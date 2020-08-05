@@ -17,11 +17,11 @@ cognitive cost of context switching between projects.
 
 This is one of the problems `kano` solves. It structures your development tasks, regardless of
 their actual implementations. It gives you a common interface to work with all your projects
-without getting in your way. Example:
+without getting in your way.
 
 ### Example
 
-Running tests with code coverage enabled in a different projects of different languages may look
+Running tests with code coverage enabled in different projects of different languages may look
 like this:
 
 ```shell

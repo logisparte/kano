@@ -13,7 +13,7 @@ exécuter des tests automatisés, formatter le code, etc. L'implémentation de c
 fonction du langage de programmation, des outils utilisés par l'équipe et autres contraintes
 connexes. La plupart du temps, ces tâches sont gérées via des scripts appelés directement à
 partir du terminal ou via le gestionnaire de paquet du langage utilisé. Deux projets peuvent
-avoir des configuration de script différentes pour effectuer la même tâche, ce qui augmente le
+avoir des configurations de script différentes pour effectuer la même tâche, ce qui augmente le
 coût en charge cognitive lors d'un changement de contexte entre projets.
 
 Ceci est un des problèmes que `kano` résout. Il structure vos tâches de développement, peu
