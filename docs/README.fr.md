@@ -2,7 +2,7 @@
 
 > Read in [English](/docs/README.md)
 
-Outil de gestion de tâche d'ingénierie logicielle
+CLI de gestion de tâche d'ingénierie logicielle
 
 ## À propos
 
