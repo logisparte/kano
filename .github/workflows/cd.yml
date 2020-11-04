@@ -1,0 +1,48 @@
+﻿name: CD
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    env:
+      SHELL_HELPERS: /home/linuxbrew/.linuxbrew/opt/shell-helpers/lib
+      PACKAGE_NAME: kano
+      BUILD_DIRECTORY: build
+      SOURCE_DIRECTORY: sources
+      S3_BUCKET: packages.logisparte
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout repository
+
+      - name: Install dependencies
+        run: brew bundle
+
+      - name: Build
+        run: |
+          mkdir "$BUILD_DIRECTORY"
+          rsync -r "$SOURCE_DIRECTORY/" "$BUILD_DIRECTORY"
+          . "$SHELL_HELPERS/find_and_replace_in_directory"
+          find_and_replace_in_directory "$BUILD_DIRECTORY" "\$SOURCE_DIRECTORY" "\$KANO_GLOBAL_DIRECTORY"
+          chmod +x "$BUILD_DIRECTORY/kano"
+          printf "1.0.0" >> "$BUILD_DIRECTORY/version.txt"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.HELOT_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.HELOT_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ca-central-1
+
+      - name: Release to AWS
+        run: |
+          TAG="$(echo "$GITHUB_REF" | cut -d "/" -f 3)"
+          ARTIFACT_NAME="$PACKAGE_NAME-$TAG"
+          ARTIFACT_FILE="$ARTIFACT_NAME.tar.gz"
+          mv build "$ARTIFACT_NAME"
+          tar -czvf "$ARTIFACT_FILE" "$ARTIFACT_NAME"
+          shasum -a 256 "$ARTIFACT_FILE"
+          aws s3 cp "$ARTIFACT_FILE" "s3://$S3_BUCKET/$PACKAGE_NAME/$ARTIFACT_FILE"
