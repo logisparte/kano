@@ -1,0 +1,28 @@
+#!/bin/sh
+# Install dependencies, git hooks and generate other development files
+
+. "$SHELL_HELPERS/report"
+
+setup() {
+  _install_git_hooks
+  _install_dependencies
+}
+
+_install_git_hooks() {
+  _info "Installing git hooks"
+  GIT_DIRECTORY="$(git rev-parse --git-dir)"
+  GIT_HOOK_DIRECTORY="$GIT_DIRECTORY/hooks"
+  cp -r "$KANO_LOCAL_GIT_HOOK_DIRECTORY/" "$GIT_HOOK_DIRECTORY/"
+}
+
+_install_dependencies() {
+  _info "Installing dependencies"
+  brew bundle
+  yarn global add markdownlint-cli
+}
+
+_info() {
+  MESSAGE="$1"
+
+  report info "[setup] $MESSAGE"
+}

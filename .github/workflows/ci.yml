@@ -1,0 +1,28 @@
+﻿name: CI
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      SHELL_HELPERS: /home/linuxbrew/.linuxbrew/opt/shell-helpers/lib
+      SOURCE_DIRECTORY: sources
+      TEST_DIRECTORY: tests
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: brew bundle
+
+      - name: Run tests
+        run: |
+          export KANO_GLOBAL_DIRECTORY="$SOURCE_DIRECTORY"
+          export KANO_LOCAL_DIRECTORY="$TEST_DIRECTORY/data/some_project/.kano"
+          export KANO_LOCAL_PROJECT_FILE="$KANO_LOCAL_DIRECTORY/project"
+
+          shellspec --default-path "tests/suites" --pattern "*.test"
+
+
