@@ -1,0 +1,26 @@
+#!/bin/sh
+
+. "$SHELL_HELPERS/does_directory_exist"
+. "$SHELL_HELPERS/fail"
+
+. "$SOURCE_DIRECTORY/versions/version_finder"
+
+version_router() {
+  route() {
+    MAJOR_VERSION="$(version_finder find | cut -d "." -f 1)"
+    NORMALIZED_MAJOR_VERSION="v$MAJOR_VERSION"
+    VERSIONED_SOURCE_DIRECTORY_PATH="$SOURCE_DIRECTORY/versions/$NORMALIZED_MAJOR_VERSION"
+    if ! does_directory_exist "$VERSIONED_SOURCE_DIRECTORY_PATH"; then
+      fail "Kano has no version '$NORMALIZED_MAJOR_VERSION'"
+    fi
+
+    _import "$VERSIONED_SOURCE_DIRECTORY_PATH/controller"
+    controller execute "$@"
+  }
+
+  "$@"
+}
+
+_import() {
+  . "$1"
+}

@@ -57,3 +57,57 @@ Mis à part ce bénéfice immédiat, l'uniformisation permet aussi à Kano de :
 ## Licence
 
 Kano est _libre comme dans liberté_, sous les termes de la [licence GPL-3.0](/LICENSE).
+
+## Contributions
+
+La meilleure manière de contribuer à Kano est d'améliorer sa documentation! Beaucoup d'effort
+est déployé afin que la documentation soit la plus complète et claire possible. Si vous n'y
+trouvez pas ce que vous cherchez, n'hésitez pas à ouvrir une _issue_ pour poser vos questions.
+Il nous fera plaisir de vous répondre et de mettre la documentation à jour.
+
+Mieux encore, si vous avez des suggestions d'amélioration, sentez-vous à l'aise de faire un
+_fork_ et d'ouvrir une _pull request_ vers notre dépôt pour démarrer la discussion.
+
+### Requis
+
+Vous devrez d'abord installer [Homebrew](https://brew.sh) sur votre poste (oui, même sur Linux).
+
+### Préparer
+
+Pour préparer le projet au développement local, faites :
+
+```shell
+brew bundle
+```
+
+### Formatter
+
+Pour formatter le code, faites :
+
+```shell
+shfmt -p -w -bn -ci -sr -i 2 ./
+```
+
+### Linter
+
+Pour _linter_ le code, faites :
+
+```shell
+find sources -type f -exec shellcheck {} +
+```
+
+### Tester
+
+Pour rouler les tests, faites :
+
+```shell
+shellspec --default-path tests --pattern "*.test"
+```
+
+### Builder
+
+Pour _builder_ le projet, faites :
+
+```shell
+mkdir -p build && rsync -r sources/ build
+```

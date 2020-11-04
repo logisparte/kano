@@ -1,0 +1,59 @@
+#!/bin/sh
+# Test the project to ensure the code behaves as intended
+
+. "$SHELL_HELPERS/does_directory_exist"
+. "$SHELL_HELPERS/fail"
+. "$SHELL_HELPERS/report"
+
+TEST_SUITE_DIRECTORY="$TEST_DIRECTORY/suites"
+
+test() {
+  SUITE_NAME="$1"
+
+  if [ -n "$SUITE_NAME" ]; then
+    SUITE_PATH="$TEST_SUITE_DIRECTORY/$SUITE_NAME"
+    if does_directory_exist "$SUITE_PATH"; then
+      _test "$SUITE_PATH"
+      return $?
+
+    else
+      fail "[test] No test suite named '$SUITE_NAME'"
+    fi
+
+  else
+    RESULT=0
+    for SUITE_PATH in "$TEST_SUITE_DIRECTORY"/*; do
+      if ! _test "$SUITE_PATH"; then
+        RESULT=1
+      fi
+    done
+
+    return $RESULT
+  fi
+}
+
+_test() {
+  SUITE_PATH="$1"
+
+  SUITE_NAME="$(basename "$SUITE_PATH")"
+  report info "[test] Running $SUITE_NAME tests"
+
+  # Ensure that the kano code under test is the one in the source directory
+  INITIAL_KANO_GLOBAL_DIRECTORY="$KANO_GLOBAL_DIRECTORY"
+  INITIAL_KANO_LOCAL_DIRECTORY="$KANO_LOCAL_DIRECTORY"
+  INITIAL_KANO_LOCAL_PROJECT_FILE="$KANO_LOCAL_PROJECT_FILE"
+
+  export KANO_GLOBAL_DIRECTORY="$SOURCE_DIRECTORY"
+  export KANO_LOCAL_DIRECTORY="$TEST_DIRECTORY/data/some_project/.kano"
+  export KANO_LOCAL_PROJECT_FILE="$KANO_LOCAL_DIRECTORY/project"
+
+  shellspec --default-path "$SUITE_PATH" --pattern "*.test"
+  RESULT=$?
+
+  # Reset environment
+  export KANO_GLOBAL_DIRECTORY="$INITIAL_KANO_GLOBAL_DIRECTORY"
+  export KANO_LOCAL_DIRECTORY="$INITIAL_KANO_LOCAL_DIRECTORY"
+  export KANO_LOCAL_PROJECT_FILE="$INITIAL_KANO_LOCAL_PROJECT_FILE"
+
+  return $RESULT
+}

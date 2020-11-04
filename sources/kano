@@ -1,0 +1,16 @@
+#!/bin/sh -e
+
+. "$SHELL_HELPERS/find_this_directory"
+
+kano() {
+  KANO_GLOBAL_DIRECTORY="$(find_this_directory)"
+  export KANO_GLOBAL_DIRECTORY
+  export KANO_GLOBAL_VERSION_FILE="$KANO_GLOBAL_DIRECTORY/version.txt"
+  export KANO_LOCAL_DIRECTORY="$PWD/.kano"
+  export KANO_LOCAL_PROJECT_FILE="$KANO_LOCAL_DIRECTORY/project"
+
+  . "$SOURCE_DIRECTORY/versions/version_router"
+  version_router route "$@"
+}
+
+kano "$@"

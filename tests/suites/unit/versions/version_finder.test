@@ -1,0 +1,132 @@
+#!/bin/sh
+
+Include "$SOURCE_DIRECTORY/versions/version_finder"
+
+SOME_GLOBAL_VERSION="9.9.9"
+SOME_LOCAL_VERSION="8.8.8"
+SOME_INVALID_VERSION="someinvalidversion"
+
+Describe "version_finder"
+  fail() {
+    # shellcheck disable=SC2034
+    fail_called_with="$*"
+    %preserve fail_called_with
+    exit 1
+  }
+
+  does_file_exist() {
+    if [ "$1" = "$KANO_GLOBAL_VERSION_FILE" ]; then
+      "$DOES_GLOBAL_VERSION_FILE_EXIST"
+
+    elif [ "$1" = "$KANO_LOCAL_PROJECT_FILE" ]; then
+      "$DOES_LOCAL_PROJECT_FILE_EXIST"
+
+    else
+      false
+    fi
+  }
+
+  cat() {
+    if [ "$1" = "$KANO_GLOBAL_VERSION_FILE" ]; then
+      echo "$GLOBAL_VERSION_FILE_CONTENT"
+    fi
+  }
+
+  file_system_interactor() {
+    read_variable_from_configuration_file() {
+      if [ "$2" = "$KANO_LOCAL_PROJECT_FILE" ]; then
+        if [ "$1" = "KANO_VERSION" ]; then
+          echo "$LOCAL_PROJECT_FILE_KANO_VERSION_VARIABLE_VALUE"
+        fi
+      fi
+    }
+
+    "$@"
+  }
+
+  DOES_GLOBAL_VERSION_FILE_EXIST=false
+  GLOBAL_VERSION_FILE_CONTENT=""
+  DOES_LOCAL_PROJECT_FILE_EXIST=false
+  LOCAL_PROJECT_FILE_KANO_VERSION_VARIABLE_VALUE=""
+
+  Describe "find_global"
+    Context "when no version.txt file can be found"
+      It "should fail with the expected error message"
+        When run version_finder find_global
+        The status should be failure
+        The variable fail_called_with should eq "Missing global version file"
+      End
+    End
+
+    Context "when a version.txt file exists"
+      DOES_GLOBAL_VERSION_FILE_EXIST=true
+      GLOBAL_VERSION_FILE_CONTENT="$SOME_GLOBAL_VERSION"
+      It "should return the global version"
+        When run version_finder find_global
+        The status should be success
+        The output should equal "$SOME_GLOBAL_VERSION"
+      End
+    End
+  End
+
+  Describe "find_local"
+    Context "when no local project file can be found"
+      It "should fail with the expected error message"
+        When run version_finder find_local
+        The status should be failure
+        The variable fail_called_with should eq "Missing local kano project file"
+      End
+    End
+
+    Context "when a local project file exists"
+      DOES_LOCAL_PROJECT_FILE_EXIST=true
+      Context "when the project file doesn't contain a kano version"
+        It "should fail with the expected error message"
+          When run version_finder find_local
+          The status should be failure
+          The variable fail_called_with should eq "Couldn't find local kano version"
+        End
+      End
+
+      Context "when the project file contains an invalid kano version"
+        LOCAL_PROJECT_FILE_KANO_VERSION_VARIABLE_VALUE="$SOME_INVALID_VERSION"
+        It "should fail with the expected error message"
+          When run version_finder find_local
+          The status should be failure
+          The variable fail_called_with should eq "Invalid local kano version '$SOME_INVALID_VERSION'"
+        End
+      End
+
+      Context "when the project file contains a valid kano version"
+        LOCAL_PROJECT_FILE_KANO_VERSION_VARIABLE_VALUE="$SOME_LOCAL_VERSION"
+        It "should return the local kano version"
+          When run version_finder find_local
+          The status should be success
+          The output should equal "$SOME_LOCAL_VERSION"
+        End
+      End
+    End
+  End
+
+  Describe "find"
+    DOES_GLOBAL_VERSION_FILE_EXIST=true
+    GLOBAL_VERSION_FILE_CONTENT="$SOME_GLOBAL_VERSION"
+    Context "when no local project file can be found"
+      It "should return the global version"
+        When run version_finder find
+        The status should be success
+        The output should equal "$SOME_GLOBAL_VERSION"
+      End
+    End
+
+    Context "when a local project file exists"
+      DOES_LOCAL_PROJECT_FILE_EXIST=true
+      LOCAL_PROJECT_FILE_KANO_VERSION_VARIABLE_VALUE="$SOME_LOCAL_VERSION"
+      It "should return the local kano version"
+        When run version_finder find
+        The status should be success
+        The output should equal "$SOME_LOCAL_VERSION"
+      End
+    End
+  End
+End

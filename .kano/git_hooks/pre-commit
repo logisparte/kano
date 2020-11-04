@@ -1,0 +1,48 @@
+#!/bin/sh -e
+
+. "$SHELL_HELPERS/colorize"
+. "$SHELL_HELPERS/report"
+
+pre_commit() {
+  _stash_unstaged_files
+  _format
+  _lint
+  _unstash_unstaged_files
+}
+
+_stash_unstaged_files() {
+  _info "Stashing unstaged files"
+  git stash --keep-index --include-untracked --quiet
+}
+
+_format() {
+  _emphasis_info "↴"
+  kano format
+  git add .
+  _emphasis_info "↲"
+}
+
+_lint() {
+  _emphasis_info "↴"
+  kano lint
+  _emphasis_info "↲"
+}
+
+_unstash_unstaged_files() {
+  _info "Unstashing unstaged files"
+  git stash pop --quiet
+}
+
+_info() {
+  MESSAGE="$1"
+
+  report info "[pre-commit] $MESSAGE"
+}
+
+_emphasis_info() {
+  MESSAGE="$1"
+
+  report message "$(colorize "[pre-commit]" cyan) $(colorize "$MESSAGE" bold_white)"
+}
+
+pre_commit "$@"

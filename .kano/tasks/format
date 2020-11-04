@@ -1,0 +1,27 @@
+#!/bin/sh
+# Format the project to ensure visual consistency
+
+. "$SHELL_HELPERS/report"
+
+format() {
+  _format_shell && _format_markdown_and_yaml
+  return $?
+}
+
+_format_shell() {
+  _info "Formatting shell files"
+  shfmt -p -w -bn -ci -sr -kp -i 2 ./
+  return $?
+}
+
+_format_markdown_and_yaml() {
+  _info "Formatting markdown and yaml files"
+  prettier --write .
+  return $?
+}
+
+_info() {
+  MESSAGE="$1"
+
+  report info "[format] $MESSAGE"
+}

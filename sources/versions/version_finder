@@ -1,0 +1,52 @@
+#!/bin/sh
+
+. "$SHELL_HELPERS/does_file_exist"
+. "$SHELL_HELPERS/fail"
+
+. "$SOURCE_DIRECTORY/adapters/file_system_interactor"
+alias fs=file_system_interactor
+
+version_finder() {
+  find() {
+    if does_file_exist "$KANO_LOCAL_PROJECT_FILE"; then
+      find_local
+
+    else
+      find_global
+    fi
+  }
+
+  find_global() {
+    if ! does_file_exist "$KANO_GLOBAL_VERSION_FILE"; then
+      fail "Missing global version file"
+    fi
+
+    cat "$KANO_GLOBAL_VERSION_FILE"
+  }
+
+  find_local() {
+    if ! does_file_exist "$KANO_LOCAL_PROJECT_FILE"; then
+      fail "Missing local kano project file"
+    fi
+
+    KANO_VERSION="$(
+      fs read_variable_from_configuration_file KANO_VERSION "$KANO_LOCAL_PROJECT_FILE"
+    )"
+
+    case "$KANO_VERSION" in
+      *.*.*)
+        echo "$KANO_VERSION"
+        ;;
+
+      "")
+        fail "Couldn't find local kano version"
+        ;;
+
+      *)
+        fail "Invalid local kano version '$KANO_VERSION'"
+        ;;
+    esac
+  }
+
+  "$@"
+}

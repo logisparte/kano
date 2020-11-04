@@ -1,0 +1,27 @@
+#!/bin/sh
+# Lint the project to ensure the code follows best practices
+
+. "$SHELL_HELPERS/report"
+
+lint() {
+  _lint_shell && _lint_markdown
+  return $?
+}
+
+_lint_shell() {
+  _info "Linting shell files"
+  find "$SOURCE_DIRECTORY" -type f -exec shellcheck {} +
+  return $?
+}
+
+_lint_markdown() {
+  _info "Linting markdown files"
+  markdownlint '**/*.md'
+  return $?
+}
+
+_info() {
+  MESSAGE="$1"
+
+  report info "[lint] $MESSAGE"
+}

@@ -1,0 +1,88 @@
+#!/bin/sh
+
+. "$SHELL_HELPERS/does_directory_exist"
+. "$SHELL_HELPERS/does_file_exist"
+. "$SHELL_HELPERS/does_symbol_exist"
+. "$SHELL_HELPERS/fail"
+
+. "$SOURCE_DIRECTORY/adapters/file_system_interactor"
+alias fs=file_system_interactor
+
+# Global
+export KANO_GLOBAL_TASK_DIRECTORY="$SOURCE_DIRECTORY/versions/v1/tasks"
+
+# Local
+export KANO_LOCAL_TASK_DIRECTORY="$KANO_LOCAL_DIRECTORY/tasks"
+export KANO_LOCAL_GIT_HOOK_DIRECTORY="$KANO_LOCAL_DIRECTORY/git_hooks"
+export KANO_LOCAL_ENVIRONMENT_FILE="$KANO_LOCAL_DIRECTORY/environment"
+
+controller() {
+  execute() {
+    TASK="$1"
+
+    if [ -z "$TASK" ]; then
+      TASK="help"
+
+    else
+      shift
+    fi
+
+    if does_file_exist "$KANO_GLOBAL_TASK_DIRECTORY/$TASK"; then
+      execute_global "$TASK" "$@"
+
+    else
+      execute_local "$TASK" "$@"
+    fi
+  }
+
+  execute_global() {
+    TASK="$1"
+    shift
+
+    TASK_FILE_PATH="$KANO_GLOBAL_TASK_DIRECTORY/$TASK"
+    if ! does_file_exist "$TASK_FILE_PATH"; then
+      fail "No global task named '$TASK'"
+
+    else
+      _import "$TASK_FILE_PATH"
+      "$TASK" "$@"
+    fi
+  }
+
+  execute_local() {
+    TASK="$1"
+    shift
+
+    TASK_FILE_PATH="$KANO_LOCAL_TASK_DIRECTORY/$TASK"
+    if ! does_directory_exist "$KANO_LOCAL_DIRECTORY"; then
+      fail "No local kano directory found at '$KANO_LOCAL_DIRECTORY'"
+
+    elif ! does_file_exist "$KANO_LOCAL_PROJECT_FILE"; then
+      fail "No kano project file found at '$KANO_LOCAL_PROJECT_FILE'"
+
+    elif ! does_file_exist "$TASK_FILE_PATH"; then
+      fail "No local task named '$TASK'"
+
+    else
+      _import "$KANO_LOCAL_PROJECT_FILE"
+
+      if does_file_exist "$KANO_LOCAL_ENVIRONMENT_FILE"; then
+        _import "$KANO_LOCAL_ENVIRONMENT_FILE"
+      fi
+
+      _import "$TASK_FILE_PATH"
+
+      if ! does_symbol_exist "$TASK"; then
+        fail "Local task '$TASK' was not properly defined in '$TASK_FILE_PATH'"
+      fi
+
+      "$TASK" "$@"
+    fi
+  }
+
+  "$@"
+}
+
+_import() {
+  . "$1"
+}

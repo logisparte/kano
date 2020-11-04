@@ -1,0 +1,15 @@
+#!/bin/sh
+# Uninstall dependencies, git hooks and delete generated development files (inverse of setup)
+
+. "$SHELL_HELPERS/report"
+
+teardown() {
+  _uninstall_git_hooks
+}
+
+_uninstall_git_hooks() {
+  report info "[teardown] Uninstalling git hooks"
+  GIT_DIRECTORY="$(git rev-parse --git-dir)"
+  GIT_HOOK_DIRECTORY="$GIT_DIRECTORY/hooks"
+  rm -rf "$GIT_HOOK_DIRECTORY"
+}
