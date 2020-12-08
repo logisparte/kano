@@ -3,7 +3,7 @@
 export KANO_VERSION="1.0.0"
 export KANO_PROJECT_NAME="kano"
 export KANO_PROJECT_DESCRIPTION="Software engineering task management CLI"
-export KANO_PROJECT_VERSION="0.1.0"
+export KANO_PROJECT_VERSION="0.1.1"
 export KANO_PROJECT_AUTHOR="info@logisparte.com"
 export KANO_PROJECT_MAIN="kano"
 export KANO_PROJECT_KEYWORDS="shell,posix,task-management,cli"

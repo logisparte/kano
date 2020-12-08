@@ -3,3 +3,4 @@
 export BUILD_DIRECTORY="build"
 export SOURCE_DIRECTORY="sources"
 export TEST_DIRECTORY="tests"
+export TEST_COVERAGE_DIRECTORY="coverage"

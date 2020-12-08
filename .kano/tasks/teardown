@@ -1,5 +1,5 @@
 #!/bin/sh
-# Uninstall dependencies, git hooks and delete generated development files (inverse of setup)
+# Uninstall git hooks (inverse of setup)
 
 . "$SHELL_HELPERS/report"
 
@@ -12,4 +12,5 @@ _uninstall_git_hooks() {
   GIT_DIRECTORY="$(git rev-parse --git-dir)"
   GIT_HOOK_DIRECTORY="$GIT_DIRECTORY/hooks"
   rm -rf "$GIT_HOOK_DIRECTORY"
+  mkdir "$GIT_HOOK_DIRECTORY"
 }

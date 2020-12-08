@@ -10,13 +10,13 @@ format() {
 
 _format_shell() {
   _info "Formatting shell files"
-  shfmt -p -w -bn -ci -sr -kp -i 2 ./
+  shfmt -p -w -bn -ci -sr -kp -i 2 .kano sources tests
   return $?
 }
 
 _format_markdown_and_yaml() {
   _info "Formatting markdown and yaml files"
-  prettier --write .
+  prettier --write .github docs
   return $?
 }
 

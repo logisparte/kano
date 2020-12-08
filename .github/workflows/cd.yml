@@ -6,43 +6,30 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
-  build-and-release:
+  cd:
     runs-on: ubuntu-latest
-    env:
-      SHELL_HELPERS: /home/linuxbrew/.linuxbrew/opt/shell-helpers/lib
-      PACKAGE_NAME: kano
-      BUILD_DIRECTORY: build
-      SOURCE_DIRECTORY: sources
-      S3_BUCKET: packages.logisparte
+    container:
+      image: docker.pkg.github.com/logisparte/docker-images/helot:latest
+      credentials:
+        username: ${{ secrets.GIT_USERNAME }}
+        password: ${{ secrets.GIT_TOKEN }}
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.HELOT_AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.HELOT_AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ca-central-1
+        AWS_S3_BUCKET_PACKAGE_REPOSITORY: packages.logisparte
+        GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+        GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
+        GIT_NAME: ${{ secrets.GIT_NAME }}
     steps:
       - uses: actions/checkout@v2
-        name: Checkout repository
+        name: Clone
 
       - name: Install dependencies
-        run: brew bundle
+        run: brew bundle install
 
       - name: Build
-        run: |
-          mkdir "$BUILD_DIRECTORY"
-          rsync -r "$SOURCE_DIRECTORY/" "$BUILD_DIRECTORY"
-          . "$SHELL_HELPERS/find_and_replace_in_directory"
-          find_and_replace_in_directory "$BUILD_DIRECTORY" "\$SOURCE_DIRECTORY" "\$KANO_GLOBAL_DIRECTORY"
-          chmod +x "$BUILD_DIRECTORY/kano"
-          printf "1.0.0" >> "$BUILD_DIRECTORY/version.txt"
+        run: kano build
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.HELOT_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.HELOT_AWS_SECRET_ACCESS_KEY }}
-          aws-region: ca-central-1
-
-      - name: Release to AWS
-        run: |
-          TAG="$(echo "$GITHUB_REF" | cut -d "/" -f 3)"
-          ARTIFACT_NAME="$PACKAGE_NAME-$TAG"
-          ARTIFACT_FILE="$ARTIFACT_NAME.tar.gz"
-          mv build "$ARTIFACT_NAME"
-          tar -czvf "$ARTIFACT_FILE" "$ARTIFACT_NAME"
-          shasum -a 256 "$ARTIFACT_FILE"
-          aws s3 cp "$ARTIFACT_FILE" "s3://$S3_BUCKET/$PACKAGE_NAME/$ARTIFACT_FILE"
+      - name: Release
+        run: kano release
