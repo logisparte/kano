@@ -7,20 +7,20 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      SHELL_HELPERS: /home/linuxbrew/.linuxbrew/opt/shell-helpers/lib
-      SOURCE_DIRECTORY: sources
-      TEST_DIRECTORY: tests
+    container:
+      image: docker.pkg.github.com/logisparte/docker-images/helot:latest
+      credentials:
+        username: ${{ secrets.GIT_USERNAME }}
+        password: ${{ secrets.GIT_TOKEN }}
     steps:
       - uses: actions/checkout@v2
+        name: Clone
 
       - name: Install dependencies
-        run: brew bundle
+        run: brew bundle install
 
-      - name: Run tests
-        run: |
-          export KANO_GLOBAL_DIRECTORY="$SOURCE_DIRECTORY"
-          export KANO_LOCAL_DIRECTORY="$TEST_DIRECTORY/data/some_project/.kano"
-          export KANO_LOCAL_PROJECT_FILE="$KANO_LOCAL_DIRECTORY/project"
+      - name: Lint
+        run: kano lint
 
-          shellspec --default-path "tests/suites" --pattern "*.test"
+      - name: Test
+        run: kano test

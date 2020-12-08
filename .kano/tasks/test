@@ -2,6 +2,7 @@
 # Test the project to ensure the code behaves as intended
 
 . "$SHELL_HELPERS/does_directory_exist"
+. "$SHELL_HELPERS/does_symbol_exist"
 . "$SHELL_HELPERS/fail"
 . "$SHELL_HELPERS/report"
 
@@ -13,6 +14,7 @@ test() {
   if [ -n "$SUITE_NAME" ]; then
     SUITE_PATH="$TEST_SUITE_DIRECTORY/$SUITE_NAME"
     if does_directory_exist "$SUITE_PATH"; then
+      _info "Running $SUITE_NAME tests"
       _test "$SUITE_PATH"
       return $?
 
@@ -21,22 +23,15 @@ test() {
     fi
 
   else
-    RESULT=0
-    for SUITE_PATH in "$TEST_SUITE_DIRECTORY"/*; do
-      if ! _test "$SUITE_PATH"; then
-        RESULT=1
-      fi
-    done
-
-    return $RESULT
+    SUITE_PATH="$TEST_SUITE_DIRECTORY"
+    _info "Running all tests"
+    _test "$SUITE_PATH"
+    return $?
   fi
 }
 
 _test() {
   SUITE_PATH="$1"
-
-  SUITE_NAME="$(basename "$SUITE_PATH")"
-  report info "[test] Running $SUITE_NAME tests"
 
   # Ensure that the kano code under test is the one in the source directory
   INITIAL_KANO_GLOBAL_DIRECTORY="$KANO_GLOBAL_DIRECTORY"
@@ -47,8 +42,15 @@ _test() {
   export KANO_LOCAL_DIRECTORY="$TEST_DIRECTORY/data/some_project/.kano"
   export KANO_LOCAL_PROJECT_FILE="$KANO_LOCAL_DIRECTORY/project"
 
-  shellspec --default-path "$SUITE_PATH" --pattern "*.test"
-  RESULT=$?
+  if does_symbol_exist "kcov"; then
+    shellspec --default-path "$SUITE_PATH" --pattern "*.test" \
+      --kcov --kcov-options "--include-pattern=/$SOURCE_DIRECTORY/"
+      RESULT=$?
+
+  else
+    shellspec --default-path "$SUITE_PATH" --pattern "*.test"
+    RESULT=$?
+  fi
 
   # Reset environment
   export KANO_GLOBAL_DIRECTORY="$INITIAL_KANO_GLOBAL_DIRECTORY"
@@ -56,4 +58,10 @@ _test() {
   export KANO_LOCAL_PROJECT_FILE="$INITIAL_KANO_LOCAL_PROJECT_FILE"
 
   return $RESULT
+}
+
+_info() {
+  MESSAGE="$1"
+
+  report info "[test] $MESSAGE"
 }

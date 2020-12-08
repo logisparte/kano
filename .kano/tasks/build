@@ -20,7 +20,7 @@ _clear_directory() {
 
 _copy_source_files() {
   _info "Copying source files"
-  rsync -r "$SOURCE_DIRECTORY/" "$BUILD_DIRECTORY"
+  cp -r "$SOURCE_DIRECTORY"/* "$BUILD_DIRECTORY"
 }
 
 _rewrite_imports() {
