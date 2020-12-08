@@ -24,5 +24,3 @@ jobs:
           export KANO_LOCAL_PROJECT_FILE="$KANO_LOCAL_DIRECTORY/project"
 
           shellspec --default-path "tests/suites" --pattern "*.test"
-
-
