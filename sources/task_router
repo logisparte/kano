@@ -1,0 +1,37 @@
+#!/bin/sh
+
+. "$SHELL_HELPERS/does_directory_exist"
+. "$SHELL_HELPERS/does_file_exist"
+. "$SHELL_HELPERS/fail"
+. "$SOURCE_DIRECTORY/task_executor"
+
+task_router() {
+  route_task() {
+    TASK="$1"
+    shift
+
+    TASK_SCOPE_DIRECTORY="$(_find_task_scope "$TASK")"
+    if [ -n "$TASK_SCOPE_DIRECTORY" ]; then
+      task_executor execute_task "$TASK_SCOPE_DIRECTORY" "$TASK" "$@"
+
+    else
+      fail "No local, global or builtin task named '$TASK'"
+    fi
+  }
+
+  _find_task_scope() {
+    if does_directory_exist "$KANO_LOCAL_DIRECTORY" \
+      && does_file_exist "$KANO_LOCAL_DIRECTORY/tasks/$TASK"; then
+      echo "$KANO_LOCAL_DIRECTORY"
+
+    elif does_directory_exist "$KANO_GLOBAL_DIRECTORY" \
+      && does_file_exist "$KANO_GLOBAL_DIRECTORY/tasks/$TASK"; then
+      echo "$KANO_GLOBAL_DIRECTORY"
+
+    elif does_file_exist "$KANO_BUILTIN_DIRECTORY/tasks/$TASK"; then
+      echo "$KANO_BUILTIN_DIRECTORY"
+    fi
+  }
+
+  "$@"
+}

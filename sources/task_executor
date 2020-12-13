@@ -1,0 +1,33 @@
+#!/bin/sh
+
+. "$SHELL_HELPERS/does_file_exist"
+. "$SHELL_HELPERS/does_symbol_exist"
+. "$SHELL_HELPERS/fail"
+
+task_executor() {
+  execute_task() {
+    SCOPE_DIRECTORY="$1"
+    TASK="$2"
+    shift 2
+
+    ENVIRONMENT_FILE="$SCOPE_DIRECTORY/environment"
+    TASK_FILE="$SCOPE_DIRECTORY/tasks/$TASK"
+    if does_file_exist "$ENVIRONMENT_FILE"; then
+      _import "$ENVIRONMENT_FILE"
+    fi
+
+    _import "$TASK_FILE"
+
+    if ! does_symbol_exist "$TASK"; then
+      fail "Task '$TASK' was not properly defined in '$TASK_FILE'"
+    fi
+
+    "$TASK" "$@"
+  }
+
+  "$@"
+}
+
+_import() {
+  . "$1"
+}
