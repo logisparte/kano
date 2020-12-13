@@ -1,0 +1,108 @@
+#!/bin/sh
+
+Include "$SOURCE_DIRECTORY/router"
+
+SOME_LOCAL_TASK="some_local_task"
+SOME_LOCAL_TASK_FILE_PATH="$KANO_LOCAL_TASK_DIRECTORY/$SOME_LOCAL_TASK"
+SOME_PARAMETER_1="param1"
+SOME_PARAMETER_2="param2"
+
+Describe "router"
+  fail() {
+    # shellcheck disable=SC2034
+    fail_called_with="$*"
+    %preserve fail_called_with
+    exit 1
+  }
+
+  does_directory_exist() {
+    if [ "$1" = "$KANO_LOCAL_DIRECTORY" ]; then
+      "$DOES_LOCAL_DIRECTORY_EXIST"
+
+    else
+      false
+    fi
+  }
+
+  does_file_exist() {
+    if [ "$1" = "$SOME_LOCAL_TASK_FILE_PATH" ]; then
+      "$DOES_LOCAL_TASK_FILE_EXIST"
+
+    elif [ "$1" = "$KANO_LOCAL_ENVIRONMENT_FILE" ]; then
+      "$DOES_LOCAL_ENVIRONMENT_FILE_EXIST"
+
+    else
+      false
+    fi
+  }
+
+  _import() {
+    if [ -n "$import_called_with" ]; then
+      import_called_with="$import_called_with|$*"
+
+    else
+      import_called_with="$*"
+    fi
+
+    %preserve import_called_with
+  }
+
+  DOES_LOCAL_DIRECTORY_EXIST=false
+  DOES_LOCAL_TASK_FILE_EXIST=false
+  DOES_LOCAL_ENVIRONMENT_FILE_EXIST=false
+
+  Describe "route"
+    Context "when no local kano directory"
+      It "should fail with the expected error message"
+        When run router route "$SOME_LOCAL_TASK"
+        The status should be failure
+        The variable fail_called_with should eq "No local kano directory found at '$KANO_LOCAL_DIRECTORY'"
+      End
+    End
+
+    Context "when local kano directory exists"
+      DOES_LOCAL_DIRECTORY_EXIST=true
+      Context "when task does not exist locally"
+        It "should fail with the expected error message"
+          When run router route "$SOME_LOCAL_TASK"
+          The status should be failure
+          The variable fail_called_with should eq "No local task named '$SOME_LOCAL_TASK'"
+        End
+      End
+
+      Context "when task exists locally"
+        DOES_LOCAL_TASK_FILE_EXIST=true
+        Context "when task is not correctly defined"
+          It "should fail with the expected error message"
+            When run router route "$SOME_LOCAL_TASK"
+            The status should be failure
+            The variable fail_called_with should eq "Local task '$SOME_LOCAL_TASK' was not properly defined in '$SOME_LOCAL_TASK_FILE_PATH'"
+          End
+        End
+
+        Context "when task is correctly defined"
+          eval "$SOME_LOCAL_TASK() {
+            task_called_with=\"\$*\"
+            %preserve task_called_with
+          }"
+
+          It "should execute local task"
+            When run router route "$SOME_LOCAL_TASK" "$SOME_PARAMETER_1" "$SOME_PARAMETER_2"
+            The status should be success
+            The variable import_called_with should include "$SOME_LOCAL_TASK_FILE_PATH"
+            The variable task_called_with should eq "$SOME_PARAMETER_1 $SOME_PARAMETER_2"
+          End
+
+          Context "when a local environment file is present"
+            DOES_LOCAL_ENVIRONMENT_FILE_EXIST=true
+            It "should import the local environment file"
+              When run router route "$SOME_LOCAL_TASK" "$SOME_PARAMETER_1" "$SOME_PARAMETER_2"
+              The status should be success
+              The variable import_called_with should include "$KANO_LOCAL_ENVIRONMENT_FILE"
+            End
+          End
+        End
+      End
+    End
+  End
+End
