@@ -3,14 +3,14 @@
 . "$SHELL_HELPERS/find_this_directory"
 
 kano() {
-  KANO_GLOBAL_DIRECTORY="$(find_this_directory)"
-  export KANO_GLOBAL_DIRECTORY
-  export KANO_GLOBAL_VERSION_FILE="$KANO_GLOBAL_DIRECTORY/version.txt"
+  KANO_UNIVERSAL_DIRECTORY="$(find_this_directory)"
+  export KANO_UNIVERSAL_DIRECTORY
   export KANO_LOCAL_DIRECTORY="$PWD/.kano"
-  export KANO_LOCAL_PROJECT_FILE="$KANO_LOCAL_DIRECTORY/project"
+  export KANO_LOCAL_TASK_DIRECTORY="$KANO_LOCAL_DIRECTORY/tasks"
+  export KANO_LOCAL_ENVIRONMENT_FILE="$KANO_LOCAL_DIRECTORY/environment"
 
-  . "$SOURCE_DIRECTORY/versions/version_router"
-  version_router route "$@"
+  . "$SOURCE_DIRECTORY/router"
+  router route "$@"
 }
 
 kano "$@"
