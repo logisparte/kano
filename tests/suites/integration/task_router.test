@@ -1,0 +1,86 @@
+#!/bin/sh
+
+Include "$SOURCE_DIRECTORY/task_router"
+
+SOME_TASK="some_task"
+SOME_PARAMETER="some_parameter"
+SOME_HOME_DIRECTORY="$TEST_DIRECTORY/data/some_home"
+SOME_PROJECT_DIRECTORY="$TEST_DIRECTORY/data/some_project"
+export KANO_GLOBAL_DIRECTORY="$SOME_HOME_DIRECTORY/.kano_global"
+export KANO_LOCAL_DIRECTORY="$SOME_PROJECT_DIRECTORY/.kano"
+
+
+Describe "task_router"
+  before_all() {
+    mkdir -p "$SOME_HOME_DIRECTORY"
+    mkdir -p "$SOME_PROJECT_DIRECTORY"
+  }
+
+  after_all() {
+    rm -rf "$SOME_HOME_DIRECTORY"
+    rm -rf "$SOME_PROJECT_DIRECTORY"
+  }
+
+  BeforeAll "before_all"
+  AfterAll "after_all"
+
+  Describe "route_task"
+    Context "when task is local"
+      TASK_FILE="$KANO_LOCAL_DIRECTORY/tasks/$SOME_TASK"
+      before() {
+        mkdir -p "$KANO_LOCAL_DIRECTORY/tasks"
+        echo "
+          #!/bin/sh
+
+          $SOME_TASK() {
+            PARAMETER=\"\$1\"
+
+            echo \"Executed $SOME_TASK with \$PARAMETER\"
+          }
+        " >> "$TASK_FILE"
+      }
+
+      after() {
+        rm -rf "$KANO_LOCAL_DIRECTORY"
+      }
+
+      Before "before"
+      After "after"
+
+      It "should execute task"
+        When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
+        The status should be success
+        The output should equal "Executed $SOME_TASK with $SOME_PARAMETER"
+      End
+    End
+
+    Context "when task is global"
+      TASK_FILE="$KANO_GLOBAL_DIRECTORY/tasks/$SOME_TASK"
+      before() {
+        mkdir -p "$KANO_GLOBAL_DIRECTORY/tasks"
+        echo "
+          #!/bin/sh
+
+          $SOME_TASK() {
+            PARAMETER=\"\$1\"
+
+            echo \"Executed $SOME_TASK with \$PARAMETER\"
+          }
+        " >> "$TASK_FILE"
+      }
+
+      after() {
+        rm -rf "$KANO_GLOBAL_DIRECTORY"
+      }
+
+      Before "before"
+      After "after"
+
+      It "should execute task"
+        When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
+        The status should be success
+        The output should equal "Executed $SOME_TASK with $SOME_PARAMETER"
+      End
+    End
+  End
+End
