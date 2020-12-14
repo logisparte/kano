@@ -16,18 +16,6 @@ Describe "task_router"
     exit 1
   }
 
-  does_directory_exist() {
-    if [ "$1" = "$KANO_LOCAL_DIRECTORY" ]; then
-      "$DOES_LOCAL_DIRECTORY_EXIST"
-
-    elif [ "$1" = "$KANO_GLOBAL_DIRECTORY" ]; then
-      "$DOES_GLOBAL_DIRECTORY_EXIST"
-
-    else
-      false
-    fi
-  }
-
   does_file_exist() {
     if [ "$1" = "$SOME_LOCAL_TASK_FILE" ]; then
       "$DOES_LOCAL_TASK_FILE_EXIST"
@@ -53,213 +41,176 @@ Describe "task_router"
     "$@"
   }
 
-  DOES_LOCAL_DIRECTORY_EXIST=false
   DOES_LOCAL_TASK_FILE_EXIST=false
-  DOES_GLOBAL_DIRECTORY_EXIST=false
   DOES_GLOBAL_TASK_FILE_EXIST=false
   DOES_BUILTIN_TASK_FILE_EXIST=false
 
   Describe "route_task"
-    Context "when no local kano directory"
-      Context "when no global directory"
-        Context "when task is not a builtin task"
-          It "should fail with the expected error message"
-            When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
-            The status should be failure
-            The variable fail_called_with should equal \
-              "No local, global or builtin task named '$SOME_TASK'"
-          End
-        End
+    Context "when passing an invalid flag"
+      SOME_INVALID_FLAG="-x"
+      It "should fail with the expected error message"
+        When run task_router route_task "$SOME_INVALID_FLAG" "$SOME_TASK"
+        The status should be failure
+        The variable fail_called_with should equal "Invalid flag '$SOME_INVALID_FLAG'"
+      End
+    End
 
-        Context "when task is a builtin task"
-          DOES_BUILTIN_TASK_FILE_EXIST=true
-          It "should delegate to task executor with builtin directory"
-            When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
-            The status should be success
-            The variable execute_task_called_with should equal \
-              "$KANO_BUILTIN_DIRECTORY $SOME_TASK $SOME_PARAMETER"
-          End
+    Context "when task does not exist"
+      It "should fail with the expected error message"
+        When run task_router route_task "$SOME_TASK"
+        The status should be failure
+        The variable fail_called_with should equal \
+          "No local, global or builtin task named '$SOME_TASK'"
+      End
+
+      Context "when overriding with -b flag"
+        It "should fail with the expected error message"
+          When run task_router route_task -b "$SOME_TASK"
+          The status should be failure
+          The variable fail_called_with should equal "No builtin task named '$SOME_TASK'"
         End
       End
 
-      Context "when global directory exists"
-        DOES_GLOBAL_DIRECTORY_EXIST=true
-        Context "when task is not a global task"
-          Context "when task is not a builtin task"
-            It "should fail with the expected error message"
-              When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
-              The status should be failure
-              The variable fail_called_with should equal \
-                "No local, global or builtin task named '$SOME_TASK'"
-            End
-          End
-
-          Context "when task is a builtin task"
-            DOES_BUILTIN_TASK_FILE_EXIST=true
-            It "should delegate to task executor with builtin directory"
-              When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
-              The status should be success
-              The variable execute_task_called_with should equal \
-                "$KANO_BUILTIN_DIRECTORY $SOME_TASK $SOME_PARAMETER"
-            End
-          End
+      Context "when overriding with --builtin flag"
+        It "should fail with the expected error message"
+          When run task_router route_task --builtin "$SOME_TASK"
+          The status should be failure
+          The variable fail_called_with should equal "No builtin task named '$SOME_TASK'"
         End
+      End
 
-        Context "when task is a global task"
-          DOES_GLOBAL_TASK_FILE_EXIST=true
+      Context "when overriding with -g flag"
+        It "should fail with the expected error message"
+          When run task_router route_task -g "$SOME_TASK"
+          The status should be failure
+          The variable fail_called_with should equal "No global task named '$SOME_TASK'"
+        End
+      End
+
+      Context "when overriding with --global flag"
+        It "should fail with the expected error message"
+          When run task_router route_task --global "$SOME_TASK"
+          The status should be failure
+          The variable fail_called_with should equal "No global task named '$SOME_TASK'"
+        End
+      End
+    End
+
+    Context "when task exists in builtin scope"
+      DOES_BUILTIN_TASK_FILE_EXIST=true
+      It "should delegate to task executor with builtin directory"
+        When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
+        The status should be success
+        The variable execute_task_called_with should equal \
+          "$KANO_BUILTIN_DIRECTORY $SOME_TASK $SOME_PARAMETER"
+      End
+    End
+
+    Context "when task exists in global scope"
+      DOES_GLOBAL_TASK_FILE_EXIST=true
+      It "should delegate to task executor with global directory"
+        When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
+        The status should be success
+        The variable execute_task_called_with should equal \
+          "$KANO_GLOBAL_DIRECTORY $SOME_TASK $SOME_PARAMETER"
+      End
+
+      Context "when task also exists in builtin scope"
+        DOES_BUILTIN_TASK_FILE_EXIST=true
+        Context "when not overriding with flag"
           It "should delegate to task executor with global directory"
             When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
             The status should be success
             The variable execute_task_called_with should equal \
               "$KANO_GLOBAL_DIRECTORY $SOME_TASK $SOME_PARAMETER"
           End
+        End
 
-          Context "when task is also builtin"
-            DOES_BUILTIN_TASK_FILE_EXIST=true
-            It "should delegate to task executor with global directory"
-              When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
-              The status should be success
-              The variable execute_task_called_with should equal \
-                "$KANO_GLOBAL_DIRECTORY $SOME_TASK $SOME_PARAMETER"
-            End
+        Context "when overriding with -b flag"
+          It "should delegate to task executor with builtin directory"
+            When run task_router route_task -b "$SOME_TASK" "$SOME_PARAMETER"
+            The status should be success
+            The variable execute_task_called_with should equal \
+              "$KANO_BUILTIN_DIRECTORY $SOME_TASK $SOME_PARAMETER"
+          End
+        End
+
+        Context "when overriding with --builtin flag"
+          It "should delegate to task executor with builtin directory"
+            When run task_router route_task --builtin "$SOME_TASK" "$SOME_PARAMETER"
+            The status should be success
+            The variable execute_task_called_with should equal \
+              "$KANO_BUILTIN_DIRECTORY $SOME_TASK $SOME_PARAMETER"
           End
         End
       End
     End
 
-    Context "when local kano directory exists"
-      DOES_LOCAL_DIRECTORY_EXIST=true
-      Context "when task is not a local task"
-        Context "when no global directory"
-          Context "when task is not a builtin task"
-            It "should fail with the expected error message"
-              When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
-              The status should be failure
-              The variable fail_called_with should equal \
-                "No local, global or builtin task named '$SOME_TASK'"
-            End
-          End
+    Context "when task exists in local scope"
+      DOES_LOCAL_TASK_FILE_EXIST=true
+      It "should delegate to task executor with local directory"
+        When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
+        The status should be success
+        The variable execute_task_called_with should equal \
+          "$KANO_LOCAL_DIRECTORY $SOME_TASK $SOME_PARAMETER"
+      End
 
-          Context "when task is a builtin task"
-            DOES_BUILTIN_TASK_FILE_EXIST=true
-            It "should delegate to task executor with builtin directory"
-              When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
-              The status should be success
-              The variable execute_task_called_with should equal \
-                "$KANO_BUILTIN_DIRECTORY $SOME_TASK $SOME_PARAMETER"
-            End
+      Context "when task also exists in global scope"
+        DOES_GLOBAL_TASK_FILE_EXIST=true
+        Context "when not overriding with flag"
+          It "should delegate to task executor with local directory"
+            When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
+            The status should be success
+            The variable execute_task_called_with should equal \
+              "$KANO_LOCAL_DIRECTORY $SOME_TASK $SOME_PARAMETER"
           End
         End
 
-        Context "when global directory exists"
-          DOES_GLOBAL_DIRECTORY_EXIST=true
-          Context "when task is not a global task"
-            Context "when task is not a builtin task"
-              It "should fail with the expected error message"
-                When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
-                The status should be failure
-                The variable fail_called_with should equal \
-                  "No local, global or builtin task named '$SOME_TASK'"
-              End
-            End
-
-            Context "when task is a builtin task"
-              DOES_BUILTIN_TASK_FILE_EXIST=true
-              It "should delegate to task executor with builtin directory"
-                When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
-                The status should be success
-                The variable execute_task_called_with should equal \
-                  "$KANO_BUILTIN_DIRECTORY $SOME_TASK $SOME_PARAMETER"
-              End
-            End
+        Context "when overriding with -g flag"
+          It "should delegate to task executor with global directory"
+            When run task_router route_task -g "$SOME_TASK" "$SOME_PARAMETER"
+            The status should be success
+            The variable execute_task_called_with should equal \
+              "$KANO_GLOBAL_DIRECTORY $SOME_TASK $SOME_PARAMETER"
           End
+        End
 
-          Context "when task is a global task"
-            DOES_GLOBAL_TASK_FILE_EXIST=true
-            It "should delegate to task executor with global directory"
-              When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
-              The status should be success
-              The variable execute_task_called_with should equal \
-                "$KANO_GLOBAL_DIRECTORY $SOME_TASK $SOME_PARAMETER"
-            End
-
-            Context "when task is also builtin"
-              DOES_BUILTIN_TASK_FILE_EXIST=true
-              It "should delegate to task executor with global directory"
-                When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
-                The status should be success
-                The variable execute_task_called_with should equal \
-                  "$KANO_GLOBAL_DIRECTORY $SOME_TASK $SOME_PARAMETER"
-              End
-            End
+        Context "when overriding with --global flag"
+          It "should delegate to task executor with global directory"
+            When run task_router route_task --global "$SOME_TASK" "$SOME_PARAMETER"
+            The status should be success
+            The variable execute_task_called_with should equal \
+              "$KANO_GLOBAL_DIRECTORY $SOME_TASK $SOME_PARAMETER"
           End
         End
       End
 
-      Context "when task is a local task"
-        DOES_LOCAL_TASK_FILE_EXIST=true
-        Context "when no global directory"
-          Context "when task is not a builtin task"
-            It "should delegate to task executor with local directory"
-              When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
-              The status should be success
-              The variable execute_task_called_with should equal \
-                "$KANO_LOCAL_DIRECTORY $SOME_TASK $SOME_PARAMETER"
-            End
-          End
-
-          Context "when task is also builtin"
-            DOES_BUILTIN_TASK_FILE_EXIST=true
-            It "should delegate to task executor with local directory"
-              When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
-              The status should be success
-              The variable execute_task_called_with should equal \
-                "$KANO_LOCAL_DIRECTORY $SOME_TASK $SOME_PARAMETER"
-            End
+      Context "when task also exists in builtin scope"
+        DOES_BUILTIN_TASK_FILE_EXIST=true
+        Context "when not overriding with flag"
+          It "should delegate to task executor with local directory"
+            When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
+            The status should be success
+            The variable execute_task_called_with should equal \
+              "$KANO_LOCAL_DIRECTORY $SOME_TASK $SOME_PARAMETER"
           End
         End
 
-        Context "when global directory exists"
-          DOES_GLOBAL_DIRECTORY_EXIST=true
-          Context "when task is not a global task"
-            Context "when task is not a builtin task"
-              It "should delegate to task executor with local directory"
-                When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
-                The status should be success
-                The variable execute_task_called_with should equal \
-                  "$KANO_LOCAL_DIRECTORY $SOME_TASK $SOME_PARAMETER"
-              End
-            End
-
-            Context "when task is also builtin"
-              DOES_BUILTIN_TASK_FILE_EXIST=true
-              It "should delegate to task executor with local directory"
-                When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
-                The status should be success
-                The variable execute_task_called_with should equal \
-                  "$KANO_LOCAL_DIRECTORY $SOME_TASK $SOME_PARAMETER"
-              End
-            End
+        Context "when overriding with -b flag"
+          It "should delegate to task executor with builtin directory"
+            When run task_router route_task -b "$SOME_TASK" "$SOME_PARAMETER"
+            The status should be success
+            The variable execute_task_called_with should equal \
+              "$KANO_BUILTIN_DIRECTORY $SOME_TASK $SOME_PARAMETER"
           End
+        End
 
-          Context "when task is also global"
-            DOES_GLOBAL_TASK_FILE_EXIST=true
-            It "should delegate to task executor with local directory"
-              When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
-              The status should be success
-              The variable execute_task_called_with should equal \
-                "$KANO_LOCAL_DIRECTORY $SOME_TASK $SOME_PARAMETER"
-            End
-
-            Context "when task is also builtin"
-              DOES_BUILTIN_TASK_FILE_EXIST=true
-              It "should delegate to task executor with local directory"
-                When run task_router route_task "$SOME_TASK" "$SOME_PARAMETER"
-                The status should be success
-                The variable execute_task_called_with should equal \
-                  "$KANO_LOCAL_DIRECTORY $SOME_TASK $SOME_PARAMETER"
-              End
-            End
+        Context "when overriding with --builtin flag"
+          It "should delegate to task executor with builtin directory"
+            When run task_router route_task -b "$SOME_TASK" "$SOME_PARAMETER"
+            The status should be success
+            The variable execute_task_called_with should equal \
+              "$KANO_BUILTIN_DIRECTORY $SOME_TASK $SOME_PARAMETER"
           End
         End
       End

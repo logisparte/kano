@@ -1,36 +1,63 @@
 #!/bin/sh
 
-. "$SHELL_HELPERS/does_directory_exist"
 . "$SHELL_HELPERS/does_file_exist"
 . "$SHELL_HELPERS/fail"
 . "$SOURCE_DIRECTORY/task_executor"
 
 task_router() {
   route_task() {
-    TASK="$1"
-    shift
+    case "$1" in
+      -*)
+        FLAG="$1"
+        TASK="$2"
+        shift 2
+        ;;
 
-    TASK_SCOPE_DIRECTORY="$(_find_task_scope "$TASK")"
-    if [ -n "$TASK_SCOPE_DIRECTORY" ]; then
-      task_executor execute_task "$TASK_SCOPE_DIRECTORY" "$TASK" "$@"
+      *)
+        FLAG=""
+        TASK="$1"
+        shift 1
+        ;;
+    esac
 
-    else
-      fail "No local, global or builtin task named '$TASK'"
-    fi
-  }
+    case "$FLAG" in
+      -g | --global)
+        if does_file_exist "$KANO_GLOBAL_DIRECTORY/tasks/$TASK"; then
+          task_executor execute_task "$KANO_GLOBAL_DIRECTORY" "$TASK" "$@"
 
-  _find_task_scope() {
-    if does_directory_exist "$KANO_LOCAL_DIRECTORY" \
-      && does_file_exist "$KANO_LOCAL_DIRECTORY/tasks/$TASK"; then
-      echo "$KANO_LOCAL_DIRECTORY"
+        else
+          fail "No global task named '$TASK'"
+        fi
+        ;;
 
-    elif does_directory_exist "$KANO_GLOBAL_DIRECTORY" \
-      && does_file_exist "$KANO_GLOBAL_DIRECTORY/tasks/$TASK"; then
-      echo "$KANO_GLOBAL_DIRECTORY"
+      -b | --builtin)
+        if does_file_exist "$KANO_BUILTIN_DIRECTORY/tasks/$TASK"; then
+          task_executor execute_task "$KANO_BUILTIN_DIRECTORY" "$TASK" "$@"
 
-    elif does_file_exist "$KANO_BUILTIN_DIRECTORY/tasks/$TASK"; then
-      echo "$KANO_BUILTIN_DIRECTORY"
-    fi
+        else
+          fail "No builtin task named '$TASK'"
+        fi
+        ;;
+
+      "")
+        if does_file_exist "$KANO_LOCAL_DIRECTORY/tasks/$TASK"; then
+          task_executor execute_task "$KANO_LOCAL_DIRECTORY" "$TASK" "$@"
+
+        elif does_file_exist "$KANO_GLOBAL_DIRECTORY/tasks/$TASK"; then
+          task_executor execute_task "$KANO_GLOBAL_DIRECTORY" "$TASK" "$@"
+
+        elif does_file_exist "$KANO_BUILTIN_DIRECTORY/tasks/$TASK"; then
+          task_executor execute_task "$KANO_BUILTIN_DIRECTORY" "$TASK" "$@"
+
+        else
+          fail "No local, global or builtin task named '$TASK'"
+        fi
+        ;;
+
+      *)
+        fail "Invalid flag '$FLAG'"
+        ;;
+    esac
   }
 
   "$@"
