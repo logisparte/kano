@@ -24,7 +24,7 @@ _copy_source_files() {
 
 _rewrite_imports() {
   _info "Rewriting imports"
-  find_and_replace_in_directory "$BUILD_DIRECTORY" "\$SOURCE_DIRECTORY" "\$KANO_UNIVERSAL_DIRECTORY"
+  find_and_replace_in_directory "$BUILD_DIRECTORY" "\$SOURCE_DIRECTORY" "\$KANO_SOURCE_DIRECTORY"
 }
 
 _configure_executable() {
