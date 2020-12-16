@@ -1,7 +1,10 @@
 #!/bin/sh
-# Install git hooks
 
 . "$SHELL_HELPERS/report"
+
+setup_help() {
+  echo "Install git hooks"
+}
 
 setup() {
   _install_git_hooks

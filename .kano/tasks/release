@@ -1,8 +1,11 @@
 #!/bin/sh
-# Release the build to the package registry and update package index
 
 . "$SHELL_HELPERS/fail"
 . "$SHELL_HELPERS/report"
+
+release_help() {
+  echo "Release the build to the package registry and update package index"
+}
 
 release() {
   if [ -z "$CI" ]; then
