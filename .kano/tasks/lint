@@ -1,7 +1,10 @@
 #!/bin/sh
-# Lint the project to ensure the code follows best practices
 
 . "$SHELL_HELPERS/report"
+
+lint_help() {
+  echo "Lint the project to ensure the code follows best practices"
+}
 
 lint() {
   _lint_shell && _lint_markdown

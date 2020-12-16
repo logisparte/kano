@@ -1,7 +1,10 @@
 #!/bin/sh
-# Uninstall git hooks (inverse of setup)
 
 . "$SHELL_HELPERS/report"
+
+teardown_help() {
+  echo "Uninstall git hooks (inverse of setup)"
+}
 
 teardown() {
   _uninstall_git_hooks

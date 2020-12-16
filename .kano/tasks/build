@@ -1,8 +1,11 @@
 #!/bin/sh
-# Build the project
 
 . "$SHELL_HELPERS/find_and_replace_in_directory"
 . "$SHELL_HELPERS/report"
+
+build_help() {
+  echo "Build the project"
+}
 
 build() {
   _clear_directory

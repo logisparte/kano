@@ -1,7 +1,10 @@
 #!/bin/sh
-# Format the project to ensure visual consistency
 
 . "$SHELL_HELPERS/report"
+
+format_help() {
+  echo "Format the project to ensure visual consistency"
+}
 
 format() {
   _format_shell && _format_markdown_and_yaml
