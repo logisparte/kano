@@ -21,6 +21,7 @@ jobs:
         GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
         GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
         GIT_NAME: ${{ secrets.GIT_NAME }}
+        GITHUB_REF: ${{ github.ref }}
     steps:
       - uses: actions/checkout@v2
         name: Clone
@@ -32,4 +33,6 @@ jobs:
         run: kano build
 
       - name: Release
-        run: kano release
+        run: |
+          VERSION="$(echo "$GITHUB_REF" | cut -d "/" -f 3)"
+          kano release "$VERSION"
