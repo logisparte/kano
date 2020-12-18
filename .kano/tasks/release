@@ -3,20 +3,27 @@
 . "$SHELL_HELPERS/fail"
 . "$SHELL_HELPERS/report"
 
+PROJECT_NAME="kano"
+
 release_help() {
   echo "Release the build to the package registry and update package index"
 }
 
 release() {
+  VERSION="$1"
+
   if [ -z "$CI" ]; then
-    fail "[release] Error: must be handled by the CI/CD pipeline"
+    _fail "this task must be handled by the CI/CD pipeline"
   fi
 
-  VERSION="$KANO_PROJECT_VERSION"
+  if [ -z "$VERSION" ]; then
+    _fail "no version provided"
+  fi
+
   _info "Releasing version: $VERSION"
 
   _info "Packaging artifact..."
-  ARTIFACT_NAME="$KANO_PROJECT_NAME-$VERSION"
+  ARTIFACT_NAME="$PROJECT_NAME-$VERSION"
   ARTIFACT_FILE="$(_package_artifact "$ARTIFACT_NAME")"
   CHECKSUM="$(shasum -a 256 "$ARTIFACT_FILE" | cut -d " " -f 1)"
   _info "Packaged $ARTIFACT_FILE, checksum is: $CHECKSUM"
@@ -42,7 +49,7 @@ _upload_artifact_to_aws() {
 
   _info "Uploading artifact to AWS..."
   aws s3 cp "$ARTIFACT_FILE" \
-    "s3://$AWS_S3_BUCKET_PACKAGE_REPOSITORY/$KANO_PROJECT_NAME/$ARTIFACT_FILE" \
+    "s3://$AWS_S3_BUCKET_PACKAGE_REPOSITORY/$PROJECT_NAME/$ARTIFACT_FILE" \
     --metadata checksum="$CHECKSUM"
   _info "Uploaded $ARTIFACT_FILE"
 }
@@ -59,7 +66,7 @@ _update_package_definition_in_index() {
   cd homebrew-packages || fail
   git checkout -b "$ARTIFACT_NAME"
   _update_package_definition_file "$VERSION" "$CHECKSUM"
-  git commit -a -m "chore($KANO_PROJECT_NAME): released $VERSION"
+  git commit -a -m "chore($PROJECT_NAME): released $VERSION"
   git push origin "$ARTIFACT_NAME"
   gh pr create --fill --base master
 }
@@ -78,11 +85,17 @@ _update_package_definition_file() {
   LANG=C sed \
     -e "s/\${VERSION}/$VERSION/g" \
     -e "s/\${CHECKSUM}/$CHECKSUM/g" \
-    "../$KANO_PROJECT_NAME/formula.rb" > "$KANO_PROJECT_NAME.rb"
+    "../$PROJECT_NAME/formula.rb" > "$PROJECT_NAME.rb"
 }
 
 _info() {
   MESSAGE="$1"
 
   report info "[release] $MESSAGE"
+}
+
+_fail() {
+  MESSAGE="$1"
+
+  fail "[release] Error: $MESSAGE"
 }
