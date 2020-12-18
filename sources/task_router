@@ -9,14 +9,25 @@ task_router() {
     case "$1" in
       -*)
         FLAG="$1"
-        TASK="${2-help}"
-        shift 2
+        if [ -n "$2" ]; then
+          TASK="$2"
+          shift 2
+
+        else
+          TASK="help"
+          shift 1
+        fi
         ;;
 
       *)
         FLAG=""
-        TASK="${1-help}"
-        shift 1
+        if [ -n "$1" ]; then
+          TASK="$1"
+          shift 1
+
+        else
+          TASK="help"
+        fi
         ;;
     esac
 
