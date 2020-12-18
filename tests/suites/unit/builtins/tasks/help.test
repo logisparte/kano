@@ -1,0 +1,181 @@
+#!/bin/sh
+
+Include "$SOURCE_DIRECTORY/builtins/tasks/help"
+
+SOME_LOCAL_TASK="some_local_task"
+SOME_LOCAL_TASK_HELP_MESSAGE="some_local_task_help_message"
+SOME_GLOBAL_TASK="some_global_task"
+SOME_GLOBAL_TASK_HELP_MESSAGE="some_global_task_help_message"
+SOME_BUILTIN_TASK="some_builtin_task"
+SOME_BUILTIN_TASK_HELP_MESSAGE="some_builtin_task_help_message"
+
+Describe "help"
+  report() {
+    if [ -n "$report_called_with" ]; then
+      report_called_with="$report_called_with|$*"
+
+    else
+      report_called_with="$*"
+    fi
+
+    %preserve report_called_with
+  }
+
+  does_directory_exist() {
+    if [ "$1" = "$KANO_LOCAL_DIRECTORY/tasks" ]; then
+      "$DOES_LOCAL_TASK_DIRECTORY_EXIST"
+
+    elif [ "$1" = "$KANO_GLOBAL_DIRECTORY/tasks" ]; then
+      "$DOES_GLOBAL_TASK_DIRECTORY_EXIST"
+
+    else
+      false
+    fi
+  }
+
+  list_files_in_directory() {
+    if [ "$1" = "$KANO_LOCAL_DIRECTORY/tasks" ]; then
+      echo "$SOME_LOCAL_TASK"
+
+    elif [ "$1" = "$KANO_GLOBAL_DIRECTORY/tasks" ]; then
+      echo "$SOME_GLOBAL_TASK"
+
+    elif [ "$1" = "$KANO_BUILTIN_DIRECTORY/tasks" ]; then
+      echo "$SOME_BUILTIN_TASK"
+
+    else
+      return
+    fi
+  }
+
+  _import() {
+    if [ -n "$import_called_with" ]; then
+      import_called_with="$import_called_with|$*"
+
+    else
+      import_called_with="$*"
+    fi
+
+    %preserve import_called_with
+  }
+
+  eval "${SOME_BUILTIN_TASK}_help() {
+    echo \"$SOME_BUILTIN_TASK_HELP_MESSAGE\"
+  }"
+
+  DOES_LOCAL_TASK_DIRECTORY_EXIST=false
+  DOES_GLOBAL_TASK_DIRECTORY_EXIST=false
+
+  Describe "help"
+    It "shows the task help message"
+      When run help_help
+      The status should be success
+      The variable report_called_with should include "Show this help message"
+    End
+  End
+
+  Describe "task"
+    Context "when no local task directory"
+      Context "when no global task directory"
+        It "should only list builtin tasks section"
+          When run help
+          The status should be success
+          The variable report_called_with should not include "Local tasks"
+          The variable report_called_with should not include "Global tasks"
+          The variable report_called_with should include "Builtin tasks"
+        End
+
+        It "should show builtin tasks help messages"
+          When run help
+          The status should be success
+          The variable report_called_with should include "Builtin tasks"
+          The variable report_called_with should include "$SOME_BUILTIN_TASK"
+          The variable report_called_with should include "$SOME_BUILTIN_TASK_HELP_MESSAGE"
+        End
+      End
+
+      Context "when global task directory exist"
+        DOES_GLOBAL_TASK_DIRECTORY_EXIST=true
+        It "should list global and builtin tasks sections"
+          When run help
+          The status should be success
+          The variable report_called_with should not include "Local tasks"
+          The variable report_called_with should include "Global tasks"
+          The variable report_called_with should include "Builtin tasks"
+        End
+
+        Context "when global task has no help message"
+          It "should display '-' as help message instead"
+            When run help
+            The status should be success
+            The variable report_called_with should include "Global tasks"
+            The variable report_called_with should include "$SOME_GLOBAL_TASK"
+            The variable report_called_with should include "-"
+          End
+        End
+
+        Context "when global task has a help message"
+          eval "${SOME_GLOBAL_TASK}_help() {
+            echo \"$SOME_GLOBAL_TASK_HELP_MESSAGE\"
+          }"
+
+          It "should display the help message"
+            When run help
+            The status should be success
+            The variable report_called_with should include "Global tasks"
+            The variable report_called_with should include "$SOME_GLOBAL_TASK"
+            The variable report_called_with should include "$SOME_GLOBAL_TASK_HELP_MESSAGE"
+          End
+        End
+      End
+    End
+
+    Context "when local task directory exists"
+      DOES_LOCAL_TASK_DIRECTORY_EXIST=true
+      Context "when no global task directory"
+        It "should list local and builtin tasks sections"
+          When run help
+          The status should be success
+          The variable report_called_with should include "Local tasks"
+          The variable report_called_with should not include "Global tasks"
+          The variable report_called_with should include "Builtin tasks"
+        End
+
+        Context "when local task has no help message"
+          It "should display '-' as help message instead"
+            When run help
+            The status should be success
+            The variable report_called_with should include "Local tasks"
+            The variable report_called_with should include "$SOME_LOCAL_TASK"
+            The variable report_called_with should include "-"
+          End
+        End
+
+        Context "when local task has a help message"
+          eval "${SOME_LOCAL_TASK}_help() {
+            echo \"$SOME_LOCAL_TASK_HELP_MESSAGE\"
+          }"
+
+          It "should display the help message"
+            When run help
+            The status should be success
+            The variable report_called_with should include "Local tasks"
+            The variable report_called_with should include "$SOME_LOCAL_TASK"
+            The variable report_called_with should include "$SOME_LOCAL_TASK_HELP_MESSAGE"
+          End
+        End
+      End
+
+      Context "when global task directory exist"
+        DOES_GLOBAL_TASK_DIRECTORY_EXIST=true
+        It "should list local, global and builtin tasks sections"
+          When run help
+          The status should be success
+          The variable report_called_with should include "Local tasks"
+          The variable report_called_with should include "Global tasks"
+          The variable report_called_with should include "Builtin tasks"
+        End
+      End
+    End
+  End
+End

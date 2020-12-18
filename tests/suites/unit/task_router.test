@@ -7,6 +7,7 @@ SOME_PARAMETER="some_parameter"
 SOME_LOCAL_TASK_FILE="$KANO_LOCAL_DIRECTORY/tasks/$SOME_TASK"
 SOME_GLOBAL_TASK_FILE="$KANO_GLOBAL_DIRECTORY/tasks/$SOME_TASK"
 SOME_BUILTIN_TASK_FILE="$KANO_BUILTIN_DIRECTORY/tasks/$SOME_TASK"
+HELP_TASK_FILE="$KANO_BUILTIN_DIRECTORY/tasks/help"
 
 Describe "task_router"
   fail() {
@@ -25,6 +26,9 @@ Describe "task_router"
 
     elif [ "$1" = "$SOME_BUILTIN_TASK_FILE" ]; then
       "$DOES_BUILTIN_TASK_FILE_EXIST"
+
+    elif [ "$1" = "$HELP_TASK_FILE" ]; then
+      true
 
     else
       false
@@ -213,6 +217,14 @@ Describe "task_router"
               "$KANO_BUILTIN_DIRECTORY $SOME_TASK $SOME_PARAMETER"
           End
         End
+      End
+    End
+
+    Context "when task is empty"
+      It "should delegate to task executor help task"
+        When run task_router route_task
+        The status should be success
+        The variable execute_task_called_with should equal "$KANO_BUILTIN_DIRECTORY help"
       End
     End
   End

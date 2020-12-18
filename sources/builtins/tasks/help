@@ -1,0 +1,66 @@
+#!/bin/sh
+
+. "$SHELL_HELPERS/colorize"
+. "$SHELL_HELPERS/does_directory_exist"
+. "$SHELL_HELPERS/does_symbol_exist"
+. "$SHELL_HELPERS/list_files_in_directory"
+. "$SHELL_HELPERS/report"
+
+help_help() {
+  report message "Show this help message"
+}
+
+help() {
+  _get_help_output | column -s '|' -t
+}
+
+_get_help_output() {
+  LOCAL_COLOR="green"
+  GLOBAL_COLOR="cyan"
+  BUILTIN_COLOR="yellow"
+
+  LOCAL_TASK_DIRECTORY="$KANO_LOCAL_DIRECTORY/tasks"
+  if does_directory_exist "$LOCAL_TASK_DIRECTORY"; then
+    report message "$(colorize "Local tasks" "$LOCAL_COLOR")|"
+    report message " | "
+    _get_help_description_in_scope "$LOCAL_TASK_DIRECTORY" "$LOCAL_COLOR"
+    report message " | "
+  fi
+
+  GLOBAL_TASK_DIRECTORY="$KANO_GLOBAL_DIRECTORY/tasks"
+  if does_directory_exist "$GLOBAL_TASK_DIRECTORY"; then
+    report message "$(colorize "Global tasks" "$GLOBAL_COLOR")|"
+    report message " | "
+    _get_help_description_in_scope "$GLOBAL_TASK_DIRECTORY" "$GLOBAL_COLOR"
+    report message " | "
+  fi
+
+  BUILTIN_TASK_DIRECTORY="$KANO_BUILTIN_DIRECTORY/tasks"
+  report message "$(colorize "Builtin tasks" "$BUILTIN_COLOR")|"
+  report message " | "
+  _get_help_description_in_scope "$BUILTIN_TASK_DIRECTORY" "$BUILTIN_COLOR"
+  report message " | "
+}
+
+_get_help_description_in_scope() {
+  TASK_DIRECTORY="$1"
+  TASK_COLOR="$2"
+
+  for TASK in $(list_files_in_directory "$TASK_DIRECTORY"); do
+    _import "$TASK"
+
+    TASK_HELP_FUNCTION="${TASK}_help"
+    if does_symbol_exist "$TASK_HELP_FUNCTION"; then
+      TASK_HELP="$("$TASK_HELP_FUNCTION")"
+
+    else
+      TASK_HELP="-"
+    fi
+
+    report message "$(colorize "$TASK" "$TASK_COLOR")|$TASK_HELP"
+  done
+}
+
+_import() {
+  . "$1"
+}
