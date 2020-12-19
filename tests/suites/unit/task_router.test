@@ -221,10 +221,21 @@ Describe "task_router"
     End
 
     Context "when task is empty"
-      It "should delegate to task executor help task"
-        When run task_router route_task
-        The status should be success
-        The variable execute_task_called_with should equal "$KANO_BUILTIN_DIRECTORY help"
+      Context "when not overriding with flag"
+        It "should delegate to task executor help task"
+          When run task_router route_task
+          The status should be success
+          The variable execute_task_called_with should equal "$KANO_BUILTIN_DIRECTORY help"
+        End
+      End
+
+      Context "when overriding with a flag"
+        It "should fail with the expected error message"
+          When run task_router route_task -b
+          The status should be failure
+          The variable fail_called_with should equal \
+            "Must provide a task name when overriding with a flag"
+        End
       End
     End
   End

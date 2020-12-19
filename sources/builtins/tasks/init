@@ -1,0 +1,32 @@
+#!/bin/sh
+
+. "$SHELL_HELPERS/does_directory_exist"
+. "$SHELL_HELPERS/fail"
+
+init_help() {
+  echo "Initialize an empty local or global kano directory"
+}
+
+init() {
+  SCOPE="$1"
+
+  if [ -z "$SCOPE" ] || [ "$SCOPE" = "local" ]; then
+    if does_directory_exist "$KANO_LOCAL_DIRECTORY"; then
+      fail "Local kano directory already exists"
+    fi
+
+    mkdir -p "$KANO_LOCAL_DIRECTORY"
+    mkdir -p "$KANO_LOCAL_DIRECTORY/tasks"
+
+  elif [ "$SCOPE" = "global" ]; then
+    if does_directory_exist "$KANO_GLOBAL_DIRECTORY"; then
+      fail "Global kano directory already exists"
+    fi
+
+    mkdir -p "$KANO_GLOBAL_DIRECTORY"
+    mkdir -p "$KANO_GLOBAL_DIRECTORY/tasks"
+
+  else
+    fail "Unknown scope '$SCOPE'"
+  fi
+}

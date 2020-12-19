@@ -70,7 +70,7 @@ Describe "help"
     It "shows the task help message"
       When run help_help
       The status should be success
-      The variable report_called_with should include "Show this help message"
+      The output should equal "Show this help message"
     End
   End
 

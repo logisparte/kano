@@ -7,7 +7,7 @@
 . "$SHELL_HELPERS/report"
 
 help_help() {
-  report message "Show this help message"
+  echo "Show this help message"
 }
 
 help() {

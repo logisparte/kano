@@ -1,0 +1,113 @@
+#!/bin/sh
+
+Include "$SOURCE_DIRECTORY/builtins/tasks/destroy"
+
+Describe "destroy"
+  fail() {
+    # shellcheck disable=SC2034
+    fail_called_with="$*"
+    %preserve fail_called_with
+    exit 1
+  }
+
+  does_directory_exist() {
+    if [ "$1" = "$KANO_LOCAL_DIRECTORY" ]; then
+      "$DOES_LOCAL_DIRECTORY_EXIST"
+
+    elif [ "$1" = "$KANO_GLOBAL_DIRECTORY" ]; then
+      "$DOES_GLOBAL_DIRECTORY_EXIST"
+
+    else
+      false
+    fi
+  }
+
+  rm() {
+    if [ -n "$rm_called_with" ]; then
+      rm_called_with="$rm_called_with|$*"
+
+    else
+      rm_called_with="$*"
+    fi
+
+    %preserve rm_called_with
+  }
+
+  DOES_LOCAL_DIRECTORY_EXIST=false
+  DOES_GLOBAL_DIRECTORY_EXIST=false
+
+  Describe "help"
+    It "shows the task help message"
+      When run destroy_help
+      The status should be success
+      The output should equal "Destroy an existing local or global kano directory"
+    End
+  End
+
+  Describe "task"
+    Context "when an invalid scope is provided"
+      It "should fail with the expected error message"
+        When run destroy some_invalid_scope
+        The status should be failure
+        The variable fail_called_with should equal "Unknown scope 'some_invalid_scope'"
+      End
+    End
+
+    Context "when no scope provided"
+      Context "when no local kano directory"
+        It "should fail with the expected error message"
+          When run destroy
+          The status should be failure
+          The variable fail_called_with should equal "Local kano directory does not exist"
+        End
+      End
+
+      Context "when local kano directory exists"
+        DOES_LOCAL_DIRECTORY_EXIST=true
+        It "should delete local kano directory"
+          When run destroy
+          The status should be success
+          The variable rm_called_with should include "$KANO_LOCAL_DIRECTORY"
+        End
+      End
+    End
+
+    Context "when local scope provided"
+      Context "when no local kano directory"
+        It "should fail with the expected error message"
+          When run destroy local
+          The status should be failure
+          The variable fail_called_with should equal "Local kano directory does not exist"
+        End
+      End
+
+      Context "when local kano directory exists"
+        DOES_LOCAL_DIRECTORY_EXIST=true
+        It "should delete local kano directory"
+          When run destroy local
+          The status should be success
+          The variable rm_called_with should include "$KANO_LOCAL_DIRECTORY"
+        End
+      End
+    End
+
+    Context "when global scope provided"
+      Context "when no global kano directory"
+        It "should fail with the expected error message"
+          When run destroy global
+          The status should be failure
+          The variable fail_called_with should equal "Global kano directory does not exist"
+        End
+      End
+
+      Context "when global kano directory exists"
+        DOES_GLOBAL_DIRECTORY_EXIST=true
+        It "should delete global kano directory"
+          When run destroy global
+          The status should be success
+          The variable rm_called_with should include "$KANO_GLOBAL_DIRECTORY"
+        End
+      End
+    End
+  End
+End
