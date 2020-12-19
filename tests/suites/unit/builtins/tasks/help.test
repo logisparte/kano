@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$SOURCE_DIRECTORY/builtins/tasks/help"
+Include "$SOURCE_DIRECTORY/builtin/tasks/help"
 
 SOME_LOCAL_TASK="some_local_task"
 SOME_LOCAL_TASK_HELP_MESSAGE="some_local_task_help_message"
