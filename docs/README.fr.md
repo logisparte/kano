@@ -17,12 +17,12 @@ utilisé. Quand les choses deviennent plus complexes, ces scripts d'une ligne é
 longs scripts intestables avec des structures de répertoire variables et peu (ou pas) de
 documentation. Cela augmente aussi bien les coûts de maintenance que les coûts en charge
 cognitive lors de changement de contexte entre projets et d'intégration de nouveaux
-contributeurs.
+contributeurs
 
 Ceci est un des problèmes que `kano` résout. Il structure vos processus de développement en
 _tâches_ qui peuvent être exécutées de la même manière à travers tous vos projets, peu importe
 leur implémentation. Cela vous donne une interface commune avec laquelle travailler à travers
-tous vos projets sans se mettre dans vos pattes.
+tous vos projets sans se mettre dans vos pattes
 
 ## Licence
 
@@ -71,7 +71,7 @@ Un fichier de tâche est un fichier shell sourceable. Il doit avoit le format su
 #!/bin/sh
 
 un_nom_de_tache() {
-  # Votre code
+  # Le code
 }
 
 ```
@@ -79,10 +79,103 @@ un_nom_de_tache() {
 Son nom doit être le même que le nom de sa fonction (ici `un_nom_de_tache`) et n'avoir aucune
 extension
 
-#### Environnement
+### Niveaux
 
-Avant d'exécuter une tâche, kano source `.kano/environment`, s'il existe. Exportez-y toutes les
-variables d'environnement que vos tâches nécessitent.
+Kano cherche des tâches dans 3 différents niveaux, chacun représenté par un dossier spécifique :
+
+- Niveau local => `.kano` (spécifique au projet)
+- Niveau global => `~/.kano_global` (spécifique à l'utilisateur)
+- Niveau _builtin_ => Inclus dans l'installation de kano (spécifique à kano)
+
+Quand l'exécution d'une tâche est demandée, kano cherche son fichier tout d'abord en local, puis
+en global et finalement en _builtin_ jusqu'à ce qu'il le trouve. Si une tâche est définie dans 2
+niveaux différents, le fichier dans le premier niveau examiné sera utilisé. Pour outrepasser
+cette résolution, un _flag_ peut être fourni
+
+Pour forcer une résolution globale :
+
+```shell
+kano -g une_tache
+kano --global une_tache
+```
+
+Pour forcer une résolution _builtin_ :
+
+```shell
+kano -b une_tache
+kano --builtin une_tache
+```
+
+> Les tâches locales ont priorité par défaut
+
+### Tâches _builtin_
+
+Quelques tâches sont incluses avec kano. Elles sont reliées à kano en soi et son utilisation
+générale
+
+#### help
+
+Utiliser la tâche `help` dans n'importe quel répertoire pour lister toutes les tâches
+disponibles et leurs descriptions. C'est aussi la tâche par défaut si aucun nom de tâche n'est
+fourni
+
+Pour définir une description pour une tâche, définir une fonction dans le fichier de la tâche
+avec le même nom que la tâche, mais avec le suffixe `_help` :
+
+```shell
+#!/bin/sh
+
+un_nom_de_tache_help() {
+  echo "Une description de tâche"
+}
+
+un_nom_de_tache() {
+  # Le code
+}
+```
+
+#### init
+
+Utiliser la tâche `init` pour créer un répertoire kano vide. Pour créer un répertoire local
+`.kano` vide :
+
+```shell
+kano init # ou kano init local
+```
+
+Pour créer un répertoire global `~/.kano_global` vide :
+
+```shell
+kano init global
+```
+
+#### destroy
+
+Utiliser la tâche `destroy` pour effacer un répertoire kano. Pour effacer un répertoire local
+`.kano` :
+
+```shell
+kano destroy # ou kano destroy local
+```
+
+Pour effacer le répertoire global `~/.kano_global` :
+
+```shell
+kano destroy global
+```
+
+### Environnement
+
+Quand kano exécute une tâche, il source son fichier d'environnement correspondant, s'il existe.
+Il peut y avoir un fichier d'environnement par niveau :
+
+- Niveau local => `.kano/environment`
+- Niveau global => `~/.kano_global/environment`
+
+Exporter toutes les variables d'environnement requises par les tâches du niveau dans ce fichier
+
+> À l'exécution d'une tâche locale, le fichier d'environnement global ne sera pas sourcé et vice
+> versa
 
 ## Développer
 

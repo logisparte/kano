@@ -15,11 +15,11 @@ the time, this is handled through one-liner scripts in the language's package ma
 configuration. When things get more complex, these one-liners rapidly evolve into big untestable
 scripts with varying folder structures and poor documentation. It drives up the maintenance
 costs as well as the cognitive costs of switching between projects and onboarding new
-contributors.
+contributors
 
-This is one of the problems `kano` solves. It structures your development workflow in _tasks_
+This is one of the problems `kano` solves. It structures the development workflow in _tasks_
 that can be run the same way across projects, regardless of their actual implementations. It
-gives you a common interface to work with all your projects without getting in your way.
+provides a common interface to work with across all projects without getting in the way
 
 ## License
 
@@ -43,7 +43,7 @@ brew install kano
 
 ### Initialization
 
-Initialize the `.kano` directory at your project's root:
+Initialize the `.kano` directory in a project's root:
 
 ```shell
 kano init
@@ -53,7 +53,8 @@ kano init
 
 ### Tasks
 
-Define any task your development workflow requires in `.kano/tasks`. Then, to run a task:
+Define any task required by the project's development workflow in `.kano/tasks`. Then, to run a
+task:
 
 ```shell
 kano TASK_NAME
@@ -67,17 +68,105 @@ A task file is a sourceable shell file. It must have the following format:
 #!/bin/sh
 
 some_task_name() {
-  # Your code
+  # The code
 }
 
 ```
 
 Its name must exactly match its function name (here `some_task_name`) and have no extension
 
-#### Environment
+### Scopes
 
-Whenever kano runs a task, it will source `.kano/environment`, if it exists. Export any
-environment variable required by your tasks in it
+Kano looks up for tasks in 3 different scopes, each represented by a specific directory:
+
+- Local scope => `.kano` (project-specific)
+- Global scope => `~/.kano_global` (user-specific)
+- Builtin scope => Included in the kano installation (kano-specific)
+
+When a task execution is requested, kano will look for its file first in local, then in global
+and finally in the builtin scope until found. If a task is defined in 2 scopes, the file in the
+first scope encountered will be used. To override this resolution, a flag may be provided
+
+To force a global resolution:
+
+```shell
+kano -g some_task
+kano --global some_task
+```
+
+To force a builtin resolution:
+
+```shell
+kano -b some_task
+kano --builtin some_task
+```
+
+> Local tasks have priority by default
+
+### Builtin tasks
+
+Some tasks are included with kano. They are related to kano itself and its general usage
+
+#### help
+
+Use the `help` task in any directory to list all available tasks and their description. It's
+also the default task if no task name is provided
+
+To define a help description for a task, define a function in the task's file with the same name
+as the task, but with the `_help` suffix:
+
+```shell
+#!/bin/sh
+
+some_task_name_help() {
+  echo "Some help description"
+}
+
+some_task_name() {
+  # The code
+}
+```
+
+#### init
+
+Use the `init` task to create an empty kano directory. To create an empty local `.kano`
+directory:
+
+```shell
+kano init # or kano init local
+```
+
+To create an empty global `~/.kano_global` directory:
+
+```shell
+kano init global
+```
+
+#### destroy
+
+Use the `destroy` task to delete a kano directory. To delete a local `.kano` directory:
+
+```shell
+kano destroy # or kano destroy local
+```
+
+To delete the global `~/.kano_global` directory:
+
+```shell
+kano destroy global
+```
+
+### Environment
+
+Whenever kano runs a task, it will source its corresponding environment file, if it exists.
+There may be one environment file for each scope:
+
+- Local scope => `.kano/environment`
+- Global scope => `~/.kano_global/environment`
+
+Export any environment variable required by the scope's tasks in it
+
+> When running a local task, the global environment file will not be sourced and vice versa
 
 ## Develop
 
