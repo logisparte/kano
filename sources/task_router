@@ -14,8 +14,7 @@ task_router() {
           shift 2
 
         else
-          TASK="help"
-          shift 1
+          fail "Must provide a task name when overriding with a flag"
         fi
         ;;
 

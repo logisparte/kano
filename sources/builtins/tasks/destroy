@@ -1,0 +1,30 @@
+#!/bin/sh
+
+. "$SHELL_HELPERS/does_directory_exist"
+. "$SHELL_HELPERS/fail"
+
+destroy_help() {
+  echo "Destroy an existing local or global kano directory"
+}
+
+destroy() {
+  SCOPE="$1"
+
+  if [ -z "$SCOPE" ] || [ "$SCOPE" = "local" ]; then
+    if ! does_directory_exist "$KANO_LOCAL_DIRECTORY"; then
+      fail "Local kano directory does not exist"
+    fi
+
+    rm -rf "$KANO_LOCAL_DIRECTORY"
+
+  elif [ "$SCOPE" = "global" ]; then
+    if ! does_directory_exist "$KANO_GLOBAL_DIRECTORY"; then
+      fail "Global kano directory does not exist"
+    fi
+
+    rm -rf "$KANO_GLOBAL_DIRECTORY"
+
+  else
+    fail "Unknown scope '$SCOPE'"
+  fi
+}
