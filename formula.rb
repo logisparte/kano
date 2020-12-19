@@ -18,6 +18,6 @@ class Kano < Formula
       "export SHELL_HELPERS=\"$(brew --prefix)/opt/shell-helpers/libexec\" && kano help",
     )
 
-    assert_match /helped/, help_output
+    assert_match /Show this help message/, help_output
   end
 end
