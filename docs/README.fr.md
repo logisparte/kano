@@ -19,10 +19,10 @@ documentation. Cela augmente aussi bien les coûts de maintenance que les coûts
 cognitive lors de changement de contexte entre projets et d'intégration de nouveaux
 contributeurs
 
-Ceci est un des problèmes que `kano` résout. Il structure vos processus de développement en
-_tâches_ qui peuvent être exécutées de la même manière à travers tous vos projets, peu importe
-leur implémentation. Cela vous donne une interface commune avec laquelle travailler à travers
-tous vos projets sans se mettre dans vos pattes
+Ceci est un des problèmes que `kano` résout. Il structure le processus de développement en
+_tâches_ qui peuvent être exécutées de la même manière à travers tous les projets, peu importe
+leur implémentation. Cela donne une interface commune avec laquelle travailler à travers tous
+les projets sans se mettre dans vos pattes
 
 ## Licence
 
@@ -46,7 +46,7 @@ brew install kano
 
 ### Initialisation
 
-Initialiser le répertoire `.kano` à la racine de votre projet:
+Initialiser le répertoire `.kano` à la racine d'un projet:
 
 ```shell
 kano init
@@ -56,8 +56,8 @@ kano init
 
 ### Tâches
 
-Définir toutes les tâches que votre processus de développement nécessite dans `.kano/tasks`.
-Puis, pour exécuter une tâche :
+Définir toutes les tâches que le processus de développement du projet nécessite dans
+`.kano/tasks`. Puis, pour exécuter une tâche :
 
 ```shell
 kano NOM_DE_LA_TACHE
