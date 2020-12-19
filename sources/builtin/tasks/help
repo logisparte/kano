@@ -47,7 +47,7 @@ _get_help_description_in_scope() {
   TASK_COLOR="$2"
 
   for TASK in $(list_files_in_directory "$TASK_DIRECTORY"); do
-    _import "$TASK"
+    _import "$TASK_DIRECTORY/$TASK"
 
     TASK_HELP_FUNCTION="${TASK}_help"
     if does_symbol_exist "$TASK_HELP_FUNCTION"; then

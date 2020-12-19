@@ -1,0 +1,11 @@
+#!/bin/sh
+
+Describe "kano"
+  Describe "help"
+    It "should execute task"
+      When run "$SOURCE_DIRECTORY/kano" -b help
+      The status should be success
+      The output should include "Show this help message"
+    End
+  End
+End
