@@ -48,15 +48,12 @@ Describe "help"
     fi
   }
 
+  awk() {
+    true
+  }
+
   _import() {
-    if [ -n "$import_called_with" ]; then
-      import_called_with="$import_called_with|$*"
-
-    else
-      import_called_with="$*"
-    fi
-
-    %preserve import_called_with
+    true
   }
 
   eval "${SOME_BUILTIN_TASK}_help() {

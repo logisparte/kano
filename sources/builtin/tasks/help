@@ -11,7 +11,8 @@ help_help() {
 }
 
 help() {
-  _get_output | _format_output
+  OUTPUT="$(_get_output)"
+  _format_output "$OUTPUT"
 }
 
 _get_output() {
@@ -34,9 +35,9 @@ _get_output_for_scope() {
   SCOPE_COLOR="$2"
   SCOPE_TASK_DIRECTORY="$3"
 
-  echo "|"
+  report message "|"
   report message "$(colorize "$SCOPE_TITLE" "$SCOPE_COLOR")|"
-  echo "|"
+  report message "|"
   for TASK in $(list_files_in_directory "$SCOPE_TASK_DIRECTORY"); do
     _import "$SCOPE_TASK_DIRECTORY/$TASK"
 
@@ -53,9 +54,9 @@ _get_output_for_scope() {
 }
 
 _format_output() {
-  HELP_OUTPUT="$(read -r)"
+  OUTPUT="$1"
 
-  awk -F "|" '{printf "%-32s %s\n", $1, $2}' "$HELP_OUTPUT"
+  echo "$OUTPUT" | awk -F "|" '{printf "%-32s %s\n", $1, $2}'
 }
 
 _import() {
