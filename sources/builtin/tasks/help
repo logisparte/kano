@@ -11,43 +11,34 @@ help_help() {
 }
 
 help() {
-  _get_help_output | column -s '|' -t
+  _get_output | _format_output
 }
 
-_get_help_output() {
-  LOCAL_COLOR="green"
-  GLOBAL_COLOR="cyan"
-  BUILTIN_COLOR="yellow"
-
+_get_output() {
   LOCAL_TASK_DIRECTORY="$KANO_LOCAL_DIRECTORY/tasks"
   if does_directory_exist "$LOCAL_TASK_DIRECTORY"; then
-    report message "$(colorize "Local tasks" "$LOCAL_COLOR")|"
-    report message " | "
-    _get_help_description_in_scope "$LOCAL_TASK_DIRECTORY" "$LOCAL_COLOR"
-    report message " | "
+    _get_output_for_scope "Local tasks" "green" "$LOCAL_TASK_DIRECTORY"
   fi
 
   GLOBAL_TASK_DIRECTORY="$KANO_GLOBAL_DIRECTORY/tasks"
   if does_directory_exist "$GLOBAL_TASK_DIRECTORY"; then
-    report message "$(colorize "Global tasks" "$GLOBAL_COLOR")|"
-    report message " | "
-    _get_help_description_in_scope "$GLOBAL_TASK_DIRECTORY" "$GLOBAL_COLOR"
-    report message " | "
+    _get_output_for_scope "Global tasks" "cyan" "$GLOBAL_TASK_DIRECTORY"
   fi
 
   BUILTIN_TASK_DIRECTORY="$KANO_BUILTIN_DIRECTORY/tasks"
-  report message "$(colorize "Builtin tasks" "$BUILTIN_COLOR")|"
-  report message " | "
-  _get_help_description_in_scope "$BUILTIN_TASK_DIRECTORY" "$BUILTIN_COLOR"
-  report message " | "
+  _get_output_for_scope "Builtin tasks" "yellow" "$BUILTIN_TASK_DIRECTORY"
 }
 
-_get_help_description_in_scope() {
-  TASK_DIRECTORY="$1"
-  TASK_COLOR="$2"
+_get_output_for_scope() {
+  SCOPE_TITLE="$1"
+  SCOPE_COLOR="$2"
+  SCOPE_TASK_DIRECTORY="$3"
 
-  for TASK in $(list_files_in_directory "$TASK_DIRECTORY"); do
-    _import "$TASK_DIRECTORY/$TASK"
+  echo "|"
+  report message "$(colorize "$SCOPE_TITLE" "$SCOPE_COLOR")|"
+  echo "|"
+  for TASK in $(list_files_in_directory "$SCOPE_TASK_DIRECTORY"); do
+    _import "$SCOPE_TASK_DIRECTORY/$TASK"
 
     TASK_HELP_FUNCTION="${TASK}_help"
     if does_symbol_exist "$TASK_HELP_FUNCTION"; then
@@ -57,8 +48,14 @@ _get_help_description_in_scope() {
       TASK_HELP="-"
     fi
 
-    report message "$(colorize "$TASK" "$TASK_COLOR")|$TASK_HELP"
+    report message "$(colorize "$TASK" "$SCOPE_COLOR")|$TASK_HELP"
   done
+}
+
+_format_output() {
+  HELP_OUTPUT="$(read -r)"
+
+  awk -F "|" '{printf "%-32s %s\n", $1, $2}' "$HELP_OUTPUT"
 }
 
 _import() {
