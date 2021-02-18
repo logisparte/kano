@@ -25,7 +25,14 @@ provides a common interface to work with across all projects without getting in 
 
 `kano` is _free as in freedom_, under the terms of the [GPL-3.0 License](/LICENSE)
 
-## Install
+## Users
+
+### Installation
+
+Installation can be done either with [Homebrew](https://github.com/Homebrew/brew) or manually
+with `curl`
+
+#### Homebrew
 
 First, if not already done, track our package index:
 
@@ -39,145 +46,20 @@ Then install the package:
 brew install kano
 ```
 
-## Use
+#### Manually
 
-### Initialization
-
-Initialize the `.kano` directory in a project's root:
+Download the package and run the installation script:
 
 ```shell
-kano init
+curl "https://github.com/logisparte/kano/releases/download/$VERSION/kano.tar.gz" | tar -xz
+./kano/install
 ```
 
-> Anything related to kano will be in this directory
+### Usage
 
-### Tasks
+See the [documentation](/docs/en/usage.md)
 
-Define any task required by the project's development workflow in `.kano/tasks`. Then, to run a
-task:
-
-```shell
-kano TASK_NAME
-```
-
-#### Define a task
-
-A task file is a sourceable shell file. It must have the following format:
-
-```shell
-#!/bin/sh
-
-some_task_name() {
-  # The code
-}
-
-```
-
-Its name must exactly match its function name (here `some_task_name`) and have no extension
-
-### Scopes
-
-Kano looks up for tasks in 3 different scopes, each represented by a specific directory:
-
-- Local scope => `.kano` (project-specific)
-- Global scope => `~/.kano_global` (user-specific)
-- Builtin scope => Included in the kano installation (kano-specific)
-
-When a task execution is requested, kano will look for its file first in local, then in global
-and finally in the builtin scope until found. If a task is defined in 2 scopes, the file in the
-first scope encountered will be used. To override this resolution, a flag may be provided
-
-To force a global resolution:
-
-```shell
-kano -g some_task
-kano --global some_task
-```
-
-To force a builtin resolution:
-
-```shell
-kano -b some_task
-kano --builtin some_task
-```
-
-> Local tasks have priority by default
-
-### Builtin tasks
-
-Some tasks are included with kano. They are related to kano itself and its general usage
-
-#### help
-
-Use the `help` task in any directory to list all available tasks and their description. It's
-also the default task if no task name is provided
-
-To define a help description for a task, define a function in the task's file with the same name
-as the task, but with the `_help` suffix:
-
-```shell
-#!/bin/sh
-
-some_task_name_help() {
-  echo "Some help description"
-}
-
-some_task_name() {
-  # The code
-}
-```
-
-#### init
-
-Use the `init` task to create an empty kano directory. To create an empty local `.kano`
-directory:
-
-```shell
-kano init # or kano init local
-```
-
-To create an empty global `~/.kano_global` directory:
-
-```shell
-kano init global
-```
-
-#### destroy
-
-Use the `destroy` task to delete a kano directory. To delete a local `.kano` directory:
-
-```shell
-kano destroy # or kano destroy local
-```
-
-To delete the global `~/.kano_global` directory:
-
-```shell
-kano destroy global
-```
-
-### Environment
-
-Whenever kano runs a task, it will source its corresponding environment file, if it exists.
-There may be one environment file for each scope:
-
-- Local scope => `.kano/environment`
-- Global scope => `~/.kano_global/environment`
-
-Export any environment variable required by the scope's tasks in it
-
-> When running a local task, the global environment file will not be sourced and vice versa
-
-## Develop
-
-### Prerequisites
-
-The [Homebrew](https://github.com/Homebrew/brew) package manager is required. To install the
-required dependencies:
-
-```shell
-brew bundle install
-```
+## Contributors
 
 ### Setup
 
@@ -204,6 +86,15 @@ tests:
 
 ```shell
 kano test
+```
+
+### Coverage
+
+[Kcov](https://github.com/SimonKagstrom/kcov) is used to measure test coverage during tests. To
+view the coverage report after a test run:
+
+```shell
+kano coverage
 ```
 
 ### Format

@@ -1,0 +1,56 @@
+#!/bin/sh
+
+colorize() {
+  TEXT="$1"
+  COLOR="$2"
+
+  WHITE_CODE="15"
+  CYAN_CODE="14"
+  GREEN_CODE="10"
+  RED_CODE="9"
+  YELLOW_CODE="11"
+
+  if [ -z "$TEXT" ]; then
+    return
+  fi
+
+  if [ "$COLOR" = "bold_white" ]; then
+    COLOR_MODIFIER="1"
+
+  else
+    COLOR_MODIFIER="5"
+  fi
+
+  case "$COLOR" in
+    "" | "white" | "bold_white")
+      COLOR_CODE="$WHITE_CODE"
+      ;;
+
+    "cyan")
+      COLOR_CODE="$CYAN_CODE"
+      ;;
+
+    "green")
+      COLOR_CODE="$GREEN_CODE"
+      ;;
+
+    "red")
+      COLOR_CODE="$RED_CODE"
+      ;;
+
+    "yellow")
+      COLOR_CODE="$YELLOW_CODE"
+      ;;
+
+    [0-9] | [1-9][0-9] | 1[0-9][0-9] | [2][0-5][0-5])
+      COLOR_CODE="$COLOR"
+      ;;
+
+    *)
+      printf "Invalid color: %s" "$COLOR" >&2
+      return 1
+      ;;
+  esac
+
+  printf "\e[38;${COLOR_MODIFIER};${COLOR_CODE}m%s\e[0m" "$TEXT"
+}

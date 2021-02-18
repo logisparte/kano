@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
-. "$SHELL_HELPERS/colorize"
-. "$SHELL_HELPERS/report"
+. "$KANO_HELPERS/colorize"
+. "$KANO_HELPERS/report"
 
 pre_commit() {
   _stash_unstaged_files

@@ -1,7 +1,7 @@
 #!/bin/sh
 
-. "$SHELL_HELPERS/find_and_replace_in_directory"
-. "$SHELL_HELPERS/report"
+. "$KANO_HELPERS/find_and_replace_in_directory"
+. "$KANO_HELPERS/report"
 
 build_help() {
   echo "Build the project"

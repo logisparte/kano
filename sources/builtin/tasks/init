@@ -1,7 +1,7 @@
 #!/bin/sh
 
-. "$SHELL_HELPERS/does_directory_exist"
-. "$SHELL_HELPERS/fail"
+. "$SOURCE_DIRECTORY/builtin/helpers/does_directory_exist"
+. "$SOURCE_DIRECTORY/builtin/helpers/fail"
 
 init_help() {
   echo "Initialize an empty local or global kano directory"

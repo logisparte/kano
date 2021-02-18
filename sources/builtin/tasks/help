@@ -1,10 +1,10 @@
 #!/bin/sh
 
-. "$SHELL_HELPERS/colorize"
-. "$SHELL_HELPERS/does_directory_exist"
-. "$SHELL_HELPERS/does_symbol_exist"
-. "$SHELL_HELPERS/list_files_in_directory"
-. "$SHELL_HELPERS/report"
+. "$SOURCE_DIRECTORY/builtin/helpers/colorize"
+. "$SOURCE_DIRECTORY/builtin/helpers/does_directory_exist"
+. "$SOURCE_DIRECTORY/builtin/helpers/does_symbol_exist"
+. "$SOURCE_DIRECTORY/builtin/helpers/list_files_in_directory"
+. "$SOURCE_DIRECTORY/builtin/helpers/report"
 
 help_help() {
   echo "Show this help message"

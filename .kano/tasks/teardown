@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. "$SHELL_HELPERS/report"
+. "$KANO_HELPERS/report"
 
 teardown_help() {
   echo "Uninstall git hooks (inverse of setup)"

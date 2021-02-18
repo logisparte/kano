@@ -1,8 +1,8 @@
 #!/bin/sh
 
-. "$SHELL_HELPERS/does_file_exist"
-. "$SHELL_HELPERS/does_symbol_exist"
-. "$SHELL_HELPERS/fail"
+. "$SOURCE_DIRECTORY/builtin/helpers/does_file_exist"
+. "$SOURCE_DIRECTORY/builtin/helpers/does_symbol_exist"
+. "$SOURCE_DIRECTORY/builtin/helpers/fail"
 
 task_executor() {
   execute_task() {

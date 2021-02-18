@@ -1,0 +1,37 @@
+#!/bin/sh
+
+Include "$SOURCE_DIRECTORY/builtin/helpers/is_symbolic_link"
+
+TEST_DATA_DIRECTORY="$TEST_DIRECTORY/data/is_symbolic_link_test"
+
+SOME_FILE="$TEST_DATA_DIRECTORY/some_file"
+SOME_SYMBOLIC_LINK_TO_FILE="$TEST_DATA_DIRECTORY/some_link"
+
+Describe "is_symbolic_link"
+  before_all() {
+    mkdir -p "$TEST_DATA_DIRECTORY"
+    touch "$SOME_FILE"
+    ln -s "$SOME_FILE" "$SOME_SYMBOLIC_LINK_TO_FILE"
+  }
+
+  after_all() {
+    rm -rf "$TEST_DATA_DIRECTORY"
+  }
+
+  BeforeAll "before_all"
+  AfterAll "after_all"
+
+  Context "when file is not a symbolic link"
+    It "should return false"
+      When run is_symbolic_link "$SOME_FILE"
+      The status should be failure
+    End
+  End
+
+  Context "when file is a symbolic link"
+    It "should return true"
+      When run is_symbolic_link "$SOME_SYMBOLIC_LINK_TO_FILE"
+      The status should be success
+    End
+  End
+End

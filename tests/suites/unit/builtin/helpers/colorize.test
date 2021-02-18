@@ -1,0 +1,110 @@
+#!/bin/sh
+
+Include "$SOURCE_DIRECTORY/builtin/helpers/colorize"
+
+SOME_TEXT="some text"
+
+Describe "colorize"
+  Context "when no text provided"
+    It "should return an empty string"
+      When run colorize
+      The status should be success
+      The output should equal ""
+    End
+  End
+
+  Context "when text is provided"
+    Context "when no color provided"
+      It "should return the text in white"
+        When run colorize "$SOME_TEXT"
+        The status should be success
+        The output should equal "$(printf "\e[38;5;15m%s\e[0m" "$SOME_TEXT")"
+      End
+    End
+
+    Context "when color is provided"
+      Context "when color is invalid"
+        SOME_INVALID_COLOR="some_invalid_color"
+        It "should output the expected error message"
+          When run colorize "$SOME_TEXT" "$SOME_INVALID_COLOR"
+          The status should be failure
+          The error should equal "Invalid color: $SOME_INVALID_COLOR"
+        End
+      End
+
+      Context "when color is a color code"
+        Context "when color code is 0"
+          It "should return the text in corresponding color"
+            When run colorize "$SOME_TEXT" "0"
+            The status should be success
+            The output should equal "$(printf "\e[38;5;0m%s\e[0m" "$SOME_TEXT")"
+          End
+        End
+
+        Context "when color code is 255"
+          It "should return the text in corresponding color"
+            When run colorize "$SOME_TEXT" "255"
+            The status should be success
+            The output should equal "$(printf "\e[38;5;255m%s\e[0m" "$SOME_TEXT")"
+          End
+        End
+
+        Context "when color code is 256"
+          It "should output the expected error message"
+            When run colorize "$SOME_TEXT" "256"
+            The status should be failure
+            The error should equal "Invalid color: 256"
+          End
+        End
+      End
+
+      Context "when color is white"
+        It "should return the text in white"
+          When run colorize "$SOME_TEXT" "white"
+          The status should be success
+          The output should equal "$(printf "\e[38;5;15m%s\e[0m" "$SOME_TEXT")"
+        End
+      End
+
+      Context "when color is bold_white"
+        It "should return the text in bold white"
+          When run colorize "$SOME_TEXT" "bold_white"
+          The status should be success
+          The output should equal "$(printf "\e[38;1;15m%s\e[0m" "$SOME_TEXT")"
+        End
+      End
+
+      Context "when color is cyan"
+        It "should return the text in cyan"
+          When run colorize "$SOME_TEXT" "cyan"
+          The status should be success
+          The output should equal "$(printf "\e[38;5;14m%s\e[0m" "$SOME_TEXT")"
+        End
+      End
+
+      Context "when color is green"
+        It "should return the text in green"
+          When run colorize "$SOME_TEXT" "green"
+          The status should be success
+          The output should equal "$(printf "\e[38;5;10m%s\e[0m" "$SOME_TEXT")"
+        End
+      End
+
+      Context "when color is red"
+        It "should return the text in red"
+          When run colorize "$SOME_TEXT" "red"
+          The status should be success
+          The output should equal "$(printf "\e[38;5;9m%s\e[0m" "$SOME_TEXT")"
+        End
+      End
+
+      Context "when color is yellow"
+        It "should return the text in yellow"
+          When run colorize "$SOME_TEXT" "yellow"
+          The status should be success
+          The output should equal "$(printf "\e[38;5;11m%s\e[0m" "$SOME_TEXT")"
+        End
+      End
+    End
+  End
+End

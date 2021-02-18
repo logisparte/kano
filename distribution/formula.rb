@@ -3,21 +3,19 @@
 class Kano < Formula
   desc "Software engineering task management CLI"
   homepage "https://github.com/logisparte/kano"
-  url "https://packages.logisparte.com/kano/kano-${VERSION}.tar.gz"
+  url "https://github.com/logisparte/kano/releases/download/${VERSION}/kano.tar.gz"
   sha256 "${CHECKSUM}"
   license "GPL-3.0-only"
-  depends_on "logisparte/packages/shell-helpers"
 
   def install
-    libexec.install Dir["*"]
+    libexec.install Dir["libexec/*"]
+    doc.install Dir["share/doc/*"]
+    prefix.install "LICENSE"
     bin.write_exec_script (libexec/"kano")
   end
 
   test do
-    help_output = shell_output(
-      "export SHELL_HELPERS=\"$(brew --prefix)/opt/shell-helpers/libexec\" && kano help",
-    )
-
+    help_output = shell_output("kano help")
     assert_match /Show this help message/, help_output
   end
 end

@@ -1,8 +1,8 @@
 #!/bin/sh
 
-. "$SHELL_HELPERS/does_directory_exist"
-. "$SHELL_HELPERS/fail"
-. "$SHELL_HELPERS/report"
+. "$KANO_HELPERS/does_directory_exist"
+. "$KANO_HELPERS/fail"
+. "$KANO_HELPERS/report"
 
 coverage_help() {
   echo "View the coverage report for the last test run"

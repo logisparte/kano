@@ -1,0 +1,12 @@
+#!/bin/sh -e
+
+INSTALLATION_DIRECTORY="/usr/local/opt/kano"
+EXECUTABLE_DIRECTORY="/usr/local/bin"
+
+uninstall() {
+  rm "$EXECUTABLE_DIRECTORY/kano"
+  rm -rf "$INSTALLATION_DIRECTORY"
+  echo "Successfully uninstalled kano"
+}
+
+uninstall "$@"
