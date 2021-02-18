@@ -43,7 +43,7 @@ jobs:
             | docker login "$REGISTRY_URL" --username "$GIT_USERNAME" --password-stdin
 
       - name: Pull existing development image, if any
-        run: docker pull "$DEV_IMAGE"
+        run: docker pull "$DEV_IMAGE" || true
 
       - name: Build development image
         run: docker build --tag "$DEV_IMAGE" --cache-from "$DEV_IMAGE" .
