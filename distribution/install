@@ -1,0 +1,47 @@
+#!/bin/sh -e
+
+INSTALLATION_DIRECTORY="/usr/local/opt/kano"
+EXECUTABLE_DIRECTORY="/usr/local/bin"
+THIS_DIRECTORY="$(dirname "$0")"
+
+install() {
+  _uninstall_previous_installation_if_any
+  _install_current_package
+  _test_installation
+}
+
+_uninstall_previous_installation_if_any() {
+  if [ -d "$INSTALLATION_DIRECTORY" ]; then
+    if [ -f "$INSTALLATION_DIRECTORY/uninstall" ]; then
+    "$INSTALLATION_DIRECTORY/uninstall"
+
+    else
+      rm -rf "$INSTALLATION_DIRECTORY"
+    fi
+  fi
+}
+
+_install_current_package() {
+  mkdir -p "$INSTALLATION_DIRECTORY"
+  cp -R "$THIS_DIRECTORY/libexec" "$INSTALLATION_DIRECTORY"
+  cp -R "$THIS_DIRECTORY/share" "$INSTALLATION_DIRECTORY"
+  cp "$THIS_DIRECTORY/LICENSE" "$INSTALLATION_DIRECTORY"
+  cp "$THIS_DIRECTORY/uninstall" "$INSTALLATION_DIRECTORY"
+  ln -s "$INSTALLATION_DIRECTORY/libexec/kano" "$EXECUTABLE_DIRECTORY/kano"
+}
+
+_test_installation() {
+  HELP_OUTPUT="$(kano help)"
+  case "$HELP_OUTPUT" in
+    *"Show this help message"*)
+      echo "Successfully installed kano"
+    ;;
+
+  *)
+    echo "Failed to install kano"
+    exit 1
+    ;;
+  esac
+}
+
+install "$@"

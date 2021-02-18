@@ -1,0 +1,201 @@
+#!/bin/sh
+
+Include "$SOURCE_DIRECTORY/builtin/helpers/confirm"
+
+SOME_QUESTION="Some question?"
+
+Describe "confirm"
+  fail() {
+    # shellcheck disable=SC2034
+    fail_called_with="$*"
+    %preserve fail_called_with
+    exit 1
+  }
+
+  report() {
+    # shellcheck disable=SC2034
+    report_called_with="$*"
+    %preserve report_called_with
+  }
+
+  colorize() {
+    printf "%s" "$1"
+  }
+
+  Context "when no auto-answer flag provided"
+    _read_answer() {
+      printf "%s" "$SOME_ANSWER"
+    }
+
+    Context "when answer is 'y'"
+      SOME_ANSWER="y"
+
+      It "should return true"
+        When run confirm
+        The status should be success
+      End
+    End
+
+    Context "when answer is 'n'"
+      SOME_ANSWER="n"
+
+      It "should return false"
+        When run confirm
+        The status should be failure
+      End
+    End
+
+    Context "when answer is anything else"
+      SOME_ANSWER="jj"
+
+      It "should return false"
+        When run confirm
+        The status should be failure
+      End
+    End
+
+    Context "when no question provided"
+      It "should ask 'Are you sure?'"
+        When run confirm
+        The status should be present
+        The variable report_called_with should equal "message Are you sure? [y/n] "
+      End
+    End
+
+    Context "when a question is provided"
+      It "should ask the provided question"
+        When run confirm "$SOME_QUESTION"
+        The status should be present
+        The variable report_called_with should equal "message $SOME_QUESTION [y/n] "
+      End
+    End
+  End
+
+  Context "when an auto-answer flag is provided"
+    Context "when no question"
+      Context "when auto-answer flag is -y"
+        It "should not ask for anything"
+          When run confirm -y
+          The status should be present
+          The variable report_called_with should not be defined
+        End
+
+        It "should return true"
+          When run confirm -y
+          The status should be success
+        End
+      End
+
+      Context "when auto-answer flag is --yes"
+        It "should not ask for anything"
+          When run confirm --yes
+          The status should be present
+          The variable report_called_with should not be defined
+        End
+
+        It "should return true"
+          When run confirm --yes
+          The status should be success
+        End
+      End
+
+      Context "when auto-answer flag is -n"
+        It "should not ask for anything"
+          When run confirm -n
+          The status should be present
+          The variable report_called_with should not be defined
+        End
+
+        It "should return false"
+          When run confirm -n
+          The status should be failure
+        End
+      End
+
+      Context "when auto-answer flag is --no"
+        It "should not ask for anything"
+          When run confirm --no
+          The status should be present
+          The variable report_called_with should not be defined
+        End
+
+        It "should return false"
+          When run confirm --no
+          The status should be failure
+        End
+      End
+
+      Context "when auto-answer flag is anything else"
+        SOME_UNKNOWN_FLAG="--some-unknown-option"
+        It "should fail with the expected error message"
+          When run confirm "$SOME_UNKNOWN_FLAG"
+          The status should be failure
+          The variable fail_called_with should equal "Unknown flag: $SOME_UNKNOWN_FLAG"
+        End
+      End
+    End
+
+    Context "when a question is provided"
+      Context "when auto-answer flag is -y"
+        It "should not ask for anything"
+          When run confirm -y "$SOME_QUESTION"
+          The status should be present
+          The variable report_called_with should not be defined
+        End
+
+        It "should return true"
+          When run confirm -y "$SOME_QUESTION"
+          The status should be success
+        End
+      End
+
+      Context "when auto-answer flag is --yes"
+        It "should not ask for anything"
+          When run confirm --yes "$SOME_QUESTION"
+          The status should be present
+          The variable report_called_with should not be defined
+        End
+
+        It "should return true"
+          When run confirm --yes "$SOME_QUESTION"
+          The status should be success
+        End
+      End
+
+      Context "when auto-answer flag is -n"
+        It "should not ask for anything"
+          When run confirm -n "$SOME_QUESTION"
+          The status should be present
+          The variable report_called_with should not be defined
+        End
+
+        It "should return false"
+          When run confirm -n "$SOME_QUESTION"
+          The status should be failure
+        End
+      End
+
+      Context "when auto-answer flag is --no"
+        It "should not ask for anything"
+          When run confirm --no "$SOME_QUESTION"
+          The status should be present
+          The variable report_called_with should not be defined
+        End
+
+        It "should return false"
+          When run confirm --no "$SOME_QUESTION"
+          The status should be failure
+        End
+      End
+
+      Context "when auto-answer flag is anything else"
+        SOME_UNKNOWN_FLAG="--some-unknown-option"
+        It "should fail with the expected error message"
+          When run confirm "$SOME_UNKNOWN_FLAG" "$SOME_QUESTION"
+          The status should be failure
+          The variable fail_called_with should equal "Unknown flag: $SOME_UNKNOWN_FLAG"
+        End
+      End
+    End
+  End
+End

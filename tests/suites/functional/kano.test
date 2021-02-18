@@ -1,11 +1,37 @@
 #!/bin/sh
 
+EXECUTABLE="$PWD/$SOURCE_DIRECTORY/kano"
+TEST_DATA_DIRECTORY="$PWD/$TEST_DIRECTORY/data"
+LINK_TO_EXECUTABLE="$TEST_DATA_DIRECTORY/kano"
+
 Describe "kano"
   Describe "help"
-    It "should execute task"
-      When run "$SOURCE_DIRECTORY/kano" -b help
-      The status should be success
-      The output should include "Show this help message"
+    Context "when running kano executable directly"
+      It "should execute task"
+        When run "$EXECUTABLE" -b help
+        The status should be success
+        The output should include "Show this help message"
+      End
+    End
+
+    Context "when running kano executable through a symbolic link"
+      before_each() {
+        mkdir -p "$TEST_DATA_DIRECTORY"
+        ln -s "$EXECUTABLE" "$LINK_TO_EXECUTABLE"
+      }
+
+      after_each() {
+        rm "$LINK_TO_EXECUTABLE"
+      }
+
+      BeforeEach "before_each"
+      AfterEach "after_each"
+
+      It "should execute task"
+        When run "$LINK_TO_EXECUTABLE" -b help
+        The status should be success
+        The output should include "Show this help message"
+      End
     End
   End
 End

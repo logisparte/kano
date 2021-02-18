@@ -1,0 +1,37 @@
+#!/bin/sh
+
+. "$SOURCE_DIRECTORY/builtin/helpers/colorize"
+
+report() {
+  message() {
+    MESSAGE="$1"
+
+    printf "%s\n" "$MESSAGE"
+  }
+
+  success() {
+    MESSAGE="$1"
+
+    message "$(colorize "$MESSAGE" green)"
+  }
+
+  info() {
+    MESSAGE="$1"
+
+    message "$(colorize "$MESSAGE" cyan)"
+  }
+
+  warning() {
+    MESSAGE="$1"
+
+    message "$(colorize "$MESSAGE" yellow)"
+  }
+
+  error() {
+    MESSAGE="$1"
+
+    message "$(colorize "$MESSAGE" red)" >&2
+  }
+
+  "$@"
+}

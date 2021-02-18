@@ -1,12 +1,13 @@
 #!/bin/sh
 
-. "$SHELL_HELPERS/fail"
-. "$SHELL_HELPERS/report"
+. "$KANO_HELPERS/fail"
+. "$KANO_HELPERS/report"
 
-PROJECT_NAME="kano"
+PACKAGE_NAME="kano"
+ARTIFACT="$PACKAGE_NAME.tar.gz"
 
 release_help() {
-  echo "Release the build to the package registry and update package index"
+  echo "Package the build, release it to the package registry and update package indexes"
 }
 
 release() {
@@ -23,69 +24,72 @@ release() {
   _info "Releasing version: $VERSION"
 
   _info "Packaging artifact..."
-  ARTIFACT_NAME="$PROJECT_NAME-$VERSION"
-  ARTIFACT_FILE="$(_package_artifact "$ARTIFACT_NAME")"
-  CHECKSUM="$(shasum -a 256 "$ARTIFACT_FILE" | cut -d " " -f 1)"
-  _info "Packaged $ARTIFACT_FILE, checksum is: $CHECKSUM"
+  _clear_release_directory
+  _make_release
+  tar -czf "$ARTIFACT" "$RELEASE_DIRECTORY"
+  CHECKSUM="$(shasum -a 256 "$ARTIFACT" | cut -d " " -f 1)"
+  _info "Packaged $ARTIFACT, checksum is: $CHECKSUM"
 
-  _upload_artifact_to_aws "$ARTIFACT_FILE" "$CHECKSUM"
-  _update_package_definition_in_index "$ARTIFACT_NAME" "$VERSION" "$CHECKSUM"
-  report success "[release] Pull request for $ARTIFACT_NAME opened in package index"
-}
-
-_package_artifact() {
-  ARTIFACT_NAME="$1"
-
-  ARTIFACT_FILE="$ARTIFACT_NAME.tar.gz"
-  mv "$BUILD_DIRECTORY" "$ARTIFACT_NAME"
-  tar -czf "$ARTIFACT_FILE" "$ARTIFACT_NAME" > /dev/null 2>&1
-
-  echo "$ARTIFACT_FILE"
-}
-
-_upload_artifact_to_aws() {
-  ARTIFACT_FILE="$1"
-  CHECKSUM="$2"
-
-  _info "Uploading artifact to AWS..."
-  aws s3 cp "$ARTIFACT_FILE" \
-    "s3://$AWS_S3_BUCKET_PACKAGE_REPOSITORY/$PROJECT_NAME/$ARTIFACT_FILE" \
-    --metadata checksum="$CHECKSUM"
-  _info "Uploaded $ARTIFACT_FILE"
-}
-
-_update_package_definition_in_index() {
-  ARTIFACT_NAME="$1"
-  VERSION="$2"
-  CHECKSUM="$3"
-
-  _info "Updating package definition..."
   _login_to_github
-  cd .. || fail
-  gh repo clone logisparte/homebrew-packages
-  cd homebrew-packages || fail
-  git checkout -b "$ARTIFACT_NAME"
-  _update_package_definition_file "$VERSION" "$CHECKSUM"
-  git commit -a -m "chore($PROJECT_NAME): released $VERSION"
-  git push origin "$ARTIFACT_NAME"
-  gh pr create --fill --base master
+  _release_to_github "$VERSION" "$CHECKSUM"
+  _update_package_definition_in_index "$VERSION" "$CHECKSUM"
+  report success "[release] Pull request for $PACKAGE_NAME $VERSION opened in package index"
+}
+
+_clear_release_directory() {
+  rm -rf "$RELEASE_DIRECTORY"
+  mkdir -p "$RELEASE_DIRECTORY"
+}
+
+_make_release() {
+  cp LICENSE "$RELEASE_DIRECTORY"
+  cp distribution/install "$RELEASE_DIRECTORY"
+  cp distribution/uninstall "$RELEASE_DIRECTORY"
+
+  mkdir -p "$RELEASE_DIRECTORY/share/doc"
+  cp -R docs/* "$RELEASE_DIRECTORY/share/doc"
+
+  mkdir -p "$RELEASE_DIRECTORY/libexec"
+  cp -R "$BUILD_DIRECTORY"/* "$RELEASE_DIRECTORY/libexec"
 }
 
 _login_to_github() {
+  _info "Logging in to Github"
   git config --global url."https://$GIT_TOKEN:@github.com/".insteadOf "https://github.com/"
   git config --global user.email "$GIT_EMAIL"
   git config --global user.name "$GIT_NAME"
   echo "$GIT_TOKEN" | gh auth login --with-token
 }
 
-_update_package_definition_file() {
+_release_to_github() {
   VERSION="$1"
   CHECKSUM="$2"
 
-  LANG=C sed \
+  _info "Creating release"
+  DESCRIPTION="$(git tag -n32 -l "$VERSION" | sed -E "s/$VERSION//" | awk '{$1=$1};1')"
+  gh release create "$VERSION" "$ARTIFACT" --title "$VERSION" --notes "$DESCRIPTION"
+}
+
+_update_package_definition_in_index() {
+  VERSION="$1"
+  CHECKSUM="$2"
+  PROJECT_DIRECTORY="$PWD"
+  PACKAGE_INDEX_RELEASE_BRANCH_NAME="$PACKAGE_NAME-$VERSION"
+
+  _info "Updating package definition"
+  cd .. || fail
+  gh repo clone logisparte/homebrew-packages
+  cd homebrew-packages || fail
+  git checkout -b "$PACKAGE_INDEX_RELEASE_BRANCH_NAME"
+
+   LANG=C sed \
     -e "s/\${VERSION}/$VERSION/g" \
     -e "s/\${CHECKSUM}/$CHECKSUM/g" \
-    "../$PROJECT_NAME/formula.rb" > "$PROJECT_NAME.rb"
+    "$PROJECT_DIRECTORY/distribution/formula.rb" > "$PACKAGE_NAME.rb"
+
+  git commit -a -m "chore($PACKAGE_NAME): released $VERSION"
+  git push origin "$PACKAGE_INDEX_RELEASE_BRANCH_NAME"
+  gh pr create --fill --base master
 }
 
 _info() {

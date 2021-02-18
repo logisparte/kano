@@ -1,0 +1,23 @@
+#!/bin/sh
+
+Include "$SOURCE_DIRECTORY/builtin/helpers/succeed"
+
+SOME_SUCCESS_MESSAGE="Some success message"
+
+Describe "succeed"
+  Context "when no success message provided"
+    It "should just exit"
+      When run succeed
+      The status should be success
+      The output should equal ""
+    End
+  End
+
+  Context "when a success message is provided"
+    It "should output the success message before exiting"
+      When run succeed "$SOME_SUCCESS_MESSAGE"
+      The status should be success
+      The output should include "$SOME_SUCCESS_MESSAGE"
+    End
+  End
+End

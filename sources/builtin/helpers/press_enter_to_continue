@@ -1,0 +1,15 @@
+#!/bin/sh
+
+. "$SOURCE_DIRECTORY/builtin/helpers/colorize"
+. "$SOURCE_DIRECTORY/builtin/helpers/report"
+
+press_enter_to_continue() {
+  MESSAGE="${1-"Press ENTER to continue"}"
+
+  report message "$(colorize "$MESSAGE" bold_white)"
+  _read_enter
+}
+
+_read_enter() {
+  read -r
+}

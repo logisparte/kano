@@ -1,0 +1,8 @@
+#!/bin/sh
+
+does_directory_exist() {
+  DIRECTORY_PATH="$1"
+
+  [ -d "$DIRECTORY_PATH" ]
+  return $?
+}

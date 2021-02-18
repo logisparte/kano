@@ -1,0 +1,13 @@
+#!/bin/sh
+
+get_absolute_directory_path() {
+  RELATIVE_FILE_PATH="$1"
+
+  cd -P "$(_dirname "$RELATIVE_FILE_PATH")" > /dev/null 2>&1 && pwd
+}
+
+# Memoizing native program path here, otherwise it's strangely not available at runtime
+DIRNAME="$(command -v dirname)"
+_dirname() {
+  "$DIRNAME" "$1"
+}

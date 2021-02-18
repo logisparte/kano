@@ -1,0 +1,8 @@
+#!/bin/sh
+
+is_symbolic_link() {
+  PATH="$1"
+
+  [ -h "$PATH" ]
+  return $?
+}

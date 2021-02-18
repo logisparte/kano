@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. "$SHELL_HELPERS/report"
+. "$KANO_HELPERS/report"
 
 setup_help() {
   echo "Install git hooks"
@@ -8,11 +8,28 @@ setup_help() {
 
 setup() {
   _install_git_hooks
+  _build_docker_image
 }
 
 _install_git_hooks() {
   report info "[setup] Installing git hooks"
   GIT_DIRECTORY="$(git rev-parse --git-dir)"
   GIT_HOOK_DIRECTORY="$GIT_DIRECTORY/hooks"
-  cp -r "$KANO_LOCAL_GIT_HOOK_DIRECTORY"/* "$GIT_HOOK_DIRECTORY"
+  cp "$KANO_LOCAL_DIRECTORY"/git_hooks/* "$GIT_HOOK_DIRECTORY"
+}
+
+_build_docker_image() {
+  docker build --tag "kano:dev" .
+}
+
+_build_docker_image() {
+  docker build --tag "kano:dev" .
+}
+
+_build_docker_image() {
+  docker build --tag "kano:dev" .
+}
+
+_build_docker_image() {
+  docker build --tag "kano:dev" .
 }

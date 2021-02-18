@@ -1,9 +1,9 @@
 #!/bin/sh
 
-. "$SHELL_HELPERS/does_directory_exist"
-. "$SHELL_HELPERS/does_symbol_exist"
-. "$SHELL_HELPERS/fail"
-. "$SHELL_HELPERS/report"
+. "$KANO_HELPERS/does_directory_exist"
+. "$KANO_HELPERS/does_symbol_exist"
+. "$KANO_HELPERS/fail"
+. "$KANO_HELPERS/report"
 
 TEST_SUITE_DIRECTORY="$TEST_DIRECTORY/suites"
 
@@ -42,25 +42,19 @@ _test() {
   INITIAL_KANO_GLOBAL_DIRECTORY="$KANO_GLOBAL_DIRECTORY"
   INITIAL_KANO_LOCAL_DIRECTORY="$KANO_LOCAL_DIRECTORY"
 
-  export KANO_SOURCE_DIRECTORY="$SOURCE_DIRECTORY"
+  export KANO_SOURCE_DIRECTORY="$"
   export KANO_BUILTIN_DIRECTORY="$SOURCE_DIRECTORY/builtin"
   export KANO_GLOBAL_DIRECTORY="$TEST_DIRECTORY/data/some_home/.kano_global"
   export KANO_LOCAL_DIRECTORY="$TEST_DIRECTORY/data/some_project/.kano"
 
-  if does_symbol_exist "kcov"; then
-    shellspec \
-      --default-path "$SUITE_PATH" \
-      --pattern "*.test" \
-      --kcov \
-      --kcov-options "\
-        --exclude-pattern=/$SOURCE_DIRECTORY/kano \
-        --include-pattern=/$SOURCE_DIRECTORY/"
-      RESULT=$?
-
-  else
-    shellspec --default-path "$SUITE_PATH" --pattern "*.test"
-    RESULT=$?
-  fi
+  shellspec \
+    --default-path "$SUITE_PATH" \
+    --pattern "*.test" \
+    --kcov \
+    --kcov-options="\
+      --exclude-pattern=/$SOURCE_DIRECTORY/kano \
+      --include-pattern=/$SOURCE_DIRECTORY/"
+  RESULT=$?
 
   # Reset environment
   export KANO_SOURCE_DIRECTORY="$INITIAL_KANO_SOURCE_DIRECTORY"

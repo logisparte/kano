@@ -1,0 +1,10 @@
+#!/bin/sh
+
+. "$SOURCE_DIRECTORY/builtin/helpers/report"
+
+fail() {
+  MESSAGE="$1"
+
+  report error "$MESSAGE"
+  exit 1
+}

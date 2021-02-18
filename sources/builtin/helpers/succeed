@@ -1,0 +1,10 @@
+#!/bin/sh
+
+. "$SOURCE_DIRECTORY/builtin/helpers/report"
+
+succeed() {
+  MESSAGE="$1"
+
+  report success "$MESSAGE"
+  exit 0
+}

@@ -1,16 +1,25 @@
 #!/bin/sh -e
 
-. "$SHELL_HELPERS/find_this_directory"
-
 kano() {
-  KANO_SOURCE_DIRECTORY="$(find_this_directory)"
+  KANO_SOURCE_DIRECTORY="$(_find_kano_installation_directory)"
   export KANO_SOURCE_DIRECTORY
   export KANO_BUILTIN_DIRECTORY="$KANO_SOURCE_DIRECTORY/builtin"
   export KANO_GLOBAL_DIRECTORY="$HOME/.kano_global"
   export KANO_LOCAL_DIRECTORY="$PWD/.kano"
 
+  export KANO_HELPERS="$KANO_BUILTIN_DIRECTORY/helpers"
+
   . "$KANO_SOURCE_DIRECTORY/task_router"
   task_router route_task "$@"
+}
+
+_find_kano_installation_directory() {
+  KANO_EXECUTABLE="$0"
+  if [ -h "$KANO_EXECUTABLE" ]; then
+    KANO_EXECUTABLE="$(readlink "$KANO_EXECUTABLE")"
+  fi
+
+  dirname "$KANO_EXECUTABLE"
 }
 
 kano "$@"

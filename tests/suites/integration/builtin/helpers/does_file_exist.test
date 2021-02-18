@@ -1,0 +1,35 @@
+#!/bin/sh
+
+Include "$SOURCE_DIRECTORY/builtin/helpers/does_file_exist"
+
+TEST_DATA_DIRECTORY="$TEST_DIRECTORY/data/does_file_exist_test"
+
+SOME_FILE="$TEST_DATA_DIRECTORY/some_file"
+
+Describe "does_file_exist"
+  before_all() {
+    mkdir -p "$TEST_DATA_DIRECTORY"
+  }
+
+  after_all() {
+    rm -rf "$TEST_DATA_DIRECTORY"
+  }
+
+  BeforeAll "before_all"
+  AfterAll "after_all"
+
+  Context "when file does not exist"
+    It "should return false"
+      When run does_file_exist "$SOME_FILE"
+      The status should be failure
+    End
+  End
+
+  Context "when file exists"
+    It "should return true"
+      touch "$SOME_FILE"
+      When run does_file_exist "$SOME_FILE"
+      The status should be success
+    End
+  End
+End

@@ -1,7 +1,7 @@
 #!/bin/sh
 
-. "$SHELL_HELPERS/does_file_exist"
-. "$SHELL_HELPERS/fail"
+. "$SOURCE_DIRECTORY/builtin/helpers/does_file_exist"
+. "$SOURCE_DIRECTORY/builtin/helpers/fail"
 . "$SOURCE_DIRECTORY/task_executor"
 
 task_router() {

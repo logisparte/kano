@@ -1,0 +1,11 @@
+#!/bin/sh
+
+list_files_in_directory() {
+  DIRECTORY="$1"
+
+  for FILE in "$DIRECTORY"/*; do
+    if [ "$FILE" != "$DIRECTORY/*" ]; then
+      basename "$FILE"
+    fi
+  done
+}

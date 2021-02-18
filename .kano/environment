@@ -1,6 +1,7 @@
 #!/bin/sh
 
 export BUILD_DIRECTORY="build"
+export RELEASE_DIRECTORY="release"
 export SOURCE_DIRECTORY="sources"
 export TEST_DIRECTORY="tests"
 export TEST_COVERAGE_DIRECTORY="coverage"

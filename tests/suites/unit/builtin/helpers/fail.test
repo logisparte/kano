@@ -1,0 +1,23 @@
+#!/bin/sh
+
+Include "$SOURCE_DIRECTORY/builtin/helpers/fail"
+
+SOME_ERROR_MESSAGE="Some error message"
+
+Describe "fail"
+  Context "when no error message provided"
+    It "should just exit"
+      When run fail
+      The status should be failure
+      The error should equal ""
+    End
+  End
+
+  Context "when an error message is provided"
+    It "should output the error message before exiting"
+      When run fail "$SOME_ERROR_MESSAGE"
+      The status should be failure
+      The error should include "$SOME_ERROR_MESSAGE"
+    End
+  End
+End

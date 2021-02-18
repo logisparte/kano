@@ -1,0 +1,23 @@
+#!/bin/sh
+
+Include "$SOURCE_DIRECTORY/builtin/helpers/does_symbol_exist"
+
+SOME_SYMBOL="some_symbol"
+
+Describe "does_symbol_exist"
+  Context "when symbol does not exist"
+    It "should return false"
+      When run does_symbol_exist "$SOME_SYMBOL"
+      The status should be failure
+    End
+  End
+
+  Context "when symbol exists"
+    eval "$SOME_SYMBOL() { true; }"
+
+    It "should return true"
+      When run does_symbol_exist "$SOME_SYMBOL"
+      The status should be success
+    End
+  End
+End
