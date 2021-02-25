@@ -8,6 +8,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
     && apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0 \
     && apt-add-repository https://cli.github.com/packages \
     && apt-get install -y -q --no-install-recommends \
+    bash \
     binutils-dev \
     ca-certificates \
     cmake \

@@ -47,7 +47,10 @@ _test() {
   export KANO_GLOBAL_DIRECTORY="$TEST_DIRECTORY/data/some_home/.kano_global"
   export KANO_LOCAL_DIRECTORY="$TEST_DIRECTORY/data/some_project/.kano"
 
+  # bash shell is required because of
+  # [kcov limitation](https://github.com/SimonKagstrom/kcov/issues/137)
   shellspec \
+    --shell bash \
     --default-path "$SUITE_PATH" \
     --pattern "*.test" \
     --kcov \
