@@ -16,6 +16,6 @@ class Kano < Formula
 
   test do
     help_output = shell_output("kano help")
-    assert_match (/Show this help message/), help_output
+    assert_match(/Show this help message/, help_output)
   end
 end
