@@ -9,6 +9,7 @@ env:
   HELOT_GITHUB_USERNAME: ${{ secrets.HELOT_GITHUB_USERNAME }}
   HELOT_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
   HELOT_GIT_EMAIL: ${{ secrets.HELOT_GIT_EMAIL }}
+  HELOT_GIT_NAME: ${{ secrets.HELOT_GIT_NAME }}
   REPOSITORY: ${{ github.repository }}
   GITHUB_REF: ${{ github.ref }}
   REGISTRY_URL: ghcr.io
