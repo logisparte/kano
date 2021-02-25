@@ -5,8 +5,8 @@ on:
     branches: [master]
 
 env:
-  GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
-  GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+  HELOT_GITHUB_USERNAME: ${{ secrets.HELOT_GITHUB_USERNAME }}
+  HELOT_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
   BRANCH: ${{ github.head_ref }}
   REPOSITORY: ${{ github.repository }}
   REGISTRY_URL: ghcr.io
@@ -29,8 +29,8 @@ jobs:
 
       - name: Login to registry
         run: |
-          echo "$GIT_TOKEN" \
-            | docker login "$REGISTRY_URL" --username "$GIT_USERNAME" --password-stdin
+          echo "$HELOT_GITHUB_ACCESS_TOKEN" \
+            | docker login "$REGISTRY_URL" --username "$HELOT_GITHUB_USERNAME" --password-stdin
 
       - name: Pull existing development image, if any
         run: docker pull "$DEV_IMAGE" || true
@@ -47,8 +47,8 @@ jobs:
     container:
       image: ${{ needs.build_dev_image.outputs.dev_image }}
       credentials:
-        username: ${{ env.GIT_USERNAME }}
-        password: ${{ env.GIT_TOKEN }}
+        username: ${{ env.HELOT_GITHUB_USERNAME }}
+        password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
     steps:
       - uses: actions/checkout@v2
         name: Clone

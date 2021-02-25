@@ -6,9 +6,9 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+'
 
 env:
-  GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
-  GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
-  GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+  HELOT_GITHUB_USERNAME: ${{ secrets.HELOT_GITHUB_USERNAME }}
+  HELOT_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
+  HELOT_GIT_EMAIL: ${{ secrets.HELOT_GIT_EMAIL }}
   REPOSITORY: ${{ github.repository }}
   GITHUB_REF: ${{ github.ref }}
   REGISTRY_URL: ghcr.io
@@ -39,8 +39,8 @@ jobs:
 
       - name: Login to registry
         run: |
-          echo "$GIT_TOKEN" \
-            | docker login "$REGISTRY_URL" --username "$GIT_USERNAME" --password-stdin
+          echo "$HELOT_GITHUB_ACCESS_TOKEN" \
+            | docker login "$REGISTRY_URL" --username "$HELOT_GITHUB_USERNAME" --password-stdin
 
       - name: Pull existing development image, if any
         run: docker pull "$DEV_IMAGE" || true
@@ -59,8 +59,8 @@ jobs:
       env:
         VERSION: ${{ needs.build_dev_image.outputs.version }}
       credentials:
-        username: ${{ env.GIT_USERNAME }}
-        password: ${{ env.GIT_TOKEN }}
+        username: ${{ env.HELOT_GITHUB_USERNAME }}
+        password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
     steps:
       - uses: actions/checkout@v2
         name: Clone
