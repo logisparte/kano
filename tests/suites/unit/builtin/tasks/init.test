@@ -22,15 +22,22 @@ Describe "init"
     fi
   }
 
-  mkdir() {
-    if [ -n "$mkdir_called_with" ]; then
-      mkdir_called_with="$mkdir_called_with|$*"
+  report() {
+    # shellcheck disable=SC2034
+    report_called_with="$*"
+    %preserve report_called_with
+  }
 
-    else
-      mkdir_called_with="$*"
-    fi
+  _create_directory() {
+    # shellcheck disable=SC2034
+    create_directory_called_with="$*"
+    %preserve create_directory_called_with
+  }
 
-    %preserve mkdir_called_with
+  _create_task() {
+    # shellcheck disable=SC2034
+    create_task_called_with="$*"
+    %preserve create_task_called_with
   }
 
   DOES_LOCAL_DIRECTORY_EXIST=false
@@ -40,7 +47,7 @@ Describe "init"
     It "shows the task help message"
       When run init_help
       The status should be success
-      The output should equal "Initialize an empty local or global kano directory"
+      The output should equal "Initialize tasks and/or kano directories"
     End
   End
 
@@ -49,7 +56,8 @@ Describe "init"
       It "should fail with the expected error message"
         When run init some_invalid_scope
         The status should be failure
-        The variable fail_called_with should equal "Unknown scope 'some_invalid_scope'"
+        The variable fail_called_with should equal \
+          "Unknown scope 'some_invalid_scope'. Must be either 'local' or 'global'"
       End
     End
 
@@ -59,7 +67,8 @@ Describe "init"
         It "should fail with the expected error message"
           When run init
           The status should be failure
-          The variable fail_called_with should equal "Local kano directory already exists"
+          The variable fail_called_with should equal \
+            "A kano directory already exists in scope 'local'"
         End
       End
 
@@ -67,10 +76,12 @@ Describe "init"
         It "should create local kano directory"
           When run init
           The status should be success
-          The variable mkdir_called_with should include "$KANO_LOCAL_DIRECTORY"
-          The variable mkdir_called_with should include "$KANO_LOCAL_DIRECTORY/tasks"
+          The variable create_directory_called_with should equal "$KANO_LOCAL_DIRECTORY"
+          The variable report_called_with should equal \
+            "success Initialized directory at: $KANO_LOCAL_DIRECTORY"
         End
       End
+
     End
 
     Context "when local scope provided"
@@ -79,7 +90,8 @@ Describe "init"
         It "should fail with the expected error message"
           When run init local
           The status should be failure
-          The variable fail_called_with should equal "Local kano directory already exists"
+          The variable fail_called_with should equal \
+            "A kano directory already exists in scope 'local'"
         End
       End
 
@@ -87,8 +99,50 @@ Describe "init"
         It "should create local kano directory"
           When run init local
           The status should be success
-          The variable mkdir_called_with should include "$KANO_LOCAL_DIRECTORY"
-          The variable mkdir_called_with should include "$KANO_LOCAL_DIRECTORY/tasks"
+          The variable create_directory_called_with should equal "$KANO_LOCAL_DIRECTORY"
+          The variable report_called_with should equal \
+            "success Initialized directory at: $KANO_LOCAL_DIRECTORY"
+        End
+      End
+
+      Context "when task template provided"
+        Context "when no task name provided"
+          It "should fail with the expected error message"
+            When run init local task
+            The status should be failure
+            The variable fail_called_with should equal "No task name provided"
+          End
+        End
+
+        Context "when task name provided"
+          Context "when local kano directory already exists"
+            DOES_LOCAL_DIRECTORY_EXIST=true
+            It "should create local task"
+              When run init local task some_task
+              The status should be success
+              The variable create_task_called_with should equal \
+                "$KANO_LOCAL_DIRECTORY/tasks/some_task"
+              The variable report_called_with should equal \
+                "success Initialized task at: $KANO_LOCAL_DIRECTORY/tasks/some_task"
+            End
+          End
+
+          Context "when no local kano directory"
+            It "should create local kano directory"
+              When run init local task some_task
+              The status should be success
+              The variable create_directory_called_with should equal "$KANO_LOCAL_DIRECTORY"
+            End
+
+            It "should create local task"
+              When run init local task some_task
+              The status should be success
+              The variable create_task_called_with should equal \
+                "$KANO_LOCAL_DIRECTORY/tasks/some_task"
+              The variable report_called_with should equal \
+                "success Initialized task at: $KANO_LOCAL_DIRECTORY/tasks/some_task"
+            End
+          End
         End
       End
     End
@@ -99,7 +153,8 @@ Describe "init"
         It "should fail with the expected error message"
           When run init global
           The status should be failure
-          The variable fail_called_with should equal "Global kano directory already exists"
+          The variable fail_called_with should equal \
+            "A kano directory already exists in scope 'global'"
         End
       End
 
@@ -107,8 +162,81 @@ Describe "init"
         It "should create global kano directory"
           When run init global
           The status should be success
-          The variable mkdir_called_with should include "$KANO_GLOBAL_DIRECTORY"
-          The variable mkdir_called_with should include "$KANO_GLOBAL_DIRECTORY/tasks"
+          The variable create_directory_called_with should equal "$KANO_GLOBAL_DIRECTORY"
+          The variable report_called_with should equal \
+            "success Initialized directory at: $KANO_GLOBAL_DIRECTORY"
+        End
+      End
+
+      Context "when task template provided"
+        Context "when no task name provided"
+          It "should fail with the expected error message"
+            When run init global task
+            The status should be failure
+            The variable fail_called_with should equal "No task name provided"
+          End
+        End
+
+        Context "when task name provided"
+          Context "when global kano directory already exists"
+            DOES_GLOBAL_DIRECTORY_EXIST=true
+            It "should create global task"
+              When run init global task some_task
+              The status should be success
+              The variable create_task_called_with should equal \
+                "$KANO_GLOBAL_DIRECTORY/tasks/some_task"
+              The variable report_called_with should equal \
+                "success Initialized task at: $KANO_GLOBAL_DIRECTORY/tasks/some_task"
+            End
+          End
+
+          Context "when no global kano directory"
+            It "should create global kano directory"
+              When run init global task some_task
+              The status should be success
+              The variable create_directory_called_with should equal "$KANO_GLOBAL_DIRECTORY"
+            End
+
+            It "should create global task"
+              When run init global task some_task
+              The status should be success
+              The variable create_task_called_with should equal \
+                "$KANO_GLOBAL_DIRECTORY/tasks/some_task"
+              The variable report_called_with should equal \
+                "success Initialized task at: $KANO_GLOBAL_DIRECTORY/tasks/some_task"
+            End
+          End
+        End
+      End
+    End
+
+    Context "when task template provided as scope"
+      Context "when local kano directory already exists"
+        DOES_LOCAL_DIRECTORY_EXIST=true
+        It "should create local task"
+          When run init task some_task
+          The status should be success
+          The variable create_task_called_with should equal \
+            "$KANO_LOCAL_DIRECTORY/tasks/some_task"
+          The variable report_called_with should equal \
+            "success Initialized task at: $KANO_LOCAL_DIRECTORY/tasks/some_task"
+        End
+      End
+
+      Context "when no local kano directory"
+        It "should create local kano directory"
+          When run init task some_task
+          The status should be success
+          The variable create_directory_called_with should equal "$KANO_LOCAL_DIRECTORY"
+        End
+
+        It "should create local task"
+          When run init task some_task
+          The status should be success
+          The variable create_task_called_with should equal \
+            "$KANO_LOCAL_DIRECTORY/tasks/some_task"
+          The variable report_called_with should equal \
+            "success Initialized task at: $KANO_LOCAL_DIRECTORY/tasks/some_task"
         End
       End
     End

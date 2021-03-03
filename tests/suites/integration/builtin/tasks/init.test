@@ -1,0 +1,26 @@
+#!/bin/sh
+
+. "$KANO_HELPERS/does_symbol_exist"
+
+Include "$SOURCE_DIRECTORY/builtin/tasks/init"
+
+SOME_TASK="some_task"
+
+Describe "init"
+  after_all() {
+    rm -rf "$KANO_LOCAL_DIRECTORY"
+  }
+
+  AfterAll "after_all"
+
+  Context "local task"
+    It "should create local task file"
+      When run init local task "$SOME_TASK"
+      The status should be success
+      The output should include "$KANO_LOCAL_DIRECTORY/tasks/$SOME_TASK"
+      . "$KANO_LOCAL_DIRECTORY/tasks/$SOME_TASK"
+      Assert does_symbol_exist "$SOME_TASK"
+      Assert does_symbol_exist "${SOME_TASK}_help"
+    End
+  End
+End

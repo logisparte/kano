@@ -2,31 +2,122 @@
 
 . "$SOURCE_DIRECTORY/builtin/helpers/does_directory_exist"
 . "$SOURCE_DIRECTORY/builtin/helpers/fail"
+. "$SOURCE_DIRECTORY/builtin/helpers/report"
 
 init_help() {
-  echo "Initialize an empty local or global kano directory"
+  echo "Initialize tasks and/or kano directories"
 }
 
 init() {
   SCOPE="$1"
+  TEMPLATE="$2"
 
-  if [ -z "$SCOPE" ] || [ "$SCOPE" = "local" ]; then
-    if does_directory_exist "$KANO_LOCAL_DIRECTORY"; then
-      fail "Local kano directory already exists"
-    fi
+  case "$SCOPE" in
+    "")
+      SCOPE="local"
+      ;;
 
-    mkdir -p "$KANO_LOCAL_DIRECTORY"
-    mkdir -p "$KANO_LOCAL_DIRECTORY/tasks"
+    local | global)
+      shift
+      ;;
 
-  elif [ "$SCOPE" = "global" ]; then
-    if does_directory_exist "$KANO_GLOBAL_DIRECTORY"; then
-      fail "Global kano directory already exists"
-    fi
+    task)
+      _initialize_template local task "$2"
+      return $?
+      ;;
 
-    mkdir -p "$KANO_GLOBAL_DIRECTORY"
-    mkdir -p "$KANO_GLOBAL_DIRECTORY/tasks"
+    *)
+      fail "Unknown scope '$SCOPE'. Must be either 'local' or 'global'"
+      ;;
+  esac
+
+  case "$TEMPLATE" in
+    "")
+      TEMPLATE="directory"
+      ;;
+
+    directory | task)
+      shift
+      ;;
+
+    *)
+      fail "Unknown template '$TEMPLATE'. Must be either 'directory' or 'task'"
+      ;;
+  esac
+
+  _initialize_template "$SCOPE" "$TEMPLATE" "$@"
+}
+
+_initialize_template() {
+  SCOPE="$1"
+  TEMPLATE="$2"
+
+  if [ "$SCOPE" = "local" ]; then
+    SCOPE_DIRECTORY="$KANO_LOCAL_DIRECTORY"
 
   else
-    fail "Unknown scope '$SCOPE'"
+    SCOPE_DIRECTORY="$KANO_GLOBAL_DIRECTORY"
   fi
+
+  if [ "$TEMPLATE" = "directory" ]; then
+    _initialize_directory "$SCOPE" "$SCOPE_DIRECTORY"
+
+  elif [ "$TEMPLATE" = "task" ]; then
+    TASK="$3"
+    _initialize_task "$SCOPE" "$SCOPE_DIRECTORY" "$TASK"
+  fi
+}
+
+_initialize_directory() {
+  SCOPE="$1"
+  SCOPE_DIRECTORY="$2"
+
+  if does_directory_exist "$SCOPE_DIRECTORY"; then
+    fail "A kano directory already exists in scope '$SCOPE'"
+  fi
+
+  _create_directory "$SCOPE_DIRECTORY"
+  report success "Initialized directory at: $SCOPE_DIRECTORY"
+}
+
+_initialize_task() {
+  SCOPE="$1"
+  SCOPE_DIRECTORY="$2"
+  TASK="$3"
+
+  if [ -z "$TASK" ]; then
+    fail "No task name provided"
+  fi
+
+  if ! does_directory_exist "$SCOPE_DIRECTORY"; then
+    _create_directory "$SCOPE_DIRECTORY"
+  fi
+
+  TASK_PATH="$SCOPE_DIRECTORY/tasks/$TASK"
+  _create_task "$TASK_PATH"
+  report success "Initialized task at: $TASK_PATH"
+}
+
+_create_directory() {
+  DIRECTORY="$1"
+
+  mkdir -p "$DIRECTORY"
+  mkdir -p "$DIRECTORY/tasks"
+}
+
+_create_task() {
+  TASK_PATH="$1"
+
+  cat > "$TASK_PATH" << EOF
+#!/bin/sh
+
+${TASK}_help() {
+  echo "$TASK's help description"
+}
+
+$TASK() {
+  # Task code goes here
+  true
+}
+EOF
 }

@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh
 
 . "$KANO_HELPERS/colorize"
 . "$KANO_HELPERS/report"
@@ -44,5 +44,3 @@ _emphasis_info() {
 
   report message "$(colorize "[pre-commit]" cyan) $(colorize "$MESSAGE" bold_white)"
 }
-
-pre_commit "$@"

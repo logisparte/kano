@@ -14,8 +14,11 @@ setup() {
 _install_git_hooks() {
   report info "[setup] Installing git hooks"
   GIT_DIRECTORY="$(git rev-parse --git-dir)"
-  GIT_HOOK_DIRECTORY="$GIT_DIRECTORY/hooks"
-  cp "$KANO_LOCAL_DIRECTORY"/git_hooks/* "$GIT_HOOK_DIRECTORY"
+  cat > "$GIT_DIRECTORY/hooks/pre-commit" << EOF
+#!/bin/sh -e
+
+kano pre_commit
+EOF
 }
 
 _build_docker_image() {
