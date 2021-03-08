@@ -3,7 +3,7 @@
 . "$KANO_HELPERS/report"
 
 setup_help() {
-  echo "Install git hooks"
+  echo "Install git hooks and build docker image"
 }
 
 setup() {
@@ -22,17 +22,5 @@ EOF
 }
 
 _build_docker_image() {
-  docker build --tag "kano:dev" .
-}
-
-_build_docker_image() {
-  docker build --tag "kano:dev" .
-}
-
-_build_docker_image() {
-  docker build --tag "kano:dev" .
-}
-
-_build_docker_image() {
-  docker build --tag "kano:dev" .
+  docker build --tag "kano:local" --cache-from "kano:local" .
 }

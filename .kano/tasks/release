@@ -55,9 +55,6 @@ _make_release() {
 
 _login_to_github() {
   _info "Logging in to Github"
-  git config --global url."https://$HELOT_GITHUB_ACCESS_TOKEN:@github.com/".insteadOf "https://github.com/"
-  git config --global user.email "$HELOT_GIT_EMAIL"
-  git config --global user.name "$HELOT_GIT_NAME"
   echo "$HELOT_GITHUB_ACCESS_TOKEN" | gh auth login --with-token
 }
 
