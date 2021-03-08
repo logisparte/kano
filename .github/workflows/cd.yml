@@ -6,48 +6,43 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+'
 
 env:
-  HELOT_GITHUB_USERNAME: ${{ secrets.HELOT_GITHUB_USERNAME }}
+  REGISTRY_URL: ghcr.io
+  HELOT_GIT_NAME: helot
+  HELOT_GIT_EMAIL: logisparte-helot@users.noreply.github.com
+  HELOT_GITHUB_USERNAME: logisparte-helot
   HELOT_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
-  HELOT_GIT_EMAIL: ${{ secrets.HELOT_GIT_EMAIL }}
-  HELOT_GIT_NAME: ${{ secrets.HELOT_GIT_NAME }}
   REPOSITORY: ${{ github.repository }}
   GITHUB_REF: ${{ github.ref }}
-  REGISTRY_URL: ghcr.io
 
 jobs:
   build_dev_image:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.version.outputs.version }}
-      dev_image: ${{ steps.image_name.outputs.dev_image }}
+      version: ${{ steps.export_variables.outputs.version }}
+      dev_image: ${{ steps.export_variables.outputs.dev_image }}
     steps:
-      - uses: actions/checkout@v2
-        name: Clone
-
-      - name: Extract version
-        id: version
+      - name: Export variables
+        id: export_variables
         run: |
           VERSION="$(echo "$GITHUB_REF" | cut -d "/" -f 3)"
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "::set-output name=version::$VERSION"
-
-      - name: Compose development image name
-        id: image_name
-        run: |
           DEV_IMAGE="$REGISTRY_URL/$REPOSITORY-dev:$VERSION"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "DEV_IMAGE=$DEV_IMAGE" >> "$GITHUB_ENV"
+          echo "::set-output name=version::$VERSION"
           echo "::set-output name=dev_image::$DEV_IMAGE"
 
-      - name: Login to registry
-        run: |
-          echo "$HELOT_GITHUB_ACCESS_TOKEN" \
-            | docker login "$REGISTRY_URL" --username "$HELOT_GITHUB_USERNAME" --password-stdin
-
-      - name: Pull existing development image, if any
-        run: docker pull "$DEV_IMAGE" || true
+      - name: Clone
+        uses: actions/checkout@v2
 
       - name: Build development image
-        run: docker build --tag "$DEV_IMAGE" --cache-from "$DEV_IMAGE" .
+        run: docker build --tag "$DEV_IMAGE" .
+
+      - name: Login to registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY_URL }}
+          username: ${{ env.HELOT_GITHUB_USERNAME }}
+          password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
 
       - name: Push development image
         run: docker push "$DEV_IMAGE"
@@ -63,25 +58,18 @@ jobs:
         username: ${{ env.HELOT_GITHUB_USERNAME }}
         password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
     steps:
+      - name: Configure github
+        run: |
+          /root/configure_github \
+            "$HELOT_GIT_NAME" \
+            "$HELOT_GIT_EMAIL" \
+            "$HELOT_GITHUB_ACCESS_TOKEN"
+
       - uses: actions/checkout@v2
         name: Clone
 
       - name: Build
-        run: |
-          export KANO_SOURCE_DIRECTORY="sources"
-          export KANO_BUILTIN_DIRECTORY="$KANO_SOURCE_DIRECTORY/builtin"
-          export KANO_LOCAL_DIRECTORY="$PWD/.kano"
-          export KANO_HELPERS="$KANO_BUILTIN_DIRECTORY/helpers"
-          . .kano/environment
-          . .kano/tasks/build
-          build
+        run: kano build
 
       - name: Release
-        run: |
-          export KANO_SOURCE_DIRECTORY="sources"
-          export KANO_BUILTIN_DIRECTORY="$KANO_SOURCE_DIRECTORY/builtin"
-          export KANO_LOCAL_DIRECTORY="$PWD/.kano"
-          export KANO_HELPERS="$KANO_BUILTIN_DIRECTORY/helpers"
-          . .kano/environment
-          . .kano/tasks/release
-          release "$VERSION"
+        run: kano release "$VERSION"

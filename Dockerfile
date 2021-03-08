@@ -1,20 +1,11 @@
-FROM ubuntu:20.04
+FROM ghcr.io/logisparte/helot:1.0.0
 
 RUN DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt-get install -y -q --no-install-recommends \
-    gnupg \
-    software-properties-common \
-    && apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0 \
-    && apt-add-repository https://cli.github.com/packages \
-    && apt-get install -y -q --no-install-recommends \
-    bash \
     binutils-dev \
-    ca-certificates \
     cmake \
-    curl \
     gcc \
-    gh \
     g++ \
     libcurl4-openssl-dev \
     libdw-dev \

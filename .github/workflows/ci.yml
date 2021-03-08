@@ -5,40 +5,46 @@ on:
     branches: [master]
 
 env:
-  HELOT_GITHUB_USERNAME: ${{ secrets.HELOT_GITHUB_USERNAME }}
-  HELOT_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
-  BRANCH: ${{ github.head_ref }}
-  REPOSITORY: ${{ github.repository }}
   REGISTRY_URL: ghcr.io
+  HELOT_GITHUB_USERNAME: logisparte-helot
+  HELOT_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
+  REPOSITORY: ${{ github.repository }}
+  BRANCH: ${{ github.head_ref }}
 
 jobs:
   build_dev_image:
     runs-on: ubuntu-latest
     outputs:
-      dev_image: ${{ steps.image_name.outputs.dev_image }}
+      dev_image: ${{ steps.export_variables.outputs.dev_image }}
     steps:
-      - uses: actions/checkout@v2
-        name: Clone
-
-      - name: Compose development image name
-        id: image_name
+      - name: Export variables
+        id: export_variables
         run: |
           DEV_IMAGE="$REGISTRY_URL/$REPOSITORY-dev:$BRANCH"
           echo "DEV_IMAGE=$DEV_IMAGE" >> "$GITHUB_ENV"
           echo "::set-output name=dev_image::$DEV_IMAGE"
 
-      - name: Login to registry
-        run: |
-          echo "$HELOT_GITHUB_ACCESS_TOKEN" \
-            | docker login "$REGISTRY_URL" --username "$HELOT_GITHUB_USERNAME" --password-stdin
+      - name: Clone
+        uses: actions/checkout@v2
 
-      - name: Pull existing development image, if any
+      - name: Login to registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY_URL }}
+          username: ${{ env.HELOT_GITHUB_USERNAME }}
+          password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
+
+      - name: Pull existing branch image, if any
         run: docker pull "$DEV_IMAGE" || true
 
-      - name: Build development image
-        run: docker build --tag "$DEV_IMAGE" --cache-from "$DEV_IMAGE" .
+      - name: Build branch image
+        run: |
+          docker build \
+            --tag "$DEV_IMAGE" \
+            --cache-from "$DEV_IMAGE" \
+            .
 
-      - name: Push development image
+      - name: Push branch image
         run: docker push "$DEV_IMAGE"
 
   run_ci:
@@ -54,21 +60,7 @@ jobs:
         name: Clone
 
       - name: Lint
-        run: |
-          export KANO_SOURCE_DIRECTORY="sources"
-          export KANO_BUILTIN_DIRECTORY="$KANO_SOURCE_DIRECTORY/builtin"
-          export KANO_LOCAL_DIRECTORY="$PWD/.kano"
-          export KANO_HELPERS="$KANO_BUILTIN_DIRECTORY/helpers"
-          . .kano/environment
-          . .kano/tasks/lint
-          lint
+        run: kano lint
 
       - name: Test
-        run: |
-          export KANO_SOURCE_DIRECTORY="sources"
-          export KANO_BUILTIN_DIRECTORY="$KANO_SOURCE_DIRECTORY/builtin"
-          export KANO_LOCAL_DIRECTORY="$PWD/.kano"
-          export KANO_HELPERS="$KANO_BUILTIN_DIRECTORY/helpers"
-          . .kano/environment
-          . .kano/tasks/test
-          test
+        run: kano test
