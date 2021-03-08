@@ -60,7 +60,7 @@ jobs:
     steps:
       - name: Configure github
         run: |
-          /root/configure_github \
+          kano configure_github \
             "$HELOT_GIT_NAME" \
             "$HELOT_GIT_EMAIL" \
             "$HELOT_GITHUB_ACCESS_TOKEN"
