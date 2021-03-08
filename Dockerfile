@@ -1,4 +1,4 @@
-FROM ghcr.io/logisparte/helot:1.0.0
+FROM ghcr.io/logisparte/helot:1.1.0
 
 RUN DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
