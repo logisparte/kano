@@ -39,22 +39,34 @@ extension
 
 ## Niveaux
 
-Kano cherche des tâches dans 3 différents niveaux, chacun représenté par un dossier spécifique :
+Kano cherche des tâches dans jusqu'à 4 différents niveaux, chacun représenté par un répertoire
+spécifique :
 
-- Niveau local => `.kano` (spécifique au projet)
-- Niveau global => `~/.kano_global` (spécifique à l'utilisateur)
-- Niveau _builtin_ => Inclus dans l'installation de kano (spécifique à kano)
+|   Niveau    |     Répertoire      |       Disponibilité des tâches       |   Cherché   |
+| :---------: | :-----------------: | :----------------------------------: | :---------: |
+|   Projet    |    `$PWD/.kano`     |       Dans le projet seulement       | S'il existe |
+| Utilisateur |  `$HOME/.kano_user` | Toujours pour l'utilisateur connecté | S'il existe |
+|   Système   |     `/etc/kano`     |               Toujours               | S'il existe |
+|  _Builtin_  |  Inclus dans kano   |               Toujours               |  Toujours   |
 
-Quand l'exécution d'une tâche est demandée, kano cherche son fichier tout d'abord en local, puis
-en global et finalement en _builtin_ jusqu'à ce qu'il le trouve. Si une tâche est définie dans 2
-niveaux différents, le fichier dans le premier niveau examiné sera utilisé. Pour outrepasser
-cette résolution, un _flag_ peut être fourni
+Quand l'exécution d'une tâche est demandée, kano cherche son fichier tout d'abord en projet
+(s'il existe), puis en utilisateur (s'il existe), puis en système (s'il existe) et finalement en
+_builtin_ jusqu'à ce qu'il le trouve. Si une tâche est définie dans 2 niveaux différents, le
+fichier dans le premier niveau examiné sera utilisé. Pour outrepasser cette résolution, un
+_flag_ peut être fourni
 
-Pour forcer une résolution globale :
+Pour forcer une résolution utilisateur :
 
 ```shell
-kano -g une_tache
-kano --global une_tache
+kano -u une_tache
+kano --user une_tache
+```
+
+Pour forcer une résolution système :
+
+```shell
+kano -s une_tache
+kano --system une_tache
 ```
 
 Pour forcer une résolution _builtin_ :
@@ -64,20 +76,21 @@ kano -b une_tache
 kano --builtin une_tache
 ```
 
-> Les tâches locales ont priorité par défaut
+> Les tâches projet ont priorité par défaut
 
 ## Environnement
 
 Quand kano exécute une tâche, il source son fichier d'environnement correspondant, s'il existe.
 Il peut y avoir un fichier d'environnement par niveau :
 
-- Niveau local => `.kano/environment`
-- Niveau global => `~/.kano_global/environment`
+- Niveau projet => `$PWD.kano/environment`
+- Niveau user => `$HOME/.kano_user/environment`
+- Niveau système => `/etc/kano/environment`
 
 Exporter toutes les variables d'environnement requises par les tâches du niveau dans ce fichier
 
-> À l'exécution d'une tâche locale, le fichier d'environnement global ne sera pas sourcé et vice
-> versa
+> À l'exécution d'une tâche projet, le fichier d'environnement utilisateur ne sera pas sourcé et
+> vice versa
 
 ## Tâches _builtin_
 

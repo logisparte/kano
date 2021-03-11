@@ -16,18 +16,23 @@ help() {
 }
 
 _get_output() {
-  LOCAL_TASK_DIRECTORY="$KANO_LOCAL_DIRECTORY/tasks"
-  if does_directory_exist "$LOCAL_TASK_DIRECTORY"; then
-    _get_output_for_scope "Local tasks" "green" "$LOCAL_TASK_DIRECTORY"
+  PROJECT_TASK_DIRECTORY="$KANO_PROJECT_DIRECTORY/tasks"
+  if does_directory_exist "$PROJECT_TASK_DIRECTORY"; then
+    _get_output_for_scope "Project tasks" "green" "$PROJECT_TASK_DIRECTORY"
   fi
 
-  GLOBAL_TASK_DIRECTORY="$KANO_GLOBAL_DIRECTORY/tasks"
-  if does_directory_exist "$GLOBAL_TASK_DIRECTORY"; then
-    _get_output_for_scope "Global tasks" "cyan" "$GLOBAL_TASK_DIRECTORY"
+  USER_TASK_DIRECTORY="$KANO_USER_DIRECTORY/tasks"
+  if does_directory_exist "$USER_TASK_DIRECTORY"; then
+    _get_output_for_scope "User tasks" "purple" "$USER_TASK_DIRECTORY"
+  fi
+
+  SYSTEM_TASK_DIRECTORY="$KANO_SYSTEM_DIRECTORY/tasks"
+  if does_directory_exist "$SYSTEM_TASK_DIRECTORY"; then
+    _get_output_for_scope "System tasks" "blue" "$SYSTEM_TASK_DIRECTORY"
   fi
 
   BUILTIN_TASK_DIRECTORY="$KANO_BUILTIN_DIRECTORY/tasks"
-  _get_output_for_scope "Builtin tasks" "yellow" "$BUILTIN_TASK_DIRECTORY"
+  _get_output_for_scope "Builtin tasks" "cyan" "$BUILTIN_TASK_DIRECTORY"
 }
 
 _get_output_for_scope() {

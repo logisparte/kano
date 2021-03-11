@@ -2,10 +2,12 @@
 
 Include "$SOURCE_DIRECTORY/builtin/tasks/help"
 
-SOME_LOCAL_TASK="some_local_task"
-SOME_LOCAL_TASK_HELP_MESSAGE="some_local_task_help_message"
-SOME_GLOBAL_TASK="some_global_task"
-SOME_GLOBAL_TASK_HELP_MESSAGE="some_global_task_help_message"
+SOME_PROJECT_TASK="some_project_task"
+SOME_PROJECT_TASK_HELP_MESSAGE="some_project_task_help_message"
+SOME_USER_TASK="some_user_task"
+SOME_USER_TASK_HELP_MESSAGE="some_user_task_help_message"
+SOME_SYSTEM_TASK="some_system_task"
+SOME_SYSTEM_TASK_HELP_MESSAGE="some_system_task_help_message"
 SOME_BUILTIN_TASK="some_builtin_task"
 SOME_BUILTIN_TASK_HELP_MESSAGE="some_builtin_task_help_message"
 
@@ -22,11 +24,14 @@ Describe "help"
   }
 
   does_directory_exist() {
-    if [ "$1" = "$KANO_LOCAL_DIRECTORY/tasks" ]; then
-      "$DOES_LOCAL_TASK_DIRECTORY_EXIST"
+    if [ "$1" = "$KANO_PROJECT_DIRECTORY/tasks" ]; then
+      "$DOES_PROJECT_TASK_DIRECTORY_EXIST"
 
-    elif [ "$1" = "$KANO_GLOBAL_DIRECTORY/tasks" ]; then
-      "$DOES_GLOBAL_TASK_DIRECTORY_EXIST"
+    elif [ "$1" = "$KANO_USER_DIRECTORY/tasks" ]; then
+      "$DOES_USER_TASK_DIRECTORY_EXIST"
+
+    elif [ "$1" = "$KANO_SYSTEM_DIRECTORY/tasks" ]; then
+      "$DOES_SYSTEM_TASK_DIRECTORY_EXIST"
 
     else
       false
@@ -34,11 +39,14 @@ Describe "help"
   }
 
   list_files_in_directory() {
-    if [ "$1" = "$KANO_LOCAL_DIRECTORY/tasks" ]; then
-      echo "$SOME_LOCAL_TASK"
+    if [ "$1" = "$KANO_PROJECT_DIRECTORY/tasks" ]; then
+      echo "$SOME_PROJECT_TASK"
 
-    elif [ "$1" = "$KANO_GLOBAL_DIRECTORY/tasks" ]; then
-      echo "$SOME_GLOBAL_TASK"
+    elif [ "$1" = "$KANO_USER_DIRECTORY/tasks" ]; then
+      echo "$SOME_USER_TASK"
+
+    elif [ "$1" = "$KANO_SYSTEM_DIRECTORY/tasks" ]; then
+      echo "$SOME_SYSTEM_TASK"
 
     elif [ "$1" = "$KANO_BUILTIN_DIRECTORY/tasks" ]; then
       echo "$SOME_BUILTIN_TASK"
@@ -60,8 +68,9 @@ Describe "help"
     echo \"$SOME_BUILTIN_TASK_HELP_MESSAGE\"
   }"
 
-  DOES_LOCAL_TASK_DIRECTORY_EXIST=false
-  DOES_GLOBAL_TASK_DIRECTORY_EXIST=false
+  DOES_PROJECT_TASK_DIRECTORY_EXIST=false
+  DOES_USER_TASK_DIRECTORY_EXIST=false
+  DOES_SYSTEM_TASK_DIRECTORY_EXIST=false
 
   Describe "help"
     It "shows the task help message"
@@ -72,106 +81,128 @@ Describe "help"
   End
 
   Describe "task"
-    Context "when no local task directory"
-      Context "when no global task directory"
-        It "should only list builtin tasks section"
-          When run help
-          The status should be success
-          The variable report_called_with should not include "Local tasks"
-          The variable report_called_with should not include "Global tasks"
-          The variable report_called_with should include "Builtin tasks"
-        End
+    Context "when no tasks are defined in any scope"
+      It "should only list builtin tasks section"
+        When run help
+        The status should be success
+        The variable report_called_with should not include "Project tasks"
+        The variable report_called_with should not include "User tasks"
+        The variable report_called_with should not include "System tasks"
+        The variable report_called_with should include "Builtin tasks"
+      End
 
-        It "should show builtin tasks help messages"
+      It "should show builtin tasks help messages"
+        When run help
+        The status should be success
+        The variable report_called_with should include "$SOME_BUILTIN_TASK"
+        The variable report_called_with should include "$SOME_BUILTIN_TASK_HELP_MESSAGE"
+      End
+    End
+
+    Context "when tasks are defined in project scope"
+      DOES_PROJECT_TASK_DIRECTORY_EXIST=true
+      It "should list project tasks section"
+        When run help
+        The status should be success
+        The variable report_called_with should include "Project tasks"
+      End
+
+      Context "when project task has no help message"
+        It "should display '-' as help message instead"
           When run help
           The status should be success
-          The variable report_called_with should include "Builtin tasks"
-          The variable report_called_with should include "$SOME_BUILTIN_TASK"
-          The variable report_called_with should include "$SOME_BUILTIN_TASK_HELP_MESSAGE"
+          The variable report_called_with should include "$SOME_PROJECT_TASK"
+          The variable report_called_with should include "-"
         End
       End
 
-      Context "when global task directory exist"
-        DOES_GLOBAL_TASK_DIRECTORY_EXIST=true
-        It "should list global and builtin tasks sections"
+      Context "when system task has a help message"
+        eval "${SOME_PROJECT_TASK}_help() {
+          echo \"$SOME_PROJECT_TASK_HELP_MESSAGE\"
+        }"
+
+        It "should display the help message"
           When run help
           The status should be success
-          The variable report_called_with should not include "Local tasks"
-          The variable report_called_with should include "Global tasks"
-          The variable report_called_with should include "Builtin tasks"
-        End
-
-        Context "when global task has no help message"
-          It "should display '-' as help message instead"
-            When run help
-            The status should be success
-            The variable report_called_with should include "Global tasks"
-            The variable report_called_with should include "$SOME_GLOBAL_TASK"
-            The variable report_called_with should include "-"
-          End
-        End
-
-        Context "when global task has a help message"
-          eval "${SOME_GLOBAL_TASK}_help() {
-            echo \"$SOME_GLOBAL_TASK_HELP_MESSAGE\"
-          }"
-
-          It "should display the help message"
-            When run help
-            The status should be success
-            The variable report_called_with should include "Global tasks"
-            The variable report_called_with should include "$SOME_GLOBAL_TASK"
-            The variable report_called_with should include "$SOME_GLOBAL_TASK_HELP_MESSAGE"
-          End
+          The variable report_called_with should include "$SOME_PROJECT_TASK"
+          The variable report_called_with should include "$SOME_PROJECT_TASK_HELP_MESSAGE"
         End
       End
     End
 
-    Context "when local task directory exists"
-      DOES_LOCAL_TASK_DIRECTORY_EXIST=true
-      Context "when no global task directory"
-        It "should list local and builtin tasks sections"
+    Context "when tasks are defined in user scope"
+      DOES_USER_TASK_DIRECTORY_EXIST=true
+      It "should list user tasks section"
+        When run help
+        The status should be success
+        The variable report_called_with should include "User tasks"
+      End
+
+      Context "when user task has no help message"
+        It "should display '-' as help message instead"
           When run help
           The status should be success
-          The variable report_called_with should include "Local tasks"
-          The variable report_called_with should not include "Global tasks"
-          The variable report_called_with should include "Builtin tasks"
-        End
-
-        Context "when local task has no help message"
-          It "should display '-' as help message instead"
-            When run help
-            The status should be success
-            The variable report_called_with should include "Local tasks"
-            The variable report_called_with should include "$SOME_LOCAL_TASK"
-            The variable report_called_with should include "-"
-          End
-        End
-
-        Context "when local task has a help message"
-          eval "${SOME_LOCAL_TASK}_help() {
-            echo \"$SOME_LOCAL_TASK_HELP_MESSAGE\"
-          }"
-
-          It "should display the help message"
-            When run help
-            The status should be success
-            The variable report_called_with should include "Local tasks"
-            The variable report_called_with should include "$SOME_LOCAL_TASK"
-            The variable report_called_with should include "$SOME_LOCAL_TASK_HELP_MESSAGE"
-          End
+          The variable report_called_with should include "$SOME_USER_TASK"
+          The variable report_called_with should include "-"
         End
       End
 
-      Context "when global task directory exist"
-        DOES_GLOBAL_TASK_DIRECTORY_EXIST=true
-        It "should list local, global and builtin tasks sections"
+      Context "when user task has a help message"
+        eval "${SOME_USER_TASK}_help() {
+          echo \"$SOME_USER_TASK_HELP_MESSAGE\"
+        }"
+
+        It "should display the help message"
           When run help
           The status should be success
-          The variable report_called_with should include "Local tasks"
-          The variable report_called_with should include "Global tasks"
-          The variable report_called_with should include "Builtin tasks"
+          The variable report_called_with should include "$SOME_USER_TASK"
+          The variable report_called_with should include "$SOME_USER_TASK_HELP_MESSAGE"
         End
+      End
+    End
+
+    Context "when tasks are defined in system scope"
+      DOES_SYSTEM_TASK_DIRECTORY_EXIST=true
+      It "should list sytem tasks section"
+        When run help
+        The status should be success
+        The variable report_called_with should include "System tasks"
+      End
+
+      Context "when system task has no help message"
+        It "should display '-' as help message instead"
+          When run help
+          The status should be success
+          The variable report_called_with should include "$SOME_SYSTEM_TASK"
+          The variable report_called_with should include "-"
+        End
+      End
+
+      Context "when system task has a help message"
+        eval "${SOME_SYSTEM_TASK}_help() {
+          echo \"$SOME_SYSTEM_TASK_HELP_MESSAGE\"
+        }"
+
+        It "should display the help message"
+          When run help
+          The status should be success
+          The variable report_called_with should include "$SOME_SYSTEM_TASK"
+          The variable report_called_with should include "$SOME_SYSTEM_TASK_HELP_MESSAGE"
+        End
+      End
+    End
+
+    Context "when tasks are defined in all scopes"
+      DOES_PROJECT_TASK_DIRECTORY_EXIST=true
+      DOES_USER_TASK_DIRECTORY_EXIST=true
+      DOES_SYSTEM_TASK_DIRECTORY_EXIST=true
+      It "should list all tasks section"
+        When run help
+        The status should be success
+        The variable report_called_with should include "Project tasks"
+        The variable report_called_with should include "User tasks"
+        The variable report_called_with should include "System tasks"
+        The variable report_called_with should include "Builtin tasks"
       End
     End
   End

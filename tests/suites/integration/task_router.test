@@ -6,8 +6,8 @@ SOME_TASK="some_task"
 SOME_PARAMETER="some_parameter"
 SOME_HOME_DIRECTORY="$TEST_DIRECTORY/data/some_home"
 SOME_PROJECT_DIRECTORY="$TEST_DIRECTORY/data/some_project"
-export KANO_GLOBAL_DIRECTORY="$SOME_HOME_DIRECTORY/.kano_global"
-export KANO_LOCAL_DIRECTORY="$SOME_PROJECT_DIRECTORY/.kano"
+export KANO_USER_DIRECTORY="$SOME_HOME_DIRECTORY/.kano_user"
+export KANO_PROJECT_DIRECTORY="$SOME_PROJECT_DIRECTORY/.kano"
 
 
 Describe "task_router"
@@ -25,10 +25,10 @@ Describe "task_router"
   AfterAll "after_all"
 
   Describe "route_task"
-    Context "when task is local"
-      TASK_FILE="$KANO_LOCAL_DIRECTORY/tasks/$SOME_TASK"
+    Context "when task is project"
+      TASK_FILE="$KANO_PROJECT_DIRECTORY/tasks/$SOME_TASK"
       before() {
-        mkdir -p "$KANO_LOCAL_DIRECTORY/tasks"
+        mkdir -p "$KANO_PROJECT_DIRECTORY/tasks"
         echo "
           #!/bin/sh
 
@@ -41,7 +41,7 @@ Describe "task_router"
       }
 
       after() {
-        rm -rf "$KANO_LOCAL_DIRECTORY"
+        rm -rf "$KANO_PROJECT_DIRECTORY"
       }
 
       Before "before"
@@ -54,10 +54,10 @@ Describe "task_router"
       End
     End
 
-    Context "when task is global"
-      TASK_FILE="$KANO_GLOBAL_DIRECTORY/tasks/$SOME_TASK"
+    Context "when task is user"
+      TASK_FILE="$KANO_USER_DIRECTORY/tasks/$SOME_TASK"
       before() {
-        mkdir -p "$KANO_GLOBAL_DIRECTORY/tasks"
+        mkdir -p "$KANO_USER_DIRECTORY/tasks"
         echo "
           #!/bin/sh
 
@@ -70,7 +70,7 @@ Describe "task_router"
       }
 
       after() {
-        rm -rf "$KANO_GLOBAL_DIRECTORY"
+        rm -rf "$KANO_USER_DIRECTORY"
       }
 
       Before "before"

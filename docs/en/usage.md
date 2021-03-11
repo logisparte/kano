@@ -4,7 +4,7 @@
 
 ## Initialization
 
-Initialize the `.kano` directory in a project's root:
+Initialize the `.kano` directory in a project root:
 
 ```shell
 kano init
@@ -36,23 +36,36 @@ some_task_name() {
 
 Its name must exactly match its function name (here `some_task_name`) and have no extension
 
+> You can use `kano init task TASK_NAME` to quickly create an empty task template
+
 ## Scopes
 
-Kano looks up for tasks in 3 different scopes, each represented by a specific directory:
+Kano looks up for tasks in up to 4 different scopes, each represented by a specific directory:
 
-- Local scope => `.kano` (project-specific)
-- Global scope => `~/.kano_global` (user-specific)
-- Builtin scope => Included in the kano installation (kano-specific)
+|  Scope  |      Directory      |   Tasks availability   | Looked up |
+| :-----: | :-----------------: | :--------------------: | :-------: |
+| Project |    `$PWD/.kano`     |    In project only     | If exists |
+|  User   |  `$HOME/.kano_user` | Always for logged user | If exists |
+| System  |     `/etc/kano`     |         Always         | If exists |
+| Builtin |  Included in kano   |         Always         |  Always   |
 
-When a task execution is requested, kano will look for its file first in local, then in global
-and finally in the builtin scope until found. If a task is defined in 2 scopes, the file in the
-first scope encountered will be used. To override this resolution, a flag may be provided
+When a task execution is requested, kano will look for its file first in project (if it exists),
+then in user (if it exists), then in system (if it exists) and finally in the builtin scope
+until found. If a task is defined in 2 scopes, the file in the first scope encountered will be
+used. To override this resolution, a flag may be provided
 
-To force a global resolution:
+To force a user resolution:
 
 ```shell
-kano -g some_task
-kano --global some_task
+kano -u some_task
+kano --user some_task
+```
+
+To force a system resolution:
+
+```shell
+kano -s some_task
+kano --system some_task
 ```
 
 To force a builtin resolution:
@@ -62,19 +75,20 @@ kano -b some_task
 kano --builtin some_task
 ```
 
-> Local tasks have priority by default
+> Project tasks have priority by default
 
 ## Environment
 
 Whenever kano runs a task, it will source its corresponding environment file, if it exists.
 There may be one environment file for each scope:
 
-- Local scope => `.kano/environment`
-- Global scope => `~/.kano_global/environment`
+- Project scope => `.kano/environment`
+- User scope => `~/.kano_user/environment`
+- System scope => `/etc/kano/environment`
 
 Export any environment variable required by the scope's tasks in it
 
-> When running a local task, the global environment file will not be sourced and vice versa
+> When running a project task, the user environment file will not be sourced and vice versa
 
 ## Builtin tasks
 

@@ -4,8 +4,9 @@ kano() {
   KANO_SOURCE_DIRECTORY="$(_find_kano_installation_directory)"
   export KANO_SOURCE_DIRECTORY
   export KANO_BUILTIN_DIRECTORY="$KANO_SOURCE_DIRECTORY/builtin"
-  export KANO_GLOBAL_DIRECTORY="$HOME/.kano_global"
-  export KANO_LOCAL_DIRECTORY="$PWD/.kano"
+  export KANO_SYSTEM_DIRECTORY="/etc/kano"
+  export KANO_USER_DIRECTORY="$HOME/.kano_user"
+  export KANO_PROJECT_DIRECTORY="$PWD/.kano"
 
   export KANO_HELPERS="$KANO_BUILTIN_DIRECTORY/helpers"
 

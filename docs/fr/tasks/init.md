@@ -11,7 +11,7 @@ Utiliser la tâche `init` pour créer des tâches et des répertoires kano
 ```text
 kano init NIVEAU GABARIT [DETAILS_GABARIT]
 
-NIVEAU: local | global
+NIVEAU: project | user | system
 GABARIT: directory | task
 DETAILS_GABARIT: nom de tâche (task)
 ```
@@ -20,30 +20,30 @@ DETAILS_GABARIT: nom de tâche (task)
 
 ## Exemples
 
-Pour créer un répertoire local `.kano` vide, utiliser une commandes suivantes :
+Pour créer un répertoire projet `.kano` vide, utiliser une commandes suivantes :
 
 ```shell
-kano init local directory
-kano init local
+kano init project directory
+kano init project
 kano init
 ```
 
-Pour créer un répertoire global `~/.kano_global` vide, utiliser une commandes suivantes :
+Pour créer un répertoire user `~/.kano_user` vide, utiliser une commandes suivantes :
 
 ```shell
-kano init global directory
-kano init global
+kano init user directory
+kano init user
 ```
 
-Pour créer une tâche locale nommée `entrainer`, utiliser une commandes suivantes :
+Pour créer une tâche projet nommée `entrainer`, utiliser une commandes suivantes :
 
 ```shell
-kano init local task entrainer
+kano init project task entrainer
 kano init task entrainer
 ```
 
-Pour créer une tâche globale nommée `entrainer` :
+Pour créer une tâche utilisateur nommée `entrainer` :
 
 ```shell
-kano init global task entrainer
+kano init user task entrainer
 ```

@@ -1,5 +1,6 @@
 #!/bin/sh
 
+. "$SOURCE_DIRECTORY/builtin/helpers/am_i_root"
 . "$SOURCE_DIRECTORY/builtin/helpers/does_directory_exist"
 . "$SOURCE_DIRECTORY/builtin/helpers/fail"
 . "$SOURCE_DIRECTORY/builtin/helpers/report"
@@ -14,20 +15,30 @@ init() {
 
   case "$SCOPE" in
     "")
-      SCOPE="local"
+      SCOPE="project"
       ;;
 
-    local | global)
+    project | user)
       shift
       ;;
 
+    system)
+      if ! am_i_root; then
+        fail "System tasks or directories can only be initialized by root user." \
+          "Re-run with sudo"
+
+      else
+        shift
+      fi
+      ;;
+
     task)
-      _initialize_template local task "$2"
+      _initialize_template project task "$2"
       return $?
       ;;
 
     *)
-      fail "Unknown scope '$SCOPE'. Must be either 'local' or 'global'"
+      fail "Unknown scope '$SCOPE'. Must be either 'project', 'user' or 'system'"
       ;;
   esac
 
@@ -52,11 +63,17 @@ _initialize_template() {
   SCOPE="$1"
   TEMPLATE="$2"
 
-  if [ "$SCOPE" = "local" ]; then
-    SCOPE_DIRECTORY="$KANO_LOCAL_DIRECTORY"
+  if [ "$SCOPE" = "project" ]; then
+    SCOPE_DIRECTORY="$KANO_PROJECT_DIRECTORY"
+
+  elif [ "$SCOPE" = "user" ]; then
+    SCOPE_DIRECTORY="$KANO_USER_DIRECTORY"
+
+  elif [ "$SCOPE" = "system" ]; then
+    SCOPE_DIRECTORY="$KANO_SYSTEM_DIRECTORY"
 
   else
-    SCOPE_DIRECTORY="$KANO_GLOBAL_DIRECTORY"
+    fail
   fi
 
   if [ "$TEMPLATE" = "directory" ]; then
