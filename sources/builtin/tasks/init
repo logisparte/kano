@@ -24,8 +24,7 @@ init() {
 
     system)
       if ! am_i_root; then
-        fail "System tasks or directories can only be initialized by root user." \
-          "Re-run with sudo"
+        fail "System tasks or directories can only be initialized by root user. Re-run with sudo"
 
       else
         shift
