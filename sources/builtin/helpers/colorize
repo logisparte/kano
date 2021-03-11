@@ -4,11 +4,14 @@ colorize() {
   TEXT="$1"
   COLOR="$2"
 
-  WHITE_CODE="15"
-  CYAN_CODE="14"
-  GREEN_CODE="10"
+  BLACK_CODE="0"
   RED_CODE="9"
+  GREEN_CODE="10"
   YELLOW_CODE="11"
+  BLUE_CODE="12"
+  PURPLE_CODE="5"
+  CYAN_CODE="14"
+  WHITE_CODE="15"
 
   if [ -z "$TEXT" ]; then
     return
@@ -26,20 +29,32 @@ colorize() {
       COLOR_CODE="$WHITE_CODE"
       ;;
 
-    "cyan")
-      COLOR_CODE="$CYAN_CODE"
-      ;;
-
-    "green")
-      COLOR_CODE="$GREEN_CODE"
+    "black")
+      COLOR_CODE="$BLACK_CODE"
       ;;
 
     "red")
       COLOR_CODE="$RED_CODE"
       ;;
 
+    "green")
+      COLOR_CODE="$GREEN_CODE"
+      ;;
+
     "yellow")
       COLOR_CODE="$YELLOW_CODE"
+      ;;
+
+    "blue")
+      COLOR_CODE="$BLUE_CODE"
+      ;;
+
+    "purple")
+      COLOR_CODE="$PURPLE_CODE"
+      ;;
+
+    "cyan")
+      COLOR_CODE="$CYAN_CODE"
       ;;
 
     [0-9] | [1-9][0-9] | 1[0-9][0-9] | [2][0-5][0-5])

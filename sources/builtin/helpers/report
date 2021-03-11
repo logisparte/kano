@@ -5,32 +5,37 @@
 report() {
   message() {
     MESSAGE="$1"
+    COLOR="$2"
 
-    printf "%s\n" "$MESSAGE"
+    if [ -n "$COLOR" ]; then
+      printf "%s\n" "$(colorize "$MESSAGE" "$COLOR")"
+    else
+      printf "%s\n" "$MESSAGE"
+    fi
   }
 
   success() {
     MESSAGE="$1"
 
-    message "$(colorize "$MESSAGE" green)"
+    message "$MESSAGE" green
   }
 
   info() {
     MESSAGE="$1"
 
-    message "$(colorize "$MESSAGE" cyan)"
+    message "$MESSAGE" cyan
   }
 
   warning() {
     MESSAGE="$1"
 
-    message "$(colorize "$MESSAGE" yellow)"
+    message "$MESSAGE" yellow
   }
 
   error() {
     MESSAGE="$1"
 
-    message "$(colorize "$MESSAGE" red)" >&2
+    message "$MESSAGE" red >&2
   }
 
   "$@"
