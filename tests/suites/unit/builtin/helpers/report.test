@@ -3,6 +3,7 @@
 Include "$SOURCE_DIRECTORY/builtin/helpers/report"
 
 SOME_MESSAGE="some message"
+SOME_COLOR="purple"
 
 Describe "report"
   colorize() {
@@ -13,11 +14,22 @@ Describe "report"
   }
 
   Describe "message"
-    It "should output message normally"
-      When run report message "$SOME_MESSAGE"
-      The status should be success
-      The output should equal "$SOME_MESSAGE"
-      The variable colorize_called_with should be undefined
+    Context "if no color provided"
+      It "should output message normally"
+        When run report message "$SOME_MESSAGE"
+        The status should be success
+        The output should equal "$SOME_MESSAGE"
+        The variable colorize_called_with should be undefined
+      End
+    End
+
+    Context "if color provided"
+      It "should output message in provided color"
+        When run report message "$SOME_MESSAGE" "$SOME_COLOR"
+        The status should be success
+        The output should equal "$SOME_MESSAGE"
+        The variable colorize_called_with should equal "$SOME_MESSAGE $SOME_COLOR"
+      End
     End
   End
 
