@@ -1,0 +1,29 @@
+#!/bin/sh
+
+Include "$SOURCE_DIRECTORY/builtin/helpers/am_i_root"
+
+ROOT_USER_ID="0"
+SOME_NON_ROOT_USER_ID="300"
+
+Describe "am_i_root"
+  USER_ID=
+  id() {
+    echo "$USER_ID"
+  }
+
+  Context "when I'm not root user"
+    USER_ID="$SOME_NON_ROOT_USER_ID"
+    It "should return false"
+      When run am_i_root
+      The status should be failure
+    End
+  End
+
+  Context "when I'm root user"
+    USER_ID="$ROOT_USER_ID"
+    It "should return true"
+      When run am_i_root
+      The status should be success
+    End
+  End
+End

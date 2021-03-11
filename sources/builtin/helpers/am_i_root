@@ -1,0 +1,8 @@
+#!/bin/sh
+
+ROOT_USER_ID="0"
+
+am_i_root() {
+  [ "$(id -u)" = "$ROOT_USER_ID" ]
+  return $?
+}
