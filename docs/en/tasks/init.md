@@ -11,7 +11,7 @@ Use the `init` task to create tasks and kano directories
 ```text
 kano init SCOPE TEMPLATE [TEMPLATE_DETAILS]
 
-SCOPE: local | global
+SCOPE: project | user | system
 TEMPLATE: directory | task
 TEMPLATE_DETAILS: task's name (task)
 ```
@@ -20,30 +20,30 @@ TEMPLATE_DETAILS: task's name (task)
 
 ## Examples
 
-To create an empty local `.kano` directory, use one of:
+To create an empty project `.kano` directory, use one of:
 
 ```shell
-kano init local directory
-kano init local
+kano init project directory
+kano init project
 kano init
 ```
 
-To create an empty global `~/.kano_global` directory, use one of:
+To create an empty user `~/.kano_user` directory, use one of:
 
 ```shell
-kano init global directory
-kano init global
+kano init user directory
+kano init user
 ```
 
-To create a local task named `train`, use one of:
+To create a project task named `train`, use one of:
 
 ```shell
-kano init local task train
+kano init project task train
 kano init task train
 ```
 
-To create a global task named `train`:
+To create a user task named `train`:
 
 ```shell
-kano init global task train
+kano init user task train
 ```

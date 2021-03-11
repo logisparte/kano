@@ -31,12 +31,21 @@ task_router() {
     esac
 
     case "$FLAG" in
-      -g | --global)
-        if does_file_exist "$KANO_GLOBAL_DIRECTORY/tasks/$TASK"; then
-          task_executor execute_task "$KANO_GLOBAL_DIRECTORY" "$TASK" "$@"
+      -u | --user)
+        if does_file_exist "$KANO_USER_DIRECTORY/tasks/$TASK"; then
+          task_executor execute_task "$KANO_USER_DIRECTORY" "$TASK" "$@"
 
         else
-          fail "No global task named '$TASK'"
+          fail "No user task named '$TASK'"
+        fi
+        ;;
+
+      -s | --system)
+        if does_file_exist "$KANO_SYSTEM_DIRECTORY/tasks/$TASK"; then
+          task_executor execute_task "$KANO_SYSTEM_DIRECTORY" "$TASK" "$@"
+
+        else
+          fail "No system task named '$TASK'"
         fi
         ;;
 
@@ -50,17 +59,20 @@ task_router() {
         ;;
 
       "")
-        if does_file_exist "$KANO_LOCAL_DIRECTORY/tasks/$TASK"; then
-          task_executor execute_task "$KANO_LOCAL_DIRECTORY" "$TASK" "$@"
+        if does_file_exist "$KANO_PROJECT_DIRECTORY/tasks/$TASK"; then
+          task_executor execute_task "$KANO_PROJECT_DIRECTORY" "$TASK" "$@"
 
-        elif does_file_exist "$KANO_GLOBAL_DIRECTORY/tasks/$TASK"; then
-          task_executor execute_task "$KANO_GLOBAL_DIRECTORY" "$TASK" "$@"
+        elif does_file_exist "$KANO_USER_DIRECTORY/tasks/$TASK"; then
+          task_executor execute_task "$KANO_USER_DIRECTORY" "$TASK" "$@"
+
+        elif does_file_exist "$KANO_SYSTEM_DIRECTORY/tasks/$TASK"; then
+          task_executor execute_task "$KANO_SYSTEM_DIRECTORY" "$TASK" "$@"
 
         elif does_file_exist "$KANO_BUILTIN_DIRECTORY/tasks/$TASK"; then
           task_executor execute_task "$KANO_BUILTIN_DIRECTORY" "$TASK" "$@"
 
         else
-          fail "No local, global or builtin task named '$TASK'"
+          fail "No project, user, system or builtin task named '$TASK'"
         fi
         ;;
 
