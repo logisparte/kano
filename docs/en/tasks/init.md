@@ -13,14 +13,14 @@ kano init SCOPE TEMPLATE [TEMPLATE_DETAILS]
 
 SCOPE: project | user | system
 TEMPLATE: directory | task
-TEMPLATE_DETAILS: task's name (task)
+TEMPLATE_DETAILS: task name for task template
 ```
 
 > Some shortcuts are detailed below
 
 ## Examples
 
-To create an empty project `.kano` directory, use one of:
+To initialize an empty project directory (`$PWD.kano`), use one of:
 
 ```shell
 kano init project directory
@@ -28,12 +28,21 @@ kano init project
 kano init
 ```
 
-To create an empty user `~/.kano_user` directory, use one of:
+To initialize an empty user directory (`$HOME/.kano_user`), use one of:
 
 ```shell
 kano init user directory
 kano init user
 ```
+
+To initialize an empty system directory (`/etc/kano`), use one of:
+
+```shell
+sudo kano init system directory
+sudo kano init system
+```
+
+> Initializing system tasks and directories requires root privilege
 
 To create a project task named `train`, use one of:
 
