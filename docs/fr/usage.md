@@ -80,17 +80,25 @@ kano --builtin une_tache
 
 ## Environnement
 
-Quand kano exécute une tâche, il source son fichier d'environnement correspondant, s'il existe.
-Il peut y avoir un fichier d'environnement par niveau :
+Un fichier d'environnement est un simple fichier shell qui exporte des variables qui seront
+disponibles dans les tâches. Il peut y avoir un fichier d'environnement par niveau. Chaque
+fichier environnement doit contenir des variables propres aux tâches de son niveau, ou encore
+des redéfinitions de variables de niveaux supérieurs (voir ci-bas)
 
-- Niveau projet => `$PWD.kano/environment`
-- Niveau user => `$HOME/.kano_user/environment`
-- Niveau système => `/etc/kano/environment`
+Quand kano exécute une tâche, il source tous les fichiers `environment` disponibles, du niveau
+le plus haut jusqu'au niveau de la tâche, s'ils existent
 
-Exporter toutes les variables d'environnement requises par les tâches du niveau dans ce fichier
+|   Niveau    |             Fichier             | Environnements disponibles dans les tâches |
+| :---------: | :-----------------------------: | :----------------------------------------: |
+|   Projet    |    `$PWD/.kano/environment`     |       Projet, utilisateur et système       |
+| Utilisateur |  `$HOME/.kano_user/environment` |           Utilisateur et système           |
+|   Système   |     `/etc/kano/environment`     |             Système seulement              |
 
-> À l'exécution d'une tâche projet, le fichier d'environnement utilisateur ne sera pas sourcé et
-> vice versa
+Par exemple, quand l'exécution d'une tâche projet est demandée, kano source d'abord le fichier
+d'environnement système (s'il existe), puis le fichier d'environnement utilisateur (s'il existe)
+puis finalement le fichier d'environnement projet (s'il existe). Ainsi, si une variable était
+exportée à la fois dans le fichier projet et dans le fichier utilisateur, la valeur définie dans
+le fichier projet aurait préséance
 
 ## Tâches _builtin_
 
