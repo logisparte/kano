@@ -79,16 +79,24 @@ kano --builtin some_task
 
 ## Environment
 
-Whenever kano runs a task, it will source its corresponding environment file, if it exists.
-There may be one environment file for each scope:
+An environment file is a simple shell file that exports variables that will be available in its
+related tasks. There may be one environment file for each scope. Each environment file must
+contain variables that are specific to their respective scopes, or that redefine higher scope
+variables (see below)
 
-- Project scope => `.kano/environment`
-- User scope => `~/.kano_user/environment`
-- System scope => `/etc/kano/environment`
+Whenever kano runs a task, it sources all `environment` files available, from the highest scope
+down to the task, if any exists
 
-Export any environment variable required by the scope's tasks in it
+|  Scope  |              File               | Available environments in tasks |
+| :-----: | :-----------------------------: | :-----------------------------: |
+| Project |    `$PWD/.kano/environment`     |    Project, user and system     |
+|  User   |  `$HOME/.kano_user/environment` |         User and system         |
+| System  |     `/etc/kano/environment`     |           System only           |
 
-> When running a project task, the user environment file will not be sourced and vice versa
+For example, when a project task execution is requested, kano first sources the system
+environment file (if it exists), then sources the user environment file (if it exists) and then
+the project environment file (if it exists). This way, were a variable to be exported both in
+project and user environment files, the project file variable value would have precedence
 
 ## Builtin tasks
 
