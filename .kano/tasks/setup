@@ -3,24 +3,20 @@
 . "$KANO_HELPERS/report"
 
 setup_help() {
-  echo "Install git hooks and build docker image"
+  echo "Install git hooks and build dev image"
 }
 
 setup() {
   _install_git_hooks
-  _build_docker_image
+  _build_dev_image
 }
 
 _install_git_hooks() {
   report info "[setup] Installing git hooks"
-  GIT_DIRECTORY="$(git rev-parse --git-dir)"
-  cat > "$GIT_DIRECTORY/hooks/pre-commit" << EOF
-#!/bin/sh -e
-
-kano pre_commit
-EOF
+  git config --local core.hooksPath "$KANO_PROJECT_DIRECTORY/hooks"
 }
 
-_build_docker_image() {
+_build_dev_image() {
+  report info "[setup] Building dev image"
   docker build --tag "kano:local" --cache-from "kano:local" .
 }
