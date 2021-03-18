@@ -1,0 +1,49 @@
+#!/bin/sh
+
+. "$SOURCE_DIRECTORY/builtin/helpers/does_directory_exist"
+. "$SOURCE_DIRECTORY/builtin/helpers/does_file_exist"
+. "$SOURCE_DIRECTORY/builtin/helpers/fail"
+
+scope_walker() {
+  list_scope_environments() {
+    SCOPE_DIRECTORY="$1"
+
+    case "$SCOPE_DIRECTORY" in
+      "$KANO_PROJECT_DIRECTORY" | "$KANO_USER_DIRECTORY" | "$KANO_SYSTEM_DIRECTORY") ;;
+
+      "$KANO_BUILTIN_DIRECTORY")
+        return
+        ;;
+
+      "")
+        fail "No scope directory provided"
+        ;;
+
+      *)
+        fail "Not a scope directory: $SCOPE_DIRECTORY"
+        ;;
+    esac
+
+    if does_file_exist "$KANO_SYSTEM_DIRECTORY/environment"; then
+      echo "$KANO_SYSTEM_DIRECTORY/environment"
+    fi
+
+    if [ "$SCOPE_DIRECTORY" = "$KANO_SYSTEM_DIRECTORY" ]; then
+      return
+    fi
+
+    if does_file_exist "$KANO_USER_DIRECTORY/environment"; then
+      echo "$KANO_USER_DIRECTORY/environment"
+    fi
+
+    if [ "$SCOPE_DIRECTORY" = "$KANO_USER_DIRECTORY" ]; then
+      return
+    fi
+
+    if does_file_exist "$KANO_PROJECT_DIRECTORY/environment"; then
+      echo "$KANO_PROJECT_DIRECTORY/environment"
+    fi
+  }
+
+  "$@"
+}
