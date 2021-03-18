@@ -3,6 +3,7 @@
 . "$SOURCE_DIRECTORY/builtin/helpers/does_file_exist"
 . "$SOURCE_DIRECTORY/builtin/helpers/does_symbol_exist"
 . "$SOURCE_DIRECTORY/builtin/helpers/fail"
+. "$SOURCE_DIRECTORY/scope_walker"
 
 task_executor() {
   execute_task() {
@@ -10,12 +11,11 @@ task_executor() {
     TASK="$2"
     shift 2
 
-    ENVIRONMENT_FILE="$SCOPE_DIRECTORY/environment"
-    TASK_FILE="$SCOPE_DIRECTORY/tasks/$TASK"
-    if does_file_exist "$ENVIRONMENT_FILE"; then
+    for ENVIRONMENT_FILE in $(scope_walker list_scope_environments "$SCOPE_DIRECTORY"); do
       _import "$ENVIRONMENT_FILE"
-    fi
+    done
 
+    TASK_FILE="$SCOPE_DIRECTORY/tasks/$TASK"
     _import "$TASK_FILE"
 
     if ! does_symbol_exist "$TASK"; then
