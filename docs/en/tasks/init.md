@@ -11,7 +11,7 @@ Use the `init` task to create tasks and kano directories
 ```text
 kano init SCOPE TEMPLATE [TEMPLATE_DETAILS]
 
-SCOPE: project | user | system
+SCOPE: project | user | team | system
 TEMPLATE: directory | task
 TEMPLATE_DETAILS: task name for task template
 ```
@@ -35,6 +35,13 @@ kano init user directory
 kano init user
 ```
 
+To initialize an empty team directory (`$HOME/.kano_teams/$KANO_TEAM`), use one of:
+
+```shell
+KANO_TEAM=TEAM_NAME kano init team directory
+KANO_TEAM=TEAM_NAME kano init team
+```
+
 To initialize an empty system directory (`/etc/kano`), use one of:
 
 ```shell
@@ -56,3 +63,11 @@ To create a user task named `train`:
 ```shell
 kano init user task train
 ```
+
+To create a team task named `train` for team `hoplites`:
+
+```shell
+KANO_TEAM="hoplites" kano init team task train
+```
+
+> It's useful to set one's default team in one's `.zshrc` or `.bashrc`

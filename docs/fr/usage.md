@@ -34,42 +34,59 @@ un_nom_de_tache() {
 
 ```
 
-Son nom doit être le même que le nom de sa fonction (ici `un_nom_de_tache`) et n'avoir aucune
+Son nom doit être le même que celui de sa fonction (ici `un_nom_de_tache`) et n'avoir aucune
 extension
 
 ## Niveaux
 
-Kano cherche des tâches dans jusqu'à 4 différents niveaux, chacun représenté par un répertoire
+Kano cherche des tâches dans jusqu'à 5 différents niveaux, chacun représenté par un répertoire
 spécifique :
 
-|   Niveau    |     Répertoire      |       Disponibilité des tâches       |   Cherché   |
-| :---------: | :-----------------: | :----------------------------------: | :---------: |
-|   Projet    |    `$PWD/.kano`     |       Dans le projet seulement       | S'il existe |
-| Utilisateur |  `$HOME/.kano_user` | Toujours pour l'utilisateur connecté | S'il existe |
-|   Système   |     `/etc/kano`     |               Toujours               | S'il existe |
-|  _Builtin_  |  Inclus dans kano   |               Toujours               |  Toujours   |
+<!-- markdownlint-disable line-length -->
+
+|   Niveau    |           Répertoire           |   Disponibilité des tâches    |
+| :---------: | :----------------------------: | :---------------------------: |
+|   Projet    |          `$PWD/.kano`          |   Dans le projet seulement    |
+| Utilisateur |       `$HOME/.kano_user`       |  Toujours pour l'utilisateur  |
+|   Équipe    | `$HOME/.kano_teams/$KANO_TEAM` | Toujours pour l'utilisateur\* |
+|   Système   |          `/etc/kano`           |           Toujours            |
+|  _Builtin_  |        Inclus dans kano        |           Toujours            |
+
+> \* Si `$KANO_TEAM` est définie
+
+<!-- markdownlint-enable line-length -->
 
 Quand l'exécution d'une tâche est demandée, kano cherche son fichier tout d'abord en projet
-(s'il existe), puis en utilisateur (s'il existe), puis en système (s'il existe) et finalement en
+(s'il existe), puis en utilisateur (s'il existe), puis en équipe (si `$KANO_TEAM` est définie
+avec le nom de l'équipe et qu'elle existe), puis en système (s'il existe) et finalement en
 _builtin_ jusqu'à ce qu'il le trouve. Si une tâche est définie dans 2 niveaux différents, le
 fichier dans le premier niveau examiné sera utilisé. Pour outrepasser cette résolution, un
 _flag_ peut être fourni
 
-Pour forcer une résolution utilisateur :
+Pour forcer une résolution **utilisateur** :
 
 ```shell
 kano -u une_tache
 kano --user une_tache
 ```
 
-Pour forcer une résolution système :
+Pour forcer une résolution **équipe** :
+
+```shell
+kano -t une_tache
+kano --team une_tache
+```
+
+> La résolution équipe ne fonctionnera que si `$KANO_TEAM` est définie
+
+Pour forcer une résolution **système** :
 
 ```shell
 kano -s une_tache
 kano --system une_tache
 ```
 
-Pour forcer une résolution _builtin_ :
+Pour forcer une résolution **_builtin_** :
 
 ```shell
 kano -b une_tache
@@ -88,17 +105,25 @@ des redéfinitions de variables de niveaux supérieurs (voir ci-bas)
 Quand kano exécute une tâche, il source tous les fichiers `environment` disponibles, du niveau
 le plus haut jusqu'au niveau de la tâche, s'ils existent
 
-|   Niveau    |             Fichier             | Environnements disponibles dans les tâches |
-| :---------: | :-----------------------------: | :----------------------------------------: |
-|   Projet    |    `$PWD/.kano/environment`     |       Projet, utilisateur et système       |
-| Utilisateur |  `$HOME/.kano_user/environment` |           Utilisateur et système           |
-|   Système   |     `/etc/kano/environment`     |             Système seulement              |
+<!-- markdownlint-disable line-length -->
+
+|   Niveau    |                   Fichier                   | Environnements disponibles dans les tâches |
+| :---------: | :-----------------------------------------: | :----------------------------------------: |
+|   Projet    |          `$PWD/.kano/environment`           |  Projet, utilisateur, équipe\* et système  |
+| Utilisateur |        `$HOME/.kano_user/environment`       |      Utilisateur, équipe\* et système      |
+|   Équipe    |  `$HOME/.kano_teams/$KANO_TEAM/environment` |            Équipe\* et système             |
+|   Système   |           `/etc/kano/environment`           |             Système seulement              |
+
+> \* Si `$KANO_TEAM` est définie
+
+<!-- markdownlint-enable line-length -->
 
 Par exemple, quand l'exécution d'une tâche projet est demandée, kano source d'abord le fichier
-d'environnement système (s'il existe), puis le fichier d'environnement utilisateur (s'il existe)
-puis finalement le fichier d'environnement projet (s'il existe). Ainsi, si une variable était
-exportée à la fois dans le fichier projet et dans le fichier utilisateur, la valeur définie dans
-le fichier projet aurait préséance
+d'environnement système (s'il existe), puis le fichier d'environnement équipe (si `$KANO_TEAM`
+est définie avec le nom de l'équipe et que'elle existe), puis le fichier d'environnement
+utilisateur (s'il existe) puis finalement le fichier d'environnement projet (s'il existe).
+Ainsi, si une variable est exportée à la fois dans le fichier projet et dans le fichier
+utilisateur, la valeur définie dans le fichier projet aura préséance
 
 ## Tâches _builtin_
 
