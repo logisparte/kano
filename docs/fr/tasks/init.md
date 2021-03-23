@@ -11,7 +11,7 @@ Utiliser la tâche `init` pour créer des tâches et des répertoires kano
 ```text
 kano init NIVEAU GABARIT [DETAILS_GABARIT]
 
-NIVEAU: project | user | system
+NIVEAU: project | user | team | system
 GABARIT: directory | task
 DETAILS_GABARIT: nom de tâche pour le gabarit task
 ```
@@ -36,6 +36,14 @@ kano init user directory
 kano init user
 ```
 
+Pour initialiser un répertoire équipe vide (`$HOME/.kano_teams/$KANO_TEAM`), utiliser une des
+commandes suivantes :
+
+```shell
+KANO_TEAM=NOM_EQUIPE kano init team directory
+KANO_TEAM=NOM_EQUIPE kano init team
+```
+
 Pour initialiser un répertoire système vide (`/etc/kano`), utiliser une des commandes suivantes
 :
 
@@ -58,3 +66,11 @@ Pour créer une tâche utilisateur nommée `entrainer` :
 ```shell
 kano init user task entrainer
 ```
+
+Pour créer une tâche équipe nommée `entrainer` pour l'équipe `hoplites`:
+
+```shell
+KANO_TEAM="hoplites" kano init team task entrainer
+```
+
+> Il est pratique de définir son équipe par défaut dans `.zshrc` ou `.bashrc`
