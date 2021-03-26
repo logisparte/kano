@@ -2,8 +2,10 @@
 
 Include "$SOURCE_DIRECTORY/task_executor"
 
-SOME_SCOPE_DIRECTORY_1="some_scope_directory_1"
-SOME_SCOPE_DIRECTORY_2="some_scope_directory_2"
+SOME_SCOPE_1="some_scope_1"
+SOME_SCOPE_2="some_scope_2"
+SOME_SCOPE_DIRECTORY_1="${SOME_SCOPE_1}_directory"
+SOME_SCOPE_DIRECTORY_2="${SOME_SCOPE_2}_directory"
 SOME_ENVIRONMENT_FILE_1="$SOME_SCOPE_DIRECTORY_1/environment"
 SOME_ENVIRONMENT_FILE_2="$SOME_SCOPE_DIRECTORY_2/environment"
 SOME_TASK="some_task"
@@ -19,11 +21,39 @@ Describe "task_executor"
   }
 
   scope_walker() {
-    list_scope_environments() {
+    walk_down() {
       true
     }
 
     "$@"
+  }
+
+  scope_mapper() {
+    map_directory_from_name() {
+      if [ "$1" = "$SOME_SCOPE_1" ]; then
+        echo "$SOME_SCOPE_DIRECTORY_1"
+
+      elif [ "$1" = "$SOME_SCOPE_2" ]; then
+        echo "$SOME_SCOPE_DIRECTORY_2"
+
+      else
+        exit 1
+      fi
+    }
+
+    "$@"
+  }
+
+  does_file_exist() {
+    if [ "$1" = "$SOME_ENVIRONMENT_FILE_1" ]; then
+      "$DOES_ENVIRONMENT_FILE_EXISTS_1"
+
+    elif [ "$1" = "$SOME_ENVIRONMENT_FILE_2" ]; then
+      "$DOES_ENVIRONMENT_FILE_EXISTS_2"
+
+    else
+      false
+    fi
   }
 
   _import() {
@@ -36,6 +66,9 @@ Describe "task_executor"
 
     %preserve import_called_with
   }
+
+  DOES_ENVIRONMENT_FILE_EXISTS_1=false
+  DOES_ENVIRONMENT_FILE_EXISTS_2=false
 
   Describe "execute_task"
     Context "when task is not correctly defined"
@@ -62,22 +95,47 @@ Describe "task_executor"
         The variable task_called_with should equal "$SOME_PARAMETER"
       End
 
-      Context "when one or more environment file exist in current scope and up"
+      Context "when some scopes exist"
         scope_walker() {
-          list_scope_environments() {
-            echo "$SOME_ENVIRONMENT_FILE_1"
-            echo "$SOME_ENVIRONMENT_FILE_2"
+          walk_down() {
+            echo "$SOME_SCOPE_1"
+            echo "$SOME_SCOPE_2"
           }
 
           "$@"
         }
 
-        It "should import all environment files"
-          When run task_executor execute_task \
-            "$SOME_SCOPE_DIRECTORY_1" "$SOME_TASK" "$SOME_PARAMETER"
-          The status should be success
-          The variable import_called_with should include "$SOME_ENVIRONMENT_FILE_1"
-          The variable import_called_with should include "$SOME_ENVIRONMENT_FILE_2"
+        Context "when no environment files exist for current scope and up"
+          It "should not import any environment files"
+            When run task_executor execute_task \
+              "$SOME_SCOPE_DIRECTORY_1" "$SOME_TASK" "$SOME_PARAMETER"
+            The status should be success
+            The variable import_called_with should not include "$SOME_ENVIRONMENT_FILE_1"
+            The variable import_called_with should not include "$SOME_ENVIRONMENT_FILE_2"
+          End
+        End
+
+        Context "when only one environment files exist for current scope and up"
+          DOES_ENVIRONMENT_FILE_EXISTS_1=true
+          It "should only import its environment files"
+            When run task_executor execute_task \
+              "$SOME_SCOPE_DIRECTORY_1" "$SOME_TASK" "$SOME_PARAMETER"
+            The status should be success
+            The variable import_called_with should include "$SOME_ENVIRONMENT_FILE_1"
+            The variable import_called_with should not include "$SOME_ENVIRONMENT_FILE_2"
+          End
+        End
+
+        Context "when all scopes have environment files"
+          DOES_ENVIRONMENT_FILE_EXISTS_1=true
+          DOES_ENVIRONMENT_FILE_EXISTS_2=true
+          It "should import all environment files"
+            When run task_executor execute_task \
+              "$SOME_SCOPE_DIRECTORY_1" "$SOME_TASK" "$SOME_PARAMETER"
+            The status should be success
+            The variable import_called_with should include "$SOME_ENVIRONMENT_FILE_1"
+            The variable import_called_with should include "$SOME_ENVIRONMENT_FILE_2"
+          End
         End
       End
     End

@@ -3,46 +3,31 @@
 . "$SOURCE_DIRECTORY/builtin/helpers/does_directory_exist"
 . "$SOURCE_DIRECTORY/builtin/helpers/does_file_exist"
 . "$SOURCE_DIRECTORY/builtin/helpers/fail"
+. "$SOURCE_DIRECTORY/scope_mapper"
 
 scope_walker() {
-  list_scope_environments() {
-    SCOPE_DIRECTORY="$1"
+  walk_up() {
+    for SCOPE in $(scope_mapper list_all_scopes_in_order); do
+      SCOPE_DIRECTORY="$(scope_mapper map_directory_from_name "$SCOPE")"
+      if does_directory_exist "$SCOPE_DIRECTORY"; then
+        echo "$SCOPE"
+      fi
+    done
+  }
 
-    case "$SCOPE_DIRECTORY" in
-      "$KANO_PROJECT_DIRECTORY" | "$KANO_USER_DIRECTORY" | "$KANO_SYSTEM_DIRECTORY") ;;
+  walk_down() {
+    STOP_AT_SCOPE="$1"
 
-      "$KANO_BUILTIN_DIRECTORY")
+    for SCOPE in $(scope_mapper list_all_scopes_in_reverse); do
+      SCOPE_DIRECTORY="$(scope_mapper map_directory_from_name "$SCOPE")"
+      if does_directory_exist "$SCOPE_DIRECTORY"; then
+        echo "$SCOPE"
+      fi
+
+      if [ -n "$STOP_AT_SCOPE" ] && [ "$SCOPE" = "$STOP_AT_SCOPE" ]; then
         return
-        ;;
-
-      "")
-        fail "No scope directory provided"
-        ;;
-
-      *)
-        fail "Not a scope directory: $SCOPE_DIRECTORY"
-        ;;
-    esac
-
-    if does_file_exist "$KANO_SYSTEM_DIRECTORY/environment"; then
-      echo "$KANO_SYSTEM_DIRECTORY/environment"
-    fi
-
-    if [ "$SCOPE_DIRECTORY" = "$KANO_SYSTEM_DIRECTORY" ]; then
-      return
-    fi
-
-    if does_file_exist "$KANO_USER_DIRECTORY/environment"; then
-      echo "$KANO_USER_DIRECTORY/environment"
-    fi
-
-    if [ "$SCOPE_DIRECTORY" = "$KANO_USER_DIRECTORY" ]; then
-      return
-    fi
-
-    if does_file_exist "$KANO_PROJECT_DIRECTORY/environment"; then
-      echo "$KANO_PROJECT_DIRECTORY/environment"
-    fi
+      fi
+    done
   }
 
   "$@"
