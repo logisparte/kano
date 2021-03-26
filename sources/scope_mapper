@@ -1,0 +1,71 @@
+#!/bin/sh
+
+. "$SOURCE_DIRECTORY/builtin/helpers/fail"
+
+scope_mapper() {
+  PROJECT_SCOPE="project"
+  USER_SCOPE="user"
+  SYSTEM_SCOPE="system"
+  BUILTIN_SCOPE="builtin"
+
+  list_all_scopes_in_order() {
+    echo "$PROJECT_SCOPE"
+    echo "$USER_SCOPE"
+    echo "$SYSTEM_SCOPE"
+    echo "$BUILTIN_SCOPE"
+  }
+
+  list_all_scopes_in_reverse() {
+    list_all_scopes_in_order | xargs | awk '{ for (i=NF; i>0; i--) printf "%s\n",$i; }'
+  }
+
+  map_name_from_flag() {
+    FLAG="$1"
+
+     case "$FLAG" in
+      -u | --user)
+        echo "$USER_SCOPE"
+        ;;
+
+      -s | --system)
+        echo "$SYSTEM_SCOPE"
+        ;;
+
+      -b | --builtin)
+        echo "$BUILTIN_SCOPE"
+        ;;
+
+      *)
+        fail "Invalid flag '$FLAG'"
+        ;;
+    esac
+  }
+
+  map_directory_from_name() {
+    NAME="$1"
+
+    case "$NAME" in
+      "$PROJECT_SCOPE")
+        echo "$KANO_PROJECT_DIRECTORY"
+        ;;
+
+      "$USER_SCOPE")
+        echo "$KANO_USER_DIRECTORY"
+        ;;
+
+      "$SYSTEM_SCOPE")
+        echo "$KANO_SYSTEM_DIRECTORY"
+        ;;
+
+      "$BUILTIN_SCOPE")
+        echo "$KANO_BUILTIN_DIRECTORY"
+        ;;
+
+      *)
+        fail "Invalid scope '$NAME'"
+        ;;
+    esac
+  }
+
+  "$@"
+}
