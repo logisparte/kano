@@ -2,10 +2,12 @@
 
 Include "$SOURCE_DIRECTORY/scope_walker"
 
-SOME_INVALID_SCOPE_DIRECTORY="some_invalid_scope_directory"
-SYSTEM_ENVIRONMENT_FILE="$KANO_SYSTEM_DIRECTORY/environment"
-USER_ENVIRONMENT_FILE="$KANO_USER_DIRECTORY/environment"
-PROJECT_ENVIRONMENT_FILE="$KANO_PROJECT_DIRECTORY/environment"
+SOME_SCOPE_1="some_scope_1"
+SOME_SCOPE_2="some_scope_2"
+SOME_SCOPE_3="some_scope_3"
+SOME_SCOPE_DIRECTORY_1="some_scope_directory_1"
+SOME_SCOPE_DIRECTORY_2="some_scope_directory_2"
+SOME_SCOPE_DIRECTORY_3="some_scope_directory_3"
 
 Describe "scope_walker"
   fail() {
@@ -15,201 +17,126 @@ Describe "scope_walker"
     exit 1
   }
 
-  does_file_exist() {
-    if [ "$1" = "$SYSTEM_ENVIRONMENT_FILE" ]; then
-      "$DOES_SYSTEM_ENVIRONMENT_FILE_EXIST"
+  does_directory_exist() {
+    if [ "$1" = "$SOME_SCOPE_DIRECTORY_1" ]; then
+      "$DOES_SCOPE_DIRECTORY_1_EXISTS"
 
-    elif [ "$1" = "$USER_ENVIRONMENT_FILE" ]; then
-      "$DOES_USER_ENVIRONMENT_FILE_EXIST"
+    elif [ "$1" = "$SOME_SCOPE_DIRECTORY_2" ]; then
+      "$DOES_SCOPE_DIRECTORY_2_EXISTS"
 
-    elif [ "$1" = "$PROJECT_ENVIRONMENT_FILE" ]; then
-      "$DOES_PROJECT_ENVIRONMENT_FILE_EXIST"
+    elif [ "$1" = "$SOME_SCOPE_DIRECTORY_3" ]; then
+      "$DOES_SCOPE_DIRECTORY_3_EXISTS"
 
     else
       false
     fi
   }
 
-  DOES_SYSTEM_ENVIRONMENT_FILE_EXIST=false
-  DOES_USER_ENVIRONMENT_FILE_EXIST=false
-  DOES_PROJECT_ENVIRONMENT_FILE_EXIST=false
+  scope_mapper() {
+    list_all_scopes_in_order() {
+      echo "$SOME_SCOPE_1"
+      echo "$SOME_SCOPE_2"
+      echo "$SOME_SCOPE_3"
+    }
 
-  Describe "list_scope_environments"
-    Context "when no scope directory provided"
-      It "should fail with the expected error message"
-        When run scope_walker list_scope_environments
-        The status should be failure
-        The variable fail_called_with should equal "No scope directory provided"
-      End
-    End
+    list_all_scopes_in_reverse() {
+      echo "$SOME_SCOPE_3"
+      echo "$SOME_SCOPE_2"
+      echo "$SOME_SCOPE_1"
+    }
 
-    Context "when invalid scope directory"
-      It "should fail with the expected error message"
-        When run scope_walker list_scope_environments "$SOME_INVALID_SCOPE_DIRECTORY"
-        The status should be failure
-        The variable fail_called_with should equal \
-          "Not a scope directory: $SOME_INVALID_SCOPE_DIRECTORY"
-      End
-    End
+    map_directory_from_name() {
+      if [ "$1" = "$SOME_SCOPE_1" ]; then
+        echo "$SOME_SCOPE_DIRECTORY_1"
 
-    Context "when scope is builtin"
-      It "should return no environment file"
-        When run scope_walker list_scope_environments "$KANO_BUILTIN_DIRECTORY"
+      elif [ "$1" = "$SOME_SCOPE_2" ]; then
+        echo "$SOME_SCOPE_DIRECTORY_2"
+
+      elif [ "$1" = "$SOME_SCOPE_3" ]; then
+        echo "$SOME_SCOPE_DIRECTORY_3"
+
+      else
+        exit 1
+      fi
+    }
+
+    "$@"
+  }
+
+  DOES_SCOPE_DIRECTORY_1_EXISTS=false
+  DOES_SCOPE_DIRECTORY_2_EXISTS=false
+  DOES_SCOPE_DIRECTORY_3_EXISTS=false
+
+  Describe "walk_up"
+    Context "when no scope directory exists"
+      It "should not return any scope"
+        When run scope_walker walk_up
         The status should be success
         The output should equal ""
       End
     End
 
-    Context "when scope is system"
-      Context "when no system environment file"
-        It "should return no environment file"
-          When run scope_walker list_scope_environments "$KANO_SYSTEM_DIRECTORY"
-          The status should be success
-          The output should equal ""
-        End
-      End
-
-      Context "when system environment file exists"
-        DOES_SYSTEM_ENVIRONMENT_FILE_EXIST=true
-        It "should return system environment file"
-          When run scope_walker list_scope_environments "$KANO_SYSTEM_DIRECTORY"
-          The status should be success
-          The output should equal "$SYSTEM_ENVIRONMENT_FILE"
-        End
+    Context "when a scope directory exists"
+      DOES_SCOPE_DIRECTORY_1_EXISTS=true
+      It "should return its scope"
+        When run scope_walker walk_up
+        The status should be success
+        The output should equal "$SOME_SCOPE_1"
       End
     End
 
-    Context "when scope is user"
-      Context "when no user environment file"
-        Context "when no system environment file"
-          It "should return no environment file"
-            When run scope_walker list_scope_environments "$KANO_USER_DIRECTORY"
-            The status should be success
-            The output should equal ""
-          End
-        End
-
-        Context "when system environment file exist"
-          DOES_SYSTEM_ENVIRONMENT_FILE_EXIST=true
-          It "should return system environment file"
-            When run scope_walker list_scope_environments "$KANO_USER_DIRECTORY"
-            The status should be success
-            The output should equal "$SYSTEM_ENVIRONMENT_FILE"
-          End
-        End
+    Context "when all scope directories exist"
+      DOES_SCOPE_DIRECTORY_1_EXISTS=true
+      DOES_SCOPE_DIRECTORY_2_EXISTS=true
+      DOES_SCOPE_DIRECTORY_3_EXISTS=true
+      It "should return all scopes"
+        When run scope_walker walk_up
+        The status should be success
+        The output should equal "$SOME_SCOPE_1
+$SOME_SCOPE_2
+$SOME_SCOPE_3"
       End
+    End
+  End
 
-      Context "when user environment file exist"
-        DOES_USER_ENVIRONMENT_FILE_EXIST=true
-        Context "when no system environment file"
-          It "should return user environment file"
-            When run scope_walker list_scope_environments "$KANO_USER_DIRECTORY"
-            The status should be success
-            The output should equal "$USER_ENVIRONMENT_FILE"
-          End
-        End
-
-        Context "when system environment file exist"
-          DOES_SYSTEM_ENVIRONMENT_FILE_EXIST=true
-          It "should return system and user environment file"
-            When run scope_walker list_scope_environments "$KANO_USER_DIRECTORY"
-            The status should be success
-            The output should equal \
-            "$SYSTEM_ENVIRONMENT_FILE
-$USER_ENVIRONMENT_FILE"
-          End
-        End
+  Describe "walk_down"
+    Context "when no scope directory exists"
+      It "should not return any scope"
+        When run scope_walker walk_down
+        The status should be success
+        The output should equal ""
       End
     End
 
-    Context "when scope is project"
-      Context "when no project environment file"
-        Context "when no user environment file"
-          Context "when no system environment file"
-            It "should return no environment file"
-              When run scope_walker list_scope_environments "$KANO_PROJECT_DIRECTORY"
-              The status should be success
-              The output should equal ""
-            End
-          End
+    Context "when a scope directory exists"
+      DOES_SCOPE_DIRECTORY_1_EXISTS=true
+      It "should return its scope"
+        When run scope_walker walk_down
+        The status should be success
+        The output should equal "$SOME_SCOPE_1"
+      End
+    End
 
-          Context "when system environment file exist"
-            DOES_SYSTEM_ENVIRONMENT_FILE_EXIST=true
-            It "should return system environment file"
-              When run scope_walker list_scope_environments "$KANO_PROJECT_DIRECTORY"
-              The status should be success
-              The output should equal "$SYSTEM_ENVIRONMENT_FILE"
-            End
-          End
-        End
-
-        Context "when user environment file exist"
-          DOES_USER_ENVIRONMENT_FILE_EXIST=true
-          Context "when no system environment file"
-            It "should return user environment file"
-              When run scope_walker list_scope_environments "$KANO_PROJECT_DIRECTORY"
-              The status should be success
-              The output should equal "$USER_ENVIRONMENT_FILE"
-            End
-          End
-
-          Context "when system environment file exist"
-            DOES_SYSTEM_ENVIRONMENT_FILE_EXIST=true
-            It "should return system and user environment file"
-              When run scope_walker list_scope_environments "$KANO_PROJECT_DIRECTORY"
-              The status should be success
-              The output should equal \
-              "$SYSTEM_ENVIRONMENT_FILE
-$USER_ENVIRONMENT_FILE"
-            End
-          End
+    Context "when all scope directories exist"
+      DOES_SCOPE_DIRECTORY_1_EXISTS=true
+      DOES_SCOPE_DIRECTORY_2_EXISTS=true
+      DOES_SCOPE_DIRECTORY_3_EXISTS=true
+      Context "when no scope to stop at provided"
+        It "should return all scopes"
+          When run scope_walker walk_down
+          The status should be success
+          The output should equal "$SOME_SCOPE_3
+$SOME_SCOPE_2
+$SOME_SCOPE_1"
         End
       End
 
-      Context "when project environment file exist"
-        DOES_PROJECT_ENVIRONMENT_FILE_EXIST=true
-        Context "when no user environment file"
-          Context "when no system environment file"
-            It "should return project environment file"
-              When run scope_walker list_scope_environments "$KANO_PROJECT_DIRECTORY"
-              The status should be success
-              The output should equal "$PROJECT_ENVIRONMENT_FILE"
-            End
-          End
-
-          Context "when system environment file exist"
-            DOES_SYSTEM_ENVIRONMENT_FILE_EXIST=true
-            It "should return system and project environment file"
-              When run scope_walker list_scope_environments "$KANO_PROJECT_DIRECTORY"
-              The status should be success
-              The output should equal "$SYSTEM_ENVIRONMENT_FILE
-$PROJECT_ENVIRONMENT_FILE"
-            End
-          End
-        End
-
-        Context "when user environment file exist"
-          DOES_USER_ENVIRONMENT_FILE_EXIST=true
-          Context "when no system environment file"
-            It "should return user and project environment file"
-              When run scope_walker list_scope_environments "$KANO_PROJECT_DIRECTORY"
-              The status should be success
-              The output should equal "$USER_ENVIRONMENT_FILE
-$PROJECT_ENVIRONMENT_FILE"
-            End
-          End
-
-          Context "when system environment file exist"
-            DOES_SYSTEM_ENVIRONMENT_FILE_EXIST=true
-            It "should return system, user and project environment file"
-              When run scope_walker list_scope_environments "$KANO_PROJECT_DIRECTORY"
-              The status should be success
-              The output should equal \
-              "$SYSTEM_ENVIRONMENT_FILE
-$USER_ENVIRONMENT_FILE
-$PROJECT_ENVIRONMENT_FILE"
-            End
-          End
+      Context "when a scope to stop at provided"
+        It "should return all scopes down to provided scope"
+          When run scope_walker walk_down "$SOME_SCOPE_2"
+          The status should be success
+          The output should equal "$SOME_SCOPE_3
+$SOME_SCOPE_2"
         End
       End
     End
