@@ -5,6 +5,7 @@ kano() {
   export KANO_SOURCE_DIRECTORY
   export KANO_BUILTIN_DIRECTORY="$KANO_SOURCE_DIRECTORY/builtin"
   export KANO_SYSTEM_DIRECTORY="/etc/kano"
+  export KANO_TEAMS_DIRECTORY="$HOME/.kano_teams"
   export KANO_USER_DIRECTORY="$HOME/.kano_user"
   export KANO_PROJECT_DIRECTORY="$PWD/.kano"
 
