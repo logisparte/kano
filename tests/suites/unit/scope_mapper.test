@@ -2,6 +2,8 @@
 
 Include "$SOURCE_DIRECTORY/scope_mapper"
 
+SOME_TEAM="some_team"
+
 Describe "scope_mapper"
   fail() {
     # shellcheck disable=SC2034
@@ -19,9 +21,22 @@ user
 system
 builtin"
     End
+
+    Context "when KANO_TEAM is set"
+      export KANO_TEAM="$SOME_TEAM"
+      It "should list all scopes in order, including team"
+        When run scope_mapper list_all_scopes_in_order
+        The status should be success
+        The output should equal "project
+user
+team
+system
+builtin"
+      End
+    End
   End
 
-    Describe "list_all_scopes_in_reverse"
+  Describe "list_all_scopes_in_reverse"
     It "should list all scopes in reverse"
       When run scope_mapper list_all_scopes_in_reverse
       The status should be success
@@ -29,6 +44,19 @@ builtin"
 system
 user
 project"
+    End
+
+    Context "when KANO_TEAM is set"
+      export KANO_TEAM="$SOME_TEAM"
+      It "should list all scopes in reverse, including team"
+        When run scope_mapper list_all_scopes_in_reverse
+        The status should be success
+        The output should equal "builtin
+system
+team
+user
+project"
+      End
     End
   End
 
@@ -55,6 +83,22 @@ project"
         When run scope_mapper map_name_from_flag "--user"
         The status should be success
         The output should equal "user"
+      End
+    End
+
+    Context "when flag is -t"
+      It "should return team scope"
+        When run scope_mapper map_name_from_flag "-t"
+        The status should be success
+        The output should equal "team"
+      End
+    End
+
+    Context "when flag is --team"
+      It "should return team scope"
+        When run scope_mapper map_name_from_flag "--team"
+        The status should be success
+        The output should equal "team"
       End
     End
 
@@ -114,6 +158,26 @@ project"
         When run scope_mapper map_directory_from_name "user"
         The status should be success
         The output should equal "$KANO_USER_DIRECTORY"
+      End
+    End
+
+    Context "when name is team"
+      Context "when KANO_TEAM is not set"
+        It "should fail with the expected error message"
+          When run scope_mapper map_directory_from_name "team"
+          The status should be failure
+          The variable fail_called_with should equal \
+            "Cannot map team directory (KANO_TEAM is not set)"
+        End
+      End
+
+      Context "when KANO_TEAM is set"
+        export KANO_TEAM="$SOME_TEAM"
+        It "should return team's directory"
+          When run scope_mapper map_directory_from_name "team"
+          The status should be success
+          The output should equal "$KANO_TEAMS_DIRECTORY/$SOME_TEAM"
+        End
       End
     End
 

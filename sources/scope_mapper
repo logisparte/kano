@@ -5,12 +5,18 @@
 scope_mapper() {
   PROJECT_SCOPE="project"
   USER_SCOPE="user"
+  TEAM_SCOPE="team"
   SYSTEM_SCOPE="system"
   BUILTIN_SCOPE="builtin"
 
   list_all_scopes_in_order() {
     echo "$PROJECT_SCOPE"
     echo "$USER_SCOPE"
+
+    if [ -n "$KANO_TEAM" ]; then
+      echo "$TEAM_SCOPE"
+    fi
+
     echo "$SYSTEM_SCOPE"
     echo "$BUILTIN_SCOPE"
   }
@@ -25,6 +31,10 @@ scope_mapper() {
      case "$FLAG" in
       -u | --user)
         echo "$USER_SCOPE"
+        ;;
+
+      -t | --team)
+        echo "$TEAM_SCOPE"
         ;;
 
       -s | --system)
@@ -51,6 +61,15 @@ scope_mapper() {
 
       "$USER_SCOPE")
         echo "$KANO_USER_DIRECTORY"
+        ;;
+
+      "$TEAM_SCOPE")
+        if [ -n "$KANO_TEAM" ]; then
+          echo "$KANO_TEAMS_DIRECTORY/$KANO_TEAM"
+
+        else
+          fail "Cannot map team directory (KANO_TEAM is not set)"
+        fi
         ;;
 
       "$SYSTEM_SCOPE")
