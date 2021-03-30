@@ -63,139 +63,137 @@ Describe "help"
     true
   }
 
-  Describe "help"
-    It "has its own help message"
-      When run help_help
+  It "has its own help message"
+    When run help_help
+    The status should be success
+    The output should equal "Show this help message"
+  End
+
+  Context "when tasks are defined in only one scope"
+    It "should print that scope's section"
+      When run help
       The status should be success
-      The output should equal "Show this help message"
+      The variable report_called_with should include "# $SOME_SCOPE_1 tasks"
     End
 
-    Context "when tasks are defined in only one scope"
-      It "should print that scope's section"
+    Context "when a scope task has no help message"
+      It "should display '-' as help message instead"
         When run help
         The status should be success
-        The variable report_called_with should include "# $SOME_SCOPE_1 tasks"
-      End
-
-      Context "when a scope task has no help message"
-        It "should display '-' as help message instead"
-          When run help
-          The status should be success
-          The variable report_called_with should include "$SOME_TASK_1"
-          The variable report_called_with should include "-"
-        End
-      End
-
-      Context "when scope task has a help message"
-        eval "${SOME_TASK_1}_help() {
-          echo \"$SOME_TASK_HELP_MESSAGE_1\"
-        }"
-
-        It "should display the help message"
-          When run help
-          The status should be success
-          The variable report_called_with should include "$SOME_TASK_1"
-          The variable report_called_with should include "$SOME_TASK_HELP_MESSAGE_1"
-        End
+        The variable report_called_with should include "$SOME_TASK_1"
+        The variable report_called_with should include "-"
       End
     End
 
-    Context "when tasks are defined in multiple scopes"
-      scope_walker() {
-        walk_up() {
-          echo "$SOME_SCOPE_1"
-          echo "$SOME_SCOPE_2"
-        }
+    Context "when scope task has a help message"
+      eval "${SOME_TASK_1}_help() {
+        echo \"$SOME_TASK_HELP_MESSAGE_1\"
+      }"
 
-        "$@"
+      It "should display the help message"
+        When run help
+        The status should be success
+        The variable report_called_with should include "$SOME_TASK_1"
+        The variable report_called_with should include "$SOME_TASK_HELP_MESSAGE_1"
+      End
+    End
+  End
+
+  Context "when tasks are defined in multiple scopes"
+    scope_walker() {
+      walk_up() {
+        echo "$SOME_SCOPE_1"
+        echo "$SOME_SCOPE_2"
       }
 
-      It "should print all scope sections"
-        When run help
-        The status should be success
-        The variable report_called_with should include "# $SOME_SCOPE_1 tasks"
-        The variable report_called_with should include "# $SOME_SCOPE_2 tasks"
-      End
+      "$@"
+    }
+
+    It "should print all scope sections"
+      When run help
+      The status should be success
+      The variable report_called_with should include "# $SOME_SCOPE_1 tasks"
+      The variable report_called_with should include "# $SOME_SCOPE_2 tasks"
     End
+  End
 
-    Context "when scope is project"
-      scope_walker() {
-        walk_up() {
-          echo "project"
-        }
-
-        "$@"
+  Context "when scope is project"
+    scope_walker() {
+      walk_up() {
+        echo "project"
       }
 
-      It "should print scope section in green"
-        When run help
-        The status should be success
-        The variable report_called_with should include "$(colorize "$TASK" green)"
-      End
+      "$@"
+    }
+
+    It "should print scope section in green"
+      When run help
+      The status should be success
+      The variable report_called_with should include "$(colorize "$TASK" green)"
     End
+  End
 
-    Context "when scope is user"
-      scope_walker() {
-        walk_up() {
-          echo "user"
-        }
-
-        "$@"
+  Context "when scope is user"
+    scope_walker() {
+      walk_up() {
+        echo "user"
       }
 
-      It "should print scope section in purple"
-        When run help
-        The status should be success
-        The variable report_called_with should include "$(colorize "$TASK" purple)"
-      End
+      "$@"
+    }
+
+    It "should print scope section in purple"
+      When run help
+      The status should be success
+      The variable report_called_with should include "$(colorize "$TASK" purple)"
     End
+  End
 
-    Context "when scope is team"
-      scope_walker() {
-        walk_up() {
-          echo "team"
-        }
-
-        "$@"
+  Context "when scope is team"
+    scope_walker() {
+      walk_up() {
+        echo "team"
       }
 
-      It "should print scope section in blue"
-        When run help
-        The status should be success
-        The variable report_called_with should include "$(colorize "$TASK" blue)"
-      End
+      "$@"
+    }
+
+    It "should print scope section in blue"
+      When run help
+      The status should be success
+      The variable report_called_with should include "$(colorize "$TASK" blue)"
     End
+  End
 
-    Context "when scope is system"
-      scope_walker() {
-        walk_up() {
-          echo "system"
-        }
-
-        "$@"
+  Context "when scope is system"
+    scope_walker() {
+      walk_up() {
+        echo "system"
       }
 
-      It "should print scope section in gray"
-        When run help
-        The status should be success
-        The variable report_called_with should include "$(colorize "$TASK" gray)"
-      End
+      "$@"
+    }
+
+    It "should print scope section in gray"
+      When run help
+      The status should be success
+      The variable report_called_with should include "$(colorize "$TASK" gray)"
     End
+  End
 
-    Context "when scope is builtin"
-      scope_walker() {
-        walk_up() {
-          echo "builtin"
-        }
-
-        "$@"
+  Context "when scope is builtin"
+    scope_walker() {
+      walk_up() {
+        echo "builtin"
       }
 
-      It "should print scope section in cyan"
-        When run help
-        The status should be success
-        The variable report_called_with should include "$(colorize "$TASK" cyan)"
-      End
+      "$@"
+    }
+
+    It "should print scope section in cyan"
+      When run help
+      The status should be success
+      The variable report_called_with should include "$(colorize "$TASK" cyan)"
     End
   End
 End
