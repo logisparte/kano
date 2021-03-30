@@ -35,7 +35,13 @@ _get_scope_title_output() {
   SCOPE_COLOR="$2"
 
   report message "|"
-  report message "$(colorize "# $SCOPE tasks" "$SCOPE_COLOR")|"
+  if [ "$SCOPE" = "team" ]; then
+    report message "$(colorize "# team ($KANO_TEAM) tasks" "$SCOPE_COLOR")|"
+
+  else
+    report message "$(colorize "# $SCOPE tasks" "$SCOPE_COLOR")|"
+  fi
+
   report message "|"
 }
 

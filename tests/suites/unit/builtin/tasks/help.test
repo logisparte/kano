@@ -9,6 +9,7 @@ SOME_DIRECTORY_2="some_directory_2"
 SOME_TASK_1="some_task_1"
 SOME_TASK_2="some_task_2"
 SOME_TASK_HELP_MESSAGE_1="some_task_help_message_1"
+SOME_TEAM="some_team"
 
 Describe "help"
   report() {
@@ -157,6 +158,13 @@ Describe "help"
 
       "$@"
     }
+
+    export KANO_TEAM="$SOME_TEAM"
+    It "should print a personalized scope section title"
+      When run help
+      The status should be success
+      The variable report_called_with should include "# team ($SOME_TEAM) tasks"
+    End
 
     It "should print scope section in blue"
       When run help
