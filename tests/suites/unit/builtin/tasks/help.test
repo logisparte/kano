@@ -2,14 +2,13 @@
 
 Include "$SOURCE_DIRECTORY/builtin/tasks/help"
 
-SOME_PROJECT_TASK="some_project_task"
-SOME_PROJECT_TASK_HELP_MESSAGE="some_project_task_help_message"
-SOME_USER_TASK="some_user_task"
-SOME_USER_TASK_HELP_MESSAGE="some_user_task_help_message"
-SOME_SYSTEM_TASK="some_system_task"
-SOME_SYSTEM_TASK_HELP_MESSAGE="some_system_task_help_message"
-SOME_BUILTIN_TASK="some_builtin_task"
-SOME_BUILTIN_TASK_HELP_MESSAGE="some_builtin_task_help_message"
+SOME_SCOPE_1="some_scope_1"
+SOME_SCOPE_2="some_scope_2"
+SOME_DIRECTORY_1="some_directory_1"
+SOME_DIRECTORY_2="some_directory_2"
+SOME_TASK_1="some_task_1"
+SOME_TASK_2="some_task_2"
+SOME_TASK_HELP_MESSAGE_1="some_task_help_message_1"
 
 Describe "help"
   report() {
@@ -23,36 +22,36 @@ Describe "help"
     %preserve report_called_with
   }
 
-  does_directory_exist() {
-    if [ "$1" = "$KANO_PROJECT_DIRECTORY/tasks" ]; then
-      "$DOES_PROJECT_TASK_DIRECTORY_EXIST"
+  scope_walker() {
+    walk_up() {
+      echo "$SOME_SCOPE_1"
+    }
 
-    elif [ "$1" = "$KANO_USER_DIRECTORY/tasks" ]; then
-      "$DOES_USER_TASK_DIRECTORY_EXIST"
+    "$@"
+  }
 
-    elif [ "$1" = "$KANO_SYSTEM_DIRECTORY/tasks" ]; then
-      "$DOES_SYSTEM_TASK_DIRECTORY_EXIST"
+  scope_mapper() {
+    map_directory_from_name() {
+      if [ "$1" = "$SOME_SCOPE_1" ]; then
+        echo "$SOME_DIRECTORY_1"
 
-    else
-      false
-    fi
+      elif [ "$1" = "$SOME_SCOPE_2" ]; then
+        echo "$SOME_DIRECTORY_2"
+
+      else
+        exit 1
+      fi
+    }
+
+    "$@"
   }
 
   list_files_in_directory() {
-    if [ "$1" = "$KANO_PROJECT_DIRECTORY/tasks" ]; then
-      echo "$SOME_PROJECT_TASK"
+    if [ "$1" = "$SOME_DIRECTORY_1/tasks" ]; then
+      echo "$SOME_TASK_1"
 
-    elif [ "$1" = "$KANO_USER_DIRECTORY/tasks" ]; then
-      echo "$SOME_USER_TASK"
-
-    elif [ "$1" = "$KANO_SYSTEM_DIRECTORY/tasks" ]; then
-      echo "$SOME_SYSTEM_TASK"
-
-    elif [ "$1" = "$KANO_BUILTIN_DIRECTORY/tasks" ]; then
-      echo "$SOME_BUILTIN_TASK"
-
-    else
-      return
+    elif [ "$1" = "$SOME_DIRECTORY_2/tasks" ]; then
+      echo "$SOME_TASK_2"
     fi
   }
 
@@ -64,145 +63,138 @@ Describe "help"
     true
   }
 
-  eval "${SOME_BUILTIN_TASK}_help() {
-    echo \"$SOME_BUILTIN_TASK_HELP_MESSAGE\"
-  }"
-
-  DOES_PROJECT_TASK_DIRECTORY_EXIST=false
-  DOES_USER_TASK_DIRECTORY_EXIST=false
-  DOES_SYSTEM_TASK_DIRECTORY_EXIST=false
-
   Describe "help"
-    It "shows the task help message"
+    It "has its own help message"
       When run help_help
       The status should be success
       The output should equal "Show this help message"
     End
-  End
 
-  Describe "task"
-    Context "when no tasks are defined in any scope"
-      It "should only list builtin tasks section"
+    Context "when tasks are defined in only one scope"
+      It "should print that scope's section"
         When run help
         The status should be success
-        The variable report_called_with should not include "Project tasks"
-        The variable report_called_with should not include "User tasks"
-        The variable report_called_with should not include "System tasks"
-        The variable report_called_with should include "Builtin tasks"
+        The variable report_called_with should include "# $SOME_SCOPE_1 tasks"
       End
 
-      It "should show builtin tasks help messages"
-        When run help
-        The status should be success
-        The variable report_called_with should include "$SOME_BUILTIN_TASK"
-        The variable report_called_with should include "$SOME_BUILTIN_TASK_HELP_MESSAGE"
-      End
-    End
-
-    Context "when tasks are defined in project scope"
-      DOES_PROJECT_TASK_DIRECTORY_EXIST=true
-      It "should list project tasks section"
-        When run help
-        The status should be success
-        The variable report_called_with should include "Project tasks"
-      End
-
-      Context "when project task has no help message"
+      Context "when a scope task has no help message"
         It "should display '-' as help message instead"
           When run help
           The status should be success
-          The variable report_called_with should include "$SOME_PROJECT_TASK"
+          The variable report_called_with should include "$SOME_TASK_1"
           The variable report_called_with should include "-"
         End
       End
 
-      Context "when system task has a help message"
-        eval "${SOME_PROJECT_TASK}_help() {
-          echo \"$SOME_PROJECT_TASK_HELP_MESSAGE\"
+      Context "when scope task has a help message"
+        eval "${SOME_TASK_1}_help() {
+          echo \"$SOME_TASK_HELP_MESSAGE_1\"
         }"
 
         It "should display the help message"
           When run help
           The status should be success
-          The variable report_called_with should include "$SOME_PROJECT_TASK"
-          The variable report_called_with should include "$SOME_PROJECT_TASK_HELP_MESSAGE"
+          The variable report_called_with should include "$SOME_TASK_1"
+          The variable report_called_with should include "$SOME_TASK_HELP_MESSAGE_1"
         End
       End
     End
 
-    Context "when tasks are defined in user scope"
-      DOES_USER_TASK_DIRECTORY_EXIST=true
-      It "should list user tasks section"
+    Context "when tasks are defined in multiple scopes"
+      scope_walker() {
+        walk_up() {
+          echo "$SOME_SCOPE_1"
+          echo "$SOME_SCOPE_2"
+        }
+
+        "$@"
+      }
+
+      It "should print all scope sections"
         When run help
         The status should be success
-        The variable report_called_with should include "User tasks"
-      End
-
-      Context "when user task has no help message"
-        It "should display '-' as help message instead"
-          When run help
-          The status should be success
-          The variable report_called_with should include "$SOME_USER_TASK"
-          The variable report_called_with should include "-"
-        End
-      End
-
-      Context "when user task has a help message"
-        eval "${SOME_USER_TASK}_help() {
-          echo \"$SOME_USER_TASK_HELP_MESSAGE\"
-        }"
-
-        It "should display the help message"
-          When run help
-          The status should be success
-          The variable report_called_with should include "$SOME_USER_TASK"
-          The variable report_called_with should include "$SOME_USER_TASK_HELP_MESSAGE"
-        End
+        The variable report_called_with should include "# $SOME_SCOPE_1 tasks"
+        The variable report_called_with should include "# $SOME_SCOPE_2 tasks"
       End
     End
 
-    Context "when tasks are defined in system scope"
-      DOES_SYSTEM_TASK_DIRECTORY_EXIST=true
-      It "should list sytem tasks section"
+    Context "when scope is project"
+      scope_walker() {
+        walk_up() {
+          echo "project"
+        }
+
+        "$@"
+      }
+
+      It "should print scope section in green"
         When run help
         The status should be success
-        The variable report_called_with should include "System tasks"
-      End
-
-      Context "when system task has no help message"
-        It "should display '-' as help message instead"
-          When run help
-          The status should be success
-          The variable report_called_with should include "$SOME_SYSTEM_TASK"
-          The variable report_called_with should include "-"
-        End
-      End
-
-      Context "when system task has a help message"
-        eval "${SOME_SYSTEM_TASK}_help() {
-          echo \"$SOME_SYSTEM_TASK_HELP_MESSAGE\"
-        }"
-
-        It "should display the help message"
-          When run help
-          The status should be success
-          The variable report_called_with should include "$SOME_SYSTEM_TASK"
-          The variable report_called_with should include "$SOME_SYSTEM_TASK_HELP_MESSAGE"
-        End
+        The variable report_called_with should include "$(colorize "$TASK" green)"
       End
     End
 
-    Context "when tasks are defined in all scopes"
-      DOES_PROJECT_TASK_DIRECTORY_EXIST=true
-      DOES_USER_TASK_DIRECTORY_EXIST=true
-      DOES_SYSTEM_TASK_DIRECTORY_EXIST=true
-      It "should list all tasks section"
+    Context "when scope is user"
+      scope_walker() {
+        walk_up() {
+          echo "user"
+        }
+
+        "$@"
+      }
+
+      It "should print scope section in purple"
         When run help
         The status should be success
-        The variable report_called_with should include "Project tasks"
-        The variable report_called_with should include "User tasks"
-        The variable report_called_with should include "System tasks"
-        The variable report_called_with should include "Builtin tasks"
+        The variable report_called_with should include "$(colorize "$TASK" purple)"
+      End
+    End
+
+    Context "when scope is team"
+      scope_walker() {
+        walk_up() {
+          echo "team"
+        }
+
+        "$@"
+      }
+
+      It "should print scope section in blue"
+        When run help
+        The status should be success
+        The variable report_called_with should include "$(colorize "$TASK" blue)"
+      End
+    End
+
+    Context "when scope is system"
+      scope_walker() {
+        walk_up() {
+          echo "system"
+        }
+
+        "$@"
+      }
+
+      It "should print scope section in gray"
+        When run help
+        The status should be success
+        The variable report_called_with should include "$(colorize "$TASK" gray)"
+      End
+    End
+
+    Context "when scope is builtin"
+      scope_walker() {
+        walk_up() {
+          echo "builtin"
+        }
+
+        "$@"
+      }
+
+      It "should print scope section in cyan"
+        When run help
+        The status should be success
+        The variable report_called_with should include "$(colorize "$TASK" cyan)"
       End
     End
   End
