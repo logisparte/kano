@@ -2,6 +2,8 @@
 
 Include "$SOURCE_DIRECTORY/builtin/tasks/init"
 
+SOME_TEAM="some_team"
+
 Describe "init"
   fail() {
     # shellcheck disable=SC2034
@@ -16,6 +18,9 @@ Describe "init"
 
     elif [ "$1" = "$KANO_USER_DIRECTORY" ]; then
       "$DOES_USER_DIRECTORY_EXIST"
+
+    elif [ "$1" = "$KANO_TEAMS_DIRECTORY/$SOME_TEAM" ]; then
+      "$DOES_TEAM_DIRECTORY_EXIST"
 
     elif [ "$1" = "$KANO_SYSTEM_DIRECTORY" ]; then
       "$DOES_SYSTEM_DIRECTORY_EXIST"
@@ -49,288 +54,359 @@ Describe "init"
 
   DOES_PROJECT_DIRECTORY_EXIST=false
   DOES_USER_DIRECTORY_EXIST=false
+  DOES_TEAM_DIRECTORY_EXIST=false
   DOES_SYSTEM_DIRECTORY_EXIST=false
   AM_I_ROOT=false
 
-  Describe "help"
-    It "shows the task help message"
-      When run init_help
-      The status should be success
-      The output should equal "Initialize tasks and/or kano directories"
+  It "has a help message"
+    When run init_help
+    The status should be success
+    The output should equal "Initialize tasks and/or kano directories"
+  End
+
+  Context "when an invalid scope is provided"
+    It "should fail with the expected error message"
+      When run init some_invalid_scope
+      The status should be failure
+      The variable fail_called_with should equal \
+        "Unknown scope 'some_invalid_scope'. Must be either 'project', 'user', 'team' or 'system'"
     End
   End
 
-  Describe "task"
-    Context "when an invalid scope is provided"
+  Context "when no scope provided"
+    Context "when project kano directory already exists"
+      DOES_PROJECT_DIRECTORY_EXIST=true
       It "should fail with the expected error message"
-        When run init some_invalid_scope
+        When run init
         The status should be failure
         The variable fail_called_with should equal \
-          "Unknown scope 'some_invalid_scope'. Must be either 'project', 'user' or 'system'"
+          "A kano directory already exists in scope 'project'"
       End
     End
 
-    Context "when no scope provided"
-      Context "when project kano directory already exists"
-        DOES_PROJECT_DIRECTORY_EXIST=true
-        It "should fail with the expected error message"
-          When run init
-          The status should be failure
-          The variable fail_called_with should equal \
-            "A kano directory already exists in scope 'project'"
-        End
+    Context "when no project kano directory"
+      It "should create project kano directory"
+        When run init
+        The status should be success
+        The variable create_directory_called_with should equal "$KANO_PROJECT_DIRECTORY"
+        The variable report_called_with should equal \
+          "success Initialized directory at: $KANO_PROJECT_DIRECTORY"
       End
+    End
+  End
 
-      Context "when no project kano directory"
-        It "should create project kano directory"
-          When run init
-          The status should be success
-          The variable create_directory_called_with should equal "$KANO_PROJECT_DIRECTORY"
-          The variable report_called_with should equal \
-            "success Initialized directory at: $KANO_PROJECT_DIRECTORY"
-        End
+  Context "when project scope provided"
+    Context "when project kano directory already exists"
+      DOES_PROJECT_DIRECTORY_EXIST=true
+      It "should fail with the expected error message"
+        When run init project
+        The status should be failure
+        The variable fail_called_with should equal \
+          "A kano directory already exists in scope 'project'"
       End
-
     End
 
-    Context "when project scope provided"
-      Context "when project kano directory already exists"
-        DOES_PROJECT_DIRECTORY_EXIST=true
+    Context "when no project kano directory"
+      It "should create project kano directory"
+        When run init project
+        The status should be success
+        The variable create_directory_called_with should equal "$KANO_PROJECT_DIRECTORY"
+        The variable report_called_with should equal \
+          "success Initialized directory at: $KANO_PROJECT_DIRECTORY"
+      End
+    End
+
+    Context "when unknown project template provided"
+      It "should fail with the expected error message"
+        When run init project unknown_template
+        The status should be failure
+        The variable fail_called_with should equal \
+          "Unknown template 'unknown_template'. Must be either 'directory' or 'task'"
+      End
+    End
+
+    Context "when project task template provided"
+      Context "when no task name provided"
         It "should fail with the expected error message"
-          When run init project
+          When run init project task
           The status should be failure
-          The variable fail_called_with should equal \
-            "A kano directory already exists in scope 'project'"
+          The variable fail_called_with should equal "No task name provided"
         End
       End
 
-      Context "when no project kano directory"
-        It "should create project kano directory"
-          When run init project
-          The status should be success
-          The variable create_directory_called_with should equal "$KANO_PROJECT_DIRECTORY"
-          The variable report_called_with should equal \
-            "success Initialized directory at: $KANO_PROJECT_DIRECTORY"
-        End
-      End
-
-      Context "when unknown project template provided"
-        It "should fail with the expected error message"
-          When run init project unknown_template
-          The status should be failure
-          The variable fail_called_with should equal \
-            "Unknown template 'unknown_template'. Must be either 'directory' or 'task'"
-        End
-      End
-
-      Context "when project task template provided"
-        Context "when no task name provided"
-          It "should fail with the expected error message"
-            When run init project task
-            The status should be failure
-            The variable fail_called_with should equal "No task name provided"
+      Context "when task name provided"
+        Context "when project kano directory already exists"
+          DOES_PROJECT_DIRECTORY_EXIST=true
+          It "should create project task"
+            When run init project task some_task
+            The status should be success
+            The variable create_task_called_with should equal \
+              "$KANO_PROJECT_DIRECTORY/tasks/some_task"
+            The variable report_called_with should equal \
+              "success Initialized task at: $KANO_PROJECT_DIRECTORY/tasks/some_task"
           End
         End
 
-        Context "when task name provided"
-          Context "when project kano directory already exists"
-            DOES_PROJECT_DIRECTORY_EXIST=true
-            It "should create project task"
-              When run init project task some_task
-              The status should be success
-              The variable create_task_called_with should equal \
-                "$KANO_PROJECT_DIRECTORY/tasks/some_task"
-              The variable report_called_with should equal \
-                "success Initialized task at: $KANO_PROJECT_DIRECTORY/tasks/some_task"
-            End
+        Context "when no project kano directory"
+          It "should create project kano directory"
+            When run init project task some_task
+            The status should be success
+            The variable create_directory_called_with should equal "$KANO_PROJECT_DIRECTORY"
           End
 
-          Context "when no project kano directory"
-            It "should create project kano directory"
-              When run init project task some_task
-              The status should be success
-              The variable create_directory_called_with should equal "$KANO_PROJECT_DIRECTORY"
-            End
-
-            It "should create project task"
-              When run init project task some_task
-              The status should be success
-              The variable create_task_called_with should equal \
-                "$KANO_PROJECT_DIRECTORY/tasks/some_task"
-              The variable report_called_with should equal \
-                "success Initialized task at: $KANO_PROJECT_DIRECTORY/tasks/some_task"
-            End
+          It "should create project task"
+            When run init project task some_task
+            The status should be success
+            The variable create_task_called_with should equal \
+              "$KANO_PROJECT_DIRECTORY/tasks/some_task"
+            The variable report_called_with should equal \
+              "success Initialized task at: $KANO_PROJECT_DIRECTORY/tasks/some_task"
           End
         End
       End
     End
+  End
 
-    Context "when user scope provided"
-      Context "when user kano directory already exists"
-        DOES_USER_DIRECTORY_EXIST=true
+  Context "when user scope provided"
+    Context "when user kano directory already exists"
+      DOES_USER_DIRECTORY_EXIST=true
+      It "should fail with the expected error message"
+        When run init user
+        The status should be failure
+        The variable fail_called_with should equal \
+          "A kano directory already exists in scope 'user'"
+      End
+    End
+
+    Context "when no user kano directory"
+      It "should create user kano directory"
+        When run init user
+        The status should be success
+        The variable create_directory_called_with should equal "$KANO_USER_DIRECTORY"
+        The variable report_called_with should equal \
+          "success Initialized directory at: $KANO_USER_DIRECTORY"
+      End
+    End
+
+    Context "when task template provided"
+      Context "when no task name provided"
         It "should fail with the expected error message"
-          When run init user
+          When run init user task
           The status should be failure
-          The variable fail_called_with should equal \
-            "A kano directory already exists in scope 'user'"
+          The variable fail_called_with should equal "No task name provided"
         End
       End
 
-      Context "when no user kano directory"
-        It "should create user kano directory"
-          When run init user
+      Context "when task name provided"
+        Context "when user kano directory already exists"
+          DOES_USER_DIRECTORY_EXIST=true
+          It "should create user task"
+            When run init user task some_task
+            The status should be success
+            The variable create_task_called_with should equal \
+              "$KANO_USER_DIRECTORY/tasks/some_task"
+            The variable report_called_with should equal \
+              "success Initialized task at: $KANO_USER_DIRECTORY/tasks/some_task"
+          End
+        End
+
+        Context "when no user kano directory"
+          It "should create user kano directory"
+            When run init user task some_task
+            The status should be success
+            The variable create_directory_called_with should equal "$KANO_USER_DIRECTORY"
+          End
+
+          It "should create user task"
+            When run init user task some_task
+            The status should be success
+            The variable create_task_called_with should equal \
+              "$KANO_USER_DIRECTORY/tasks/some_task"
+            The variable report_called_with should equal \
+              "success Initialized task at: $KANO_USER_DIRECTORY/tasks/some_task"
+          End
+        End
+      End
+    End
+  End
+
+  Context "when teams scope provided"
+    Context "when KANO_TEAM is not set"
+      It "should fail with the expected error message"
+        When run init team
+        The status should be failure
+        The variable fail_called_with should equal \
+          "Cannot initialize team task or directory (KANO_TEAM is not set)"
+      End
+    End
+
+    Context "when KANO_TEAM is set"
+      export KANO_TEAM="$SOME_TEAM"
+      Context "when team kano directory already exists"
+        DOES_TEAM_DIRECTORY_EXIST=true
+        It "should fail with the expected error message"
+          When run init team
+          The status should be failure
+          The variable fail_called_with should equal \
+            "A kano directory already exists in scope 'team'"
+        End
+      End
+
+      Context "when no team kano directory"
+        It "should create team kano directory"
+          When run init team
           The status should be success
-          The variable create_directory_called_with should equal "$KANO_USER_DIRECTORY"
+          The variable create_directory_called_with should equal "$KANO_TEAMS_DIRECTORY/$SOME_TEAM"
           The variable report_called_with should equal \
-            "success Initialized directory at: $KANO_USER_DIRECTORY"
+            "success Initialized directory at: $KANO_TEAMS_DIRECTORY/$SOME_TEAM"
         End
       End
 
       Context "when task template provided"
         Context "when no task name provided"
           It "should fail with the expected error message"
-            When run init user task
+            When run init team task
             The status should be failure
             The variable fail_called_with should equal "No task name provided"
           End
         End
 
         Context "when task name provided"
-          Context "when user kano directory already exists"
-            DOES_USER_DIRECTORY_EXIST=true
-            It "should create user task"
-              When run init user task some_task
+          Context "when team kano directory already exists"
+            DOES_TEAM_DIRECTORY_EXIST=true
+            It "should create team task"
+              When run init team task some_task
               The status should be success
               The variable create_task_called_with should equal \
-                "$KANO_USER_DIRECTORY/tasks/some_task"
+                "$KANO_TEAMS_DIRECTORY/$SOME_TEAM/tasks/some_task"
               The variable report_called_with should equal \
-                "success Initialized task at: $KANO_USER_DIRECTORY/tasks/some_task"
+                "success Initialized task at: $KANO_TEAMS_DIRECTORY/$SOME_TEAM/tasks/some_task"
             End
           End
 
-          Context "when no user kano directory"
-            It "should create user kano directory"
-              When run init user task some_task
+          Context "when no team kano directory"
+            It "should create team kano directory"
+              When run init team task some_task
               The status should be success
-              The variable create_directory_called_with should equal "$KANO_USER_DIRECTORY"
+              The variable create_directory_called_with should equal "$KANO_TEAMS_DIRECTORY/$SOME_TEAM"
             End
 
-            It "should create user task"
-              When run init user task some_task
+            It "should create team task"
+              When run init team task some_task
               The status should be success
               The variable create_task_called_with should equal \
-                "$KANO_USER_DIRECTORY/tasks/some_task"
+                "$KANO_TEAMS_DIRECTORY/$SOME_TEAM/tasks/some_task"
               The variable report_called_with should equal \
-                "success Initialized task at: $KANO_USER_DIRECTORY/tasks/some_task"
+                "success Initialized task at: $KANO_TEAMS_DIRECTORY/$SOME_TEAM/tasks/some_task"
             End
           End
         End
       End
     End
+  End
 
-    Context "when system scope provided"
-      Context "when I'm not the root user"
+  Context "when system scope provided"
+    Context "when I'm not the root user"
+      It "should fail with the expected error message"
+        When run init system
+        The status should be failure
+        The variable fail_called_with should equal \
+          "System tasks or directories can only be initialized by root user. Re-run with sudo"
+      End
+    End
+
+    Context "when I'm the root user"
+      AM_I_ROOT=true
+      Context "when system kano directory already exists"
+        DOES_SYSTEM_DIRECTORY_EXIST=true
         It "should fail with the expected error message"
           When run init system
           The status should be failure
           The variable fail_called_with should equal \
-            "System tasks or directories can only be initialized by root user. Re-run with sudo"
+            "A kano directory already exists in scope 'system'"
         End
       End
 
-      Context "when I'm the root user"
-        AM_I_ROOT=true
-        Context "when system kano directory already exists"
-          DOES_SYSTEM_DIRECTORY_EXIST=true
+      Context "when no system kano directory"
+        It "should create system kano directory"
+          When run init system
+          The status should be success
+          The variable create_directory_called_with should equal "$KANO_SYSTEM_DIRECTORY"
+          The variable report_called_with should equal \
+            "success Initialized directory at: $KANO_SYSTEM_DIRECTORY"
+        End
+      End
+
+      Context "when task template provided"
+        Context "when no task name provided"
           It "should fail with the expected error message"
-            When run init system
+            When run init system task
             The status should be failure
-            The variable fail_called_with should equal \
-              "A kano directory already exists in scope 'system'"
+            The variable fail_called_with should equal "No task name provided"
           End
         End
 
-        Context "when no system kano directory"
-          It "should create system kano directory"
-            When run init system
-            The status should be success
-            The variable create_directory_called_with should equal "$KANO_SYSTEM_DIRECTORY"
-            The variable report_called_with should equal \
-              "success Initialized directory at: $KANO_SYSTEM_DIRECTORY"
-          End
-        End
-
-        Context "when task template provided"
-          Context "when no task name provided"
-            It "should fail with the expected error message"
-              When run init system task
-              The status should be failure
-              The variable fail_called_with should equal "No task name provided"
+        Context "when task name provided"
+          Context "when system kano directory already exists"
+            DOES_SYSTEM_DIRECTORY_EXIST=true
+            It "should create system task"
+              When run init system task some_task
+              The status should be success
+              The variable create_task_called_with should equal \
+                "$KANO_SYSTEM_DIRECTORY/tasks/some_task"
+              The variable report_called_with should equal \
+                "success Initialized task at: $KANO_SYSTEM_DIRECTORY/tasks/some_task"
             End
           End
 
-          Context "when task name provided"
-            Context "when system kano directory already exists"
-              DOES_SYSTEM_DIRECTORY_EXIST=true
-              It "should create system task"
-                When run init system task some_task
-                The status should be success
-                The variable create_task_called_with should equal \
-                  "$KANO_SYSTEM_DIRECTORY/tasks/some_task"
-                The variable report_called_with should equal \
-                  "success Initialized task at: $KANO_SYSTEM_DIRECTORY/tasks/some_task"
-              End
+          Context "when no system kano directory"
+            It "should create system kano directory"
+              When run init system task some_task
+              The status should be success
+              The variable create_directory_called_with should equal "$KANO_SYSTEM_DIRECTORY"
             End
 
-            Context "when no system kano directory"
-              It "should create system kano directory"
-                When run init system task some_task
-                The status should be success
-                The variable create_directory_called_with should equal "$KANO_SYSTEM_DIRECTORY"
-              End
-
-              It "should create system task"
-                When run init system task some_task
-                The status should be success
-                The variable create_task_called_with should equal \
-                  "$KANO_SYSTEM_DIRECTORY/tasks/some_task"
-                The variable report_called_with should equal \
-                  "success Initialized task at: $KANO_SYSTEM_DIRECTORY/tasks/some_task"
-              End
+            It "should create system task"
+              When run init system task some_task
+              The status should be success
+              The variable create_task_called_with should equal \
+                "$KANO_SYSTEM_DIRECTORY/tasks/some_task"
+              The variable report_called_with should equal \
+                "success Initialized task at: $KANO_SYSTEM_DIRECTORY/tasks/some_task"
             End
           End
         End
       End
     End
+  End
 
-    Context "when task template provided as scope"
-      Context "when project kano directory already exists"
-        DOES_PROJECT_DIRECTORY_EXIST=true
-        It "should create project task"
-          When run init task some_task
-          The status should be success
-          The variable create_task_called_with should equal \
-            "$KANO_PROJECT_DIRECTORY/tasks/some_task"
-          The variable report_called_with should equal \
-            "success Initialized task at: $KANO_PROJECT_DIRECTORY/tasks/some_task"
-        End
+  Context "when task template provided as scope"
+    Context "when project kano directory already exists"
+      DOES_PROJECT_DIRECTORY_EXIST=true
+      It "should create project task"
+        When run init task some_task
+        The status should be success
+        The variable create_task_called_with should equal \
+          "$KANO_PROJECT_DIRECTORY/tasks/some_task"
+        The variable report_called_with should equal \
+          "success Initialized task at: $KANO_PROJECT_DIRECTORY/tasks/some_task"
+      End
+    End
+
+    Context "when no project kano directory"
+      It "should create project kano directory"
+        When run init task some_task
+        The status should be success
+        The variable create_directory_called_with should equal "$KANO_PROJECT_DIRECTORY"
       End
 
-      Context "when no project kano directory"
-        It "should create project kano directory"
-          When run init task some_task
-          The status should be success
-          The variable create_directory_called_with should equal "$KANO_PROJECT_DIRECTORY"
-        End
-
-        It "should create project task"
-          When run init task some_task
-          The status should be success
-          The variable create_task_called_with should equal \
-            "$KANO_PROJECT_DIRECTORY/tasks/some_task"
-          The variable report_called_with should equal \
-            "success Initialized task at: $KANO_PROJECT_DIRECTORY/tasks/some_task"
-        End
+      It "should create project task"
+        When run init task some_task
+        The status should be success
+        The variable create_task_called_with should equal \
+          "$KANO_PROJECT_DIRECTORY/tasks/some_task"
+        The variable report_called_with should equal \
+          "success Initialized task at: $KANO_PROJECT_DIRECTORY/tasks/some_task"
       End
     End
   End
