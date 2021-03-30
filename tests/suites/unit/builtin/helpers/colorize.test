@@ -74,6 +74,14 @@ Describe "colorize"
         End
       End
 
+      Context "when color is gray"
+        It "should return the text in gray"
+          When run colorize "$SOME_TEXT" "gray"
+          The status should be success
+          The output should equal "$(printf "\e[38;5;8m%s\e[0m" "$SOME_TEXT")"
+        End
+      End
+
       Context "when color is black"
         It "should return the text in black"
           When run colorize "$SOME_TEXT" "black"
@@ -90,6 +98,14 @@ Describe "colorize"
         End
       End
 
+      Context "when color is yellow"
+        It "should return the text in yellow"
+          When run colorize "$SOME_TEXT" "yellow"
+          The status should be success
+          The output should equal "$(printf "\e[38;5;11m%s\e[0m" "$SOME_TEXT")"
+        End
+      End
+
       Context "when color is green"
         It "should return the text in green"
           When run colorize "$SOME_TEXT" "green"
@@ -98,11 +114,11 @@ Describe "colorize"
         End
       End
 
-      Context "when color is yellow"
-        It "should return the text in yellow"
-          When run colorize "$SOME_TEXT" "yellow"
+      Context "when color is cyan"
+        It "should return the text in cyan"
+          When run colorize "$SOME_TEXT" "cyan"
           The status should be success
-          The output should equal "$(printf "\e[38;5;11m%s\e[0m" "$SOME_TEXT")"
+          The output should equal "$(printf "\e[38;5;14m%s\e[0m" "$SOME_TEXT")"
         End
       End
 
@@ -119,14 +135,6 @@ Describe "colorize"
           When run colorize "$SOME_TEXT" "purple"
           The status should be success
           The output should equal "$(printf "\e[38;5;5m%s\e[0m" "$SOME_TEXT")"
-        End
-      End
-
-      Context "when color is cyan"
-        It "should return the text in cyan"
-          When run colorize "$SOME_TEXT" "cyan"
-          The status should be success
-          The output should equal "$(printf "\e[38;5;14m%s\e[0m" "$SOME_TEXT")"
         End
       End
     End

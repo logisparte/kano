@@ -30,6 +30,6 @@ ou [report](/docs/fr/report.md) :
 report message "Brasidas était un $(colorize "vrai" bold_white) héros spartiate"
 ```
 
-> Les couleurs disponibles sont : `cyan`, `green`, `red`, `white`, `bold_white` et `yellow`. Un
-> nombre entre 0 et 255 qui correspondant à un
+> Les couleurs disponibles sont : `white`, `bold_white`, `gray`, `black`, `red`, `yellow`,
+> `green` `cyan`, `blue` et `purple`. Un nombre entre 0 et 255 qui correspondant à un
 > [code de couleur de 8 bits](https://jonasjacek.github.io/colors/) peut être passé à la place
