@@ -1,10 +1,11 @@
 #!/bin/sh
 
 . "$SOURCE_DIRECTORY/builtin/helpers/colorize"
-. "$SOURCE_DIRECTORY/builtin/helpers/does_directory_exist"
 . "$SOURCE_DIRECTORY/builtin/helpers/does_symbol_exist"
 . "$SOURCE_DIRECTORY/builtin/helpers/list_files_in_directory"
 . "$SOURCE_DIRECTORY/builtin/helpers/report"
+. "$SOURCE_DIRECTORY/scope_mapper"
+. "$SOURCE_DIRECTORY/scope_walker"
 
 help_help() {
   echo "Show this help message"
@@ -16,46 +17,85 @@ help() {
 }
 
 _get_output() {
-  PROJECT_TASK_DIRECTORY="$KANO_PROJECT_DIRECTORY/tasks"
-  if does_directory_exist "$PROJECT_TASK_DIRECTORY"; then
-    _get_output_for_scope "Project tasks" "green" "$PROJECT_TASK_DIRECTORY"
-  fi
-
-  USER_TASK_DIRECTORY="$KANO_USER_DIRECTORY/tasks"
-  if does_directory_exist "$USER_TASK_DIRECTORY"; then
-    _get_output_for_scope "User tasks" "purple" "$USER_TASK_DIRECTORY"
-  fi
-
-  SYSTEM_TASK_DIRECTORY="$KANO_SYSTEM_DIRECTORY/tasks"
-  if does_directory_exist "$SYSTEM_TASK_DIRECTORY"; then
-    _get_output_for_scope "System tasks" "blue" "$SYSTEM_TASK_DIRECTORY"
-  fi
-
-  BUILTIN_TASK_DIRECTORY="$KANO_BUILTIN_DIRECTORY/tasks"
-  _get_output_for_scope "Builtin tasks" "cyan" "$BUILTIN_TASK_DIRECTORY"
+  for WALKED_SCOPE in $(scope_walker walk_up); do
+    _get_scope_output "$WALKED_SCOPE"
+  done
 }
 
-_get_output_for_scope() {
-  SCOPE_TITLE="$1"
+_get_scope_output() {
+  SCOPE="$1"
+
+  SCOPE_COLOR="$(_map_color_from_name "$SCOPE")"
+  _get_scope_title_output "$SCOPE" "$SCOPE_COLOR"
+  _get_scope_content_output "$SCOPE" "$SCOPE_COLOR"
+}
+
+_get_scope_title_output() {
+  SCOPE="$1"
   SCOPE_COLOR="$2"
-  SCOPE_TASK_DIRECTORY="$3"
 
   report message "|"
-  report message "$(colorize "$SCOPE_TITLE" "$SCOPE_COLOR")|"
+  report message "$(colorize "# $SCOPE tasks" "$SCOPE_COLOR")|"
   report message "|"
+}
+
+_get_scope_content_output() {
+  SCOPE="$1"
+  SCOPE_COLOR="$2"
+
+  SCOPE_DIRECTORY="$(scope_mapper map_directory_from_name "$SCOPE")"
+  SCOPE_TASK_DIRECTORY="$SCOPE_DIRECTORY/tasks"
   for TASK in $(list_files_in_directory "$SCOPE_TASK_DIRECTORY"); do
-    _import "$SCOPE_TASK_DIRECTORY/$TASK"
-
-    TASK_HELP_FUNCTION="${TASK}_help"
-    if does_symbol_exist "$TASK_HELP_FUNCTION"; then
-      TASK_HELP="$("$TASK_HELP_FUNCTION")"
-
-    else
-      TASK_HELP="-"
-    fi
-
-    report message "$(colorize "$TASK" "$SCOPE_COLOR")|$TASK_HELP"
+    _get_task_output "$SCOPE_COLOR" "$SCOPE_TASK_DIRECTORY" "$TASK"
   done
+}
+
+_get_task_output() {
+  SCOPE_COLOR="$1"
+  SCOPE_TASK_DIRECTORY="$2"
+  TASK="$3"
+
+  _import "$SCOPE_TASK_DIRECTORY/$TASK"
+
+  TASK_HELP_FUNCTION="${TASK}_help"
+  if does_symbol_exist "$TASK_HELP_FUNCTION"; then
+    TASK_HELP="$("$TASK_HELP_FUNCTION")"
+
+  else
+    TASK_HELP="-"
+  fi
+
+  report message "$(colorize "$TASK" "$SCOPE_COLOR")|$TASK_HELP"
+}
+
+_map_color_from_name() {
+  SCOPE="$1"
+
+  case "$SCOPE" in
+    project)
+      echo "green"
+      ;;
+
+    user)
+      echo "purple"
+      ;;
+
+    team)
+      echo "blue"
+      ;;
+
+    system)
+      echo "gray"
+      ;;
+
+    builtin)
+      echo "cyan"
+      ;;
+
+    *)
+      echo "white"
+      ;;
+  esac
 }
 
 _format_output() {
