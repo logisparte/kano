@@ -30,6 +30,6 @@ or [report](/docs/en/report.md):
 report message "Brasidas was a $(colorize "true" bold_white) spartan hero"
 ```
 
-> Available colors are: `cyan`, `green`, `red`, `white`, `bold_white` and `yellow`. A number
-> between 0 and 255 matching an [8-bit color code](https://jonasjacek.github.io/colors/) can be
-> passed instead
+> Available colors are: `white`, `bold_white`, `gray`, `black`, `red`, `yellow`, `green` `cyan`,
+> `blue` and `purple`. A number between 0 and 255 matching an
+> [8-bit color code](https://jonasjacek.github.io/colors/) can be passed instead
