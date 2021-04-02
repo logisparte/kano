@@ -7,24 +7,38 @@ PACKAGE_NAME="kano"
 ARTIFACT="$PACKAGE_NAME.tar.gz"
 
 release_help() {
-  echo "Package the build, release it to the package registry and update package indexes"
+  echo "Package the build and release it either locally (to preview) or to GitHub"
 }
 
 release() {
   VERSION="$1"
 
   if [ -z "$CI" ]; then
-    _fail "this task must be handled by the CI/CD pipeline"
+    _fail "releases must be handled by the continuous delivery pipeline on GitHub"
   fi
 
-  if [ -z "$VERSION" ]; then
-    _fail "no version provided"
-  fi
+  case "$VERSION" in
+    *.*.*)
+      _release_version "$VERSION"
+      ;;
+
+    "")
+      _fail "no version provided"
+      ;;
+
+    *)
+      _fail "unknown version pattern. Must be a semantic version (x.x.x)"
+      ;;
+
+  esac
+}
+
+_release_version() {
+  VERSION="$1"
 
   _info "Releasing version: $VERSION"
 
   _info "Packaging artifact..."
-  _clear_release_directory
   _make_release
   tar -czf "$ARTIFACT" "$RELEASE_DIRECTORY"
   CHECKSUM="$(shasum -a 256 "$ARTIFACT" | cut -d " " -f 1)"
@@ -36,12 +50,9 @@ release() {
   report success "[release] Pull request for $PACKAGE_NAME $VERSION opened in package index"
 }
 
-_clear_release_directory() {
+_make_release() {
   rm -rf "$RELEASE_DIRECTORY"
   mkdir -p "$RELEASE_DIRECTORY"
-}
-
-_make_release() {
   cp LICENSE "$RELEASE_DIRECTORY"
   cp distribution/install "$RELEASE_DIRECTORY"
   cp distribution/uninstall "$RELEASE_DIRECTORY"
