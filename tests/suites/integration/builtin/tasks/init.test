@@ -2,7 +2,7 @@
 
 . "$KANO_HELPERS/does_symbol_exist"
 
-Include "$SOURCE_DIRECTORY/builtin/tasks/init"
+Include "$KANO_SOURCE_DIRECTORY/builtin/tasks/init"
 
 SOME_TASK="some_task"
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$SOURCE_DIRECTORY/scope_mapper"
+Include "$KANO_SOURCE_DIRECTORY/scope_mapper"
 
 SOME_TEAM="some_team"
 

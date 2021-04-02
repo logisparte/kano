@@ -1,9 +1,9 @@
 #!/bin/sh
 
-. "$SOURCE_DIRECTORY/builtin/helpers/am_i_root"
-. "$SOURCE_DIRECTORY/builtin/helpers/does_directory_exist"
-. "$SOURCE_DIRECTORY/builtin/helpers/fail"
-. "$SOURCE_DIRECTORY/builtin/helpers/report"
+. "$KANO_SOURCE_DIRECTORY/builtin/helpers/am_i_root"
+. "$KANO_SOURCE_DIRECTORY/builtin/helpers/does_directory_exist"
+. "$KANO_SOURCE_DIRECTORY/builtin/helpers/fail"
+. "$KANO_SOURCE_DIRECTORY/builtin/helpers/report"
 
 init_help() {
   echo "Initialize tasks and/or kano directories"

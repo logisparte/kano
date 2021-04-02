@@ -1,7 +1,7 @@
 #!/bin/sh
 
-export BUILD_DIRECTORY="build"
-export RELEASE_DIRECTORY="kano"
-export SOURCE_DIRECTORY="sources"
-export TEST_DIRECTORY="tests"
-export TEST_COVERAGE_DIRECTORY="coverage"
+export BUILD_DIRECTORY="$PWD/build"
+export RELEASE_DIRECTORY="$PWD/kano"
+export SOURCE_DIRECTORY="$PWD/sources"
+export TEST_DIRECTORY="$PWD/tests"
+export TEST_COVERAGE_DIRECTORY="$PWD/coverage"

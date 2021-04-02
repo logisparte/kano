@@ -63,8 +63,8 @@ _test() {
     --pattern "*.test" \
     --kcov \
     --kcov-options="\
-      --exclude-pattern=/$SOURCE_DIRECTORY/kano \
-      --include-pattern=/$SOURCE_DIRECTORY/"
+      --exclude-pattern=$SOURCE_DIRECTORY/kano \
+      --include-pattern=$SOURCE_DIRECTORY/"
   RESULT=$?
 
   # Reset environment

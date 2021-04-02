@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$SOURCE_DIRECTORY/builtin/helpers/confirm"
+Include "$KANO_SOURCE_DIRECTORY/builtin/helpers/confirm"
 
 SOME_QUESTION="Some question?"
 

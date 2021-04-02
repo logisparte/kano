@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$SOURCE_DIRECTORY/builtin/helpers/fail"
+Include "$KANO_SOURCE_DIRECTORY/builtin/helpers/fail"
 
 SOME_ERROR_MESSAGE="Some error message"
 

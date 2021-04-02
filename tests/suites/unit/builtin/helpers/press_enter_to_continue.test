@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$SOURCE_DIRECTORY/builtin/helpers/press_enter_to_continue"
+Include "$KANO_SOURCE_DIRECTORY/builtin/helpers/press_enter_to_continue"
 
 SOME_MESSAGE="Some message"
 
