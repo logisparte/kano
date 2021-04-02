@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$SOURCE_DIRECTORY/builtin/helpers/colorize"
+Include "$KANO_SOURCE_DIRECTORY/builtin/helpers/colorize"
 
 SOME_TEXT="some text"
 

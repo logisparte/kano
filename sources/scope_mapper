@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. "$SOURCE_DIRECTORY/builtin/helpers/fail"
+. "$KANO_SOURCE_DIRECTORY/builtin/helpers/fail"
 
 scope_mapper() {
   PROJECT_SCOPE="project"

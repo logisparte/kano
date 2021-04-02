@@ -1,11 +1,11 @@
 #!/bin/sh
 
-. "$SOURCE_DIRECTORY/builtin/helpers/colorize"
-. "$SOURCE_DIRECTORY/builtin/helpers/does_symbol_exist"
-. "$SOURCE_DIRECTORY/builtin/helpers/list_files_in_directory"
-. "$SOURCE_DIRECTORY/builtin/helpers/report"
-. "$SOURCE_DIRECTORY/scope_mapper"
-. "$SOURCE_DIRECTORY/scope_walker"
+. "$KANO_SOURCE_DIRECTORY/builtin/helpers/colorize"
+. "$KANO_SOURCE_DIRECTORY/builtin/helpers/does_symbol_exist"
+. "$KANO_SOURCE_DIRECTORY/builtin/helpers/list_files_in_directory"
+. "$KANO_SOURCE_DIRECTORY/builtin/helpers/report"
+. "$KANO_SOURCE_DIRECTORY/scope_mapper"
+. "$KANO_SOURCE_DIRECTORY/scope_walker"
 
 help_help() {
   echo "Show this help message"

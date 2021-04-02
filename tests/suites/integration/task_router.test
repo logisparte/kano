@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$SOURCE_DIRECTORY/task_router"
+Include "$KANO_SOURCE_DIRECTORY/task_router"
 
 SOME_TASK="some_task"
 SOME_PARAMETER="some_parameter"

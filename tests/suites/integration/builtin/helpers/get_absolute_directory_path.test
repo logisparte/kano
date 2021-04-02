@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$SOURCE_DIRECTORY/builtin/helpers/get_absolute_directory_path"
+Include "$KANO_SOURCE_DIRECTORY/builtin/helpers/get_absolute_directory_path"
 
 TEST_DATA_DIRECTORY="$TEST_DIRECTORY/data/get_absolute_directory_path_test"
 
@@ -21,6 +21,6 @@ Describe "get_absolute_directory_path"
 
   It "should return the absolute path to the file's directory"
     When run get_absolute_directory_path "$SOME_FILE"
-    The output should equal "$PWD/$TEST_DATA_DIRECTORY"
+    The output should equal "$TEST_DATA_DIRECTORY"
   End
 End

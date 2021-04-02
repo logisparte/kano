@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$SOURCE_DIRECTORY/builtin/tasks/help"
+Include "$KANO_SOURCE_DIRECTORY/builtin/tasks/help"
 
 SOME_SCOPE_1="some_scope_1"
 SOME_SCOPE_2="some_scope_2"
