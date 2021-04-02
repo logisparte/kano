@@ -1,0 +1,46 @@
+#!/bin/sh
+
+. "$KANO_HELPERS/report"
+
+EXECUTABLE_DIRECTORY="/usr/local/bin"
+
+dev_help() {
+  echo "Toggle between using the version of kano under development and the installed one"
+}
+
+dev() {
+  on() {
+    if ! _is_kano_dev_version; then
+      mv "$EXECUTABLE_DIRECTORY/kano" "$EXECUTABLE_DIRECTORY/_kano"
+      ln -s "$SOURCE_DIRECTORY/kano" "$EXECUTABLE_DIRECTORY/kano"
+    fi
+
+    report success "[dev] Now using development version of kano"
+  }
+
+  off() {
+    if _is_kano_dev_version; then
+      rm "$EXECUTABLE_DIRECTORY/kano"
+      mv "$EXECUTABLE_DIRECTORY/_kano" "$EXECUTABLE_DIRECTORY/kano"
+    fi
+
+    report success "[dev] Now using installed version of kano"
+  }
+
+  if [ -z "$*" ]; then
+    if _is_kano_dev_version; then
+      report info "[dev] Currently using development version of kano"
+
+    else
+      report info "[dev] Currently using installed version of kano"
+    fi
+
+  else
+    "$@"
+  fi
+}
+
+_is_kano_dev_version() {
+  [ "$(readlink "$EXECUTABLE_DIRECTORY/kano")" = "$SOURCE_DIRECTORY/kano" ]
+  return $?
+}
