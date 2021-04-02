@@ -1,5 +1,7 @@
 FROM ghcr.io/logisparte/helot:2.0.0
 
+ENV PATH="${PATH}:/usr/local/go/bin:/root/go/bin"
+
 RUN DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt-get install -y -q --no-install-recommends \
@@ -26,7 +28,8 @@ RUN DEBIAN_FRONTEND=noninteractive \
     && mv "shellspec-$SHELLSPEC_VERSION" shellspec \
     && ln -s /usr/local/opt/shellspec/shellspec /usr/local/bin/shellspec \
     && KCOV_VERSION="38" \
-    && curl -L "https://github.com/SimonKagstrom/kcov/archive/$KCOV_VERSION.tar.gz" | tar -xz \
+    && curl -L "https://github.com/SimonKagstrom/kcov/archive/$KCOV_VERSION.tar.gz" \
+      | tar -xz \
     && mv "kcov-$KCOV_VERSION" kcov \
     && mkdir kcov/build \
     && cd kcov/build \
@@ -34,8 +37,6 @@ RUN DEBIAN_FRONTEND=noninteractive \
     && make \
     && make install \
     && cd / \
-    && curl -L https://golang.org/dl/go1.16.linux-amd64.tar.gz | tar -C /usr/local -xz \
-    && echo "export PATH=\"\$PATH:/usr/local/go/bin\"" >> "$HOME/.profile" \
-    && echo "export PATH=\"\$PATH:/root/go/bin\"" >> "$HOME/.profile" \
-    && . "$HOME/.profile" \
+    && curl -L https://golang.org/dl/go1.16.linux-amd64.tar.gz \
+      | tar -C /usr/local -xz \
     && GO111MODULE=on go get mvdan.cc/sh/v3/cmd/shfmt
