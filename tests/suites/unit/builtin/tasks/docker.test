@@ -1,0 +1,96 @@
+#!/bin/sh
+
+Include "$KANO_SOURCE_DIRECTORY/builtin/tasks/docker"
+
+Describe "docker"
+  fail() {
+    # shellcheck disable=SC2034
+    fail_called_with="$*"
+    %preserve fail_called_with
+    exit 1
+  }
+
+  does_directory_exist() {
+    if [ "$1" = "$KANO_PROJECT_DIRECTORY" ]; then
+      "$DOES_PROJECT_DIRECTORY_EXIST"
+
+    else
+      false
+    fi
+  }
+
+  does_file_exist() {
+    if [ "$1" = "$KANO_PROJECT_DIRECTORY/Dockerfile" ]; then
+      "$DOES_DOCKERFILE_EXIST"
+
+    else
+      false
+    fi
+  }
+
+  _is_docker_installed() {
+    "$IS_DOCKER_INSTALLED"
+  }
+
+  _docker() {
+    # shellcheck disable=SC2034
+    docker_called_with="$*"
+    %preserve docker_called_with
+  }
+
+  IS_DOCKER_INSTALLED=true
+  DOES_PROJECT_DIRECTORY_EXIST=true
+  DOES_DOCKERFILE_EXIST=true
+
+  Context "when docker is not installed"
+    IS_DOCKER_INSTALLED=false
+    It "should fail with the expected error message"
+      When run docker
+      The status should be failure
+      The variable fail_called_with should equal "Docker is not installed"
+    End
+  End
+
+  Context "when project kano directory does not exist"
+    DOES_PROJECT_DIRECTORY_EXIST=false
+    It "should fail with the expected error message"
+      When run docker
+      The status should be failure
+      The variable fail_called_with should equal "No kano directory exists in project"
+    End
+  End
+
+  Context "when no Dockerfile in project kano directory"
+    DOES_DOCKERFILE_EXIST=false
+    It "should fail with the expected error message"
+      When run docker
+      The status should be failure
+      The variable fail_called_with should equal "No Dockerfile in project kano directory"
+    End
+  End
+
+  Describe "build"
+    It "should build the development image"
+      When run docker build
+      The status should be success
+      The variable docker_called_with should start_with "build"
+      The variable docker_called_with should include "--file $KANO_PROJECT_DIRECTORY/Dockerfile"
+      The variable docker_called_with should include "--tag kano_${KANO_PROJECT_NAME}:local"
+      The variable docker_called_with should include "--cache-from kano_${KANO_PROJECT_NAME}:local"
+      The variable docker_called_with should end_with "."
+    End
+
+    Context "when passing extra docker build arguments"
+      It "should build the development image with extra arguments"
+        When run docker build --build-arg some_argument=some_argument
+        The status should be success
+        The variable docker_called_with should start_with "build"
+        The variable docker_called_with should include "--file $KANO_PROJECT_DIRECTORY/Dockerfile"
+        The variable docker_called_with should include "--tag kano_${KANO_PROJECT_NAME}:local"
+        The variable docker_called_with should include "--cache-from kano_${KANO_PROJECT_NAME}:local"
+        The variable docker_called_with should include "--build-arg some_argument=some_argument"
+        The variable docker_called_with should end_with "."
+      End
+    End
+  End
+End

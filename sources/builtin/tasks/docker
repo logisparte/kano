@@ -1,0 +1,45 @@
+#!/bin/sh
+
+. "$KANO_SOURCE_DIRECTORY/builtin/helpers/does_directory_exist"
+. "$KANO_SOURCE_DIRECTORY/builtin/helpers/does_file_exist"
+. "$KANO_SOURCE_DIRECTORY/builtin/helpers/fail"
+
+SYSTEM_DOCKER="$(command -v docker)"
+DEVELOPMENT_IMAGE="kano_${KANO_PROJECT_NAME}:local"
+
+docker_help() {
+  echo "Run other tasks inside a Docker container"
+}
+
+docker() {
+  if ! _is_docker_installed; then
+    fail "Docker is not installed"
+  fi
+
+  if ! does_directory_exist "$KANO_PROJECT_DIRECTORY"; then
+    fail "No kano directory exists in project"
+  fi
+
+  if ! does_file_exist "$KANO_PROJECT_DIRECTORY/Dockerfile"; then
+    fail "No Dockerfile in project kano directory"
+  fi
+
+  build() {
+    _docker build \
+      --file "$KANO_PROJECT_DIRECTORY/Dockerfile" \
+      --tag "$DEVELOPMENT_IMAGE" \
+      --cache-from "$DEVELOPMENT_IMAGE" \
+      "$@" .
+  }
+
+  "$@"
+}
+
+_is_docker_installed() {
+  [ -n "$SYSTEM_DOCKER" ]
+  return $?
+}
+
+_docker() {
+  "$SYSTEM_DOCKER" "$@"
+}
