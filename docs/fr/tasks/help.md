@@ -2,9 +2,20 @@
 
 > Read in [English](/docs/en/tasks/help.md)
 
+## Description
+
 Utiliser la tâche `help` dans n'importe quel répertoire pour lister toutes les tâches
-disponibles et leurs descriptions. C'est aussi la tâche par défaut si aucun nom de tâche n'est
-fourni
+disponibles et leurs descriptions
+
+> C'est aussi la tâche par défaut si aucun nom de tâche n'est fourni
+
+## Usage
+
+```shell
+kano help
+```
+
+## Exemples
 
 Pour définir une description pour une tâche, définir une fonction dans le fichier de la tâche
 avec le même nom que la tâche, mais avec le suffixe `_help` :
