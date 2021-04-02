@@ -12,8 +12,5 @@ teardown() {
 
 _uninstall_git_hooks() {
   report info "[teardown] Uninstalling git hooks"
-  GIT_DIRECTORY="$(git rev-parse --git-dir)"
-  GIT_HOOK_DIRECTORY="$GIT_DIRECTORY/hooks"
-  rm -rf "$GIT_HOOK_DIRECTORY"
-  mkdir "$GIT_HOOK_DIRECTORY"
+  git config --local --unset core.hooksPath
 }
