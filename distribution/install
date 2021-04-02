@@ -11,13 +11,8 @@ install() {
 }
 
 _uninstall_previous_installation_if_any() {
-  if [ -d "$INSTALLATION_DIRECTORY" ]; then
-    if [ -f "$INSTALLATION_DIRECTORY/uninstall" ]; then
+  if [ -f "$INSTALLATION_DIRECTORY/uninstall" ]; then
     "$INSTALLATION_DIRECTORY/uninstall"
-
-    else
-      rm -rf "$INSTALLATION_DIRECTORY"
-    fi
   fi
 }
 
