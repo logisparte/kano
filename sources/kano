@@ -9,6 +9,9 @@ kano() {
   export KANO_USER_DIRECTORY="$HOME/.kano_user"
   export KANO_PROJECT_DIRECTORY="$PWD/.kano"
 
+  KANO_PROJECT_NAME="$(basename "$PWD")"
+  export KANO_PROJECT_NAME
+
   export KANO_HELPERS="$KANO_BUILTIN_DIRECTORY/helpers"
 
   . "$KANO_SOURCE_DIRECTORY/task_router"
