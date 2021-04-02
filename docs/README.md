@@ -121,6 +121,28 @@ kano lint
 
 > The `pre-commit` git hook prevents committing code with lint errors
 
+### Dev
+
+To change the version of `kano` to the one under development:
+
+```shell
+kano dev on
+```
+
+> The installed version will still be available through the `_kano` symbol
+
+To change it back to the installed version:
+
+```shell
+kano dev off
+```
+
+At any time, to know which version is currently used:
+
+```shell
+kano dev
+```
+
 ### Build
 
 To build the project:
@@ -130,3 +152,15 @@ kano build
 ```
 
 > The `/build` directory will contain the artifact
+
+### Release
+
+> This task should only be executed by the continuous delivery pipeline
+
+To release the project on GitHub and update logisparte's package index:
+
+```shell
+kano release VERSION
+```
+
+> `VERSION` should be in standard semantic versioning format
