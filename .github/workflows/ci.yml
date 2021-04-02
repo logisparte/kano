@@ -40,6 +40,7 @@ jobs:
       - name: Build branch image
         run: |
           docker build \
+            --file .kano/Dockerfile \
             --tag "$DEV_IMAGE" \
             --cache-from "$DEV_IMAGE" \
             .
