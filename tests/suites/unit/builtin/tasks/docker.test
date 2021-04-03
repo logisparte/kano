@@ -32,6 +32,10 @@ Describe "docker"
     "$IS_DOCKER_INSTALLED"
   }
 
+  _does_development_image_exist() {
+    "$DOES_DEVELOPMENT_IMAGE_EXIST"
+  }
+
   _docker() {
     # shellcheck disable=SC2034
     docker_called_with="$*"
@@ -41,6 +45,7 @@ Describe "docker"
   IS_DOCKER_INSTALLED=true
   DOES_PROJECT_DIRECTORY_EXIST=true
   DOES_DOCKERFILE_EXIST=true
+  DOES_DEVELOPMENT_IMAGE_EXIST=false
 
   Context "when docker is not installed"
     IS_DOCKER_INSTALLED=false
@@ -76,8 +81,16 @@ Describe "docker"
       The variable docker_called_with should start_with "build"
       The variable docker_called_with should include "--file $KANO_PROJECT_DIRECTORY/Dockerfile"
       The variable docker_called_with should include "--tag kano_${KANO_PROJECT_NAME}:local"
-      The variable docker_called_with should include "--cache-from kano_${KANO_PROJECT_NAME}:local"
       The variable docker_called_with should end_with "."
+    End
+
+    Context "when development image already exist"
+      DOES_DEVELOPMENT_IMAGE_EXIST=true
+      It "should build it from cache"
+        When run docker build
+        The status should be success
+        The variable docker_called_with should include "--cache-from kano_${KANO_PROJECT_NAME}:local"
+      End
     End
 
     Context "when passing extra docker build arguments"
@@ -87,7 +100,6 @@ Describe "docker"
         The variable docker_called_with should start_with "build"
         The variable docker_called_with should include "--file $KANO_PROJECT_DIRECTORY/Dockerfile"
         The variable docker_called_with should include "--tag kano_${KANO_PROJECT_NAME}:local"
-        The variable docker_called_with should include "--cache-from kano_${KANO_PROJECT_NAME}:local"
         The variable docker_called_with should include "--build-arg some_argument=some_argument"
         The variable docker_called_with should end_with "."
       End
