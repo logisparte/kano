@@ -34,7 +34,7 @@ with `curl`
 
 #### Homebrew
 
-First, if not already done, track our package index:
+First, if not already done, track logisparte's package index:
 
 ```shell
 brew tap logisparte/packages
@@ -46,7 +46,7 @@ Then install the package:
 brew install kano
 ```
 
-#### Manually
+#### Manual
 
 Download the package and run the installation script:
 
@@ -111,9 +111,9 @@ kano format
 
 ### Lint
 
-[ShellCheck](https://github.com/koalaman/shellcheck) is used to lint shell code.
-[MarkdownLint](https://github.com/igorshubovych/markdownlint-cli) is used to lint markdown code.
-To lint all code:
+[ShellCheck](https://github.com/koalaman/shellcheck) is used to analyze shell code.
+[MarkdownLint](https://github.com/igorshubovych/markdownlint-cli) is used to analyze markdown
+code. To analyze all code:
 
 ```shell
 kano lint
@@ -157,7 +157,7 @@ kano build
 
 > This task should only be executed by the continuous delivery pipeline
 
-To release the project on GitHub and update logisparte's package index:
+To release a version of the project on GitHub and update logisparte's package index:
 
 ```shell
 kano release VERSION

@@ -37,7 +37,7 @@ avec `curl`
 
 #### Homebrew
 
-Tout d'abord, si ce n'est pas déjà fait, suivre notre index de paquet :
+Tout d'abord, si ce n'est pas déjà fait, suivre l'index de paquet de logisparte :
 
 ```shell
 brew tap logisparte/packages
@@ -49,7 +49,7 @@ Puis installer le paquet :
 brew install kano
 ```
 
-#### Manuellement
+#### Manuel
 
 Télécharger le paquet et exécuter le script d'installation:
 
@@ -111,13 +111,13 @@ markdown et yaml. Pour formatter tous les fichiers :
 kano format
 ```
 
-> Le _git hook_ `pre-commit` s'assure que le code commité est formatté
+> Le _git hook_ `pre-commit` s'assure que le code commis est formatté
 
 ### Lint
 
-[ShellCheck](https://github.com/koalaman/shellcheck) est utilisé pour linter le code shell.
-[MarkdownLint](https://github.com/igorshubovych/markdownlint-cli) est utilisé pour linter le
-code markdown. Pour linter tout le code :
+[ShellCheck](https://github.com/koalaman/shellcheck) est utilisé pour analyser le code shell.
+[MarkdownLint](https://github.com/igorshubovych/markdownlint-cli) est utilisé pour analyser le
+code markdown. Pour analyser tout le code :
 
 ```shell
 kano lint
@@ -161,7 +161,7 @@ kano build
 
 > Cette tâche ne devrait être exécutée que par le pipeline de déploiement continu
 
-Pour releaser le projet sur GitHub et mettre à jour l'index de paquet de logisparte :
+Pour publier une version du projet sur GitHub et mettre à jour l'index de paquet de logisparte :
 
 ```shell
 kano release VERSION
