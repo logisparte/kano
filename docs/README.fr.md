@@ -125,7 +125,7 @@ code markdown. Pour analyser tout le code :
 kano lint
 ```
 
-> Le _git hook_ `pre-commit` empêche de commiter du code avec des erreurs de lint
+> Le _git hook_ `pre-commit` empêche de commettre du code avec des erreurs de lint
 
 ### Dev
 
