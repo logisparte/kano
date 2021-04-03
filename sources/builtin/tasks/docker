@@ -8,7 +8,7 @@ SYSTEM_DOCKER="$(command -v docker)"
 DEVELOPMENT_IMAGE="kano_${KANO_PROJECT_NAME}:local"
 
 docker_help() {
-  echo "Run other tasks inside a Docker container"
+  echo "Run project tasks inside a Docker container"
 }
 
 docker() {
@@ -25,14 +25,27 @@ docker() {
   fi
 
   build() {
-    _docker build \
-      --file "$KANO_PROJECT_DIRECTORY/Dockerfile" \
-      --tag "$DEVELOPMENT_IMAGE" \
-      --cache-from "$DEVELOPMENT_IMAGE" \
-      "$@" .
+    if _does_development_image_exist; then
+      _docker_build --cache-from "$DEVELOPMENT_IMAGE" "$@"
+
+    else
+      _docker_build "$@"
+    fi
   }
 
   "$@"
+}
+
+_docker_build() {
+  _docker build \
+    --file "$KANO_PROJECT_DIRECTORY/Dockerfile" \
+    --tag "$DEVELOPMENT_IMAGE" \
+    "$@" .
+}
+
+_does_development_image_exist() {
+  _docker image inspect "$DEVELOPMENT_IMAGE" > /dev/null 2>&1
+  return $?
 }
 
 _is_docker_installed() {
