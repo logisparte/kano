@@ -39,6 +39,20 @@ docker() {
     fi
   }
 
+  run() {
+    if ! _does_development_image_exist; then
+      fail "Development image does not exist. Run 'kano docker build'"
+    fi
+
+    # shellcheck disable=SC2046
+    _docker run \
+      --rm \
+      --log-driver=none \
+      --volume "$PWD:$PWD" \
+      --workdir "$PWD" \
+      $(_insert_image_between_docker_run_options_and_command "$@" | xargs)
+  }
+
   "$@"
 }
 
@@ -47,6 +61,69 @@ _docker_build() {
     --file "$KANO_PROJECT_DIRECTORY/Dockerfile" \
     --tag "$DEVELOPMENT_IMAGE" \
     "$@" .
+}
+
+_insert_image_between_docker_run_options_and_command() {
+  HAS_INSERTED_IMAGE=false
+  IS_EXPECTING_VALUE=false
+  for ARGUMENT in "$@"; do
+    if $HAS_INSERTED_IMAGE; then
+      echo "$ARGUMENT"
+
+    elif _is_docker_run_flag "$ARGUMENT"; then
+      echo "$ARGUMENT"
+
+    elif _is_option_or_flag "$ARGUMENT"; then
+      echo "$ARGUMENT"
+      IS_EXPECTING_VALUE=true
+
+    elif $IS_EXPECTING_VALUE; then
+      echo "$ARGUMENT"
+      IS_EXPECTING_VALUE=false
+
+    else
+      echo "$DEVELOPMENT_IMAGE"
+      echo "$ARGUMENT"
+      HAS_INSERTED_IMAGE=true
+    fi
+  done
+}
+
+_is_docker_run_flag() {
+  case "$1" in
+    --detach | \
+      -d* | \
+      --disable-content-trust | \
+      --help | \
+      --init | \
+      --interactive | \
+      -i* | \
+      --no-healthcheck | \
+      --privileged | \
+      --read-only | \
+      --rm | \
+      --sig-proxy | \
+      --tty | \
+      -t*)
+      true
+      ;;
+
+    *)
+      false
+      ;;
+  esac
+}
+
+_is_option_or_flag() {
+  case "$1" in
+    -*)
+      true
+      ;;
+
+    *)
+      false
+      ;;
+  esac
 }
 
 _does_development_image_exist() {

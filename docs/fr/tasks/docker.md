@@ -12,8 +12,7 @@ Utiliser la tâche `docker` pour exécuter d'autres tâches dans un conteneur Do
 
 Si un `Dockerfile` est présent dans le répertoire `.kano` local, il sera utilisé pour créer
 l'image de l'environnement de développement du projet. L'image de développement devrait contenir
-toutes le dépendances du projet, incluant `kano` (voir
-[installation manuelle](/docs/README.fr.md####Manuellement))
+toutes le dépendances du projet
 
 Pour bâtir l'image de développement du projet:
 
@@ -28,3 +27,20 @@ Pour l'effacer :
 ```shell
 kano docker delete
 ```
+
+### Run
+
+Pour exécuter une commande dans un conteneur de développement :
+
+```shell
+kano docker run COMMAND
+```
+
+> Les options usuelles de `docker run` peuvent être utilisées
+
+Par défaut, ce conteneur:
+
+- Sera non-persistent
+- Ne créera pas de fichiers de log
+- Aura le projet embarqué comme volume
+- Aura le projet configuré comme répertoire de travail
