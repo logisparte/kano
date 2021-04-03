@@ -14,7 +14,7 @@ release() {
   VERSION="$1"
 
   if [ -z "$CI" ]; then
-    _fail "releases must be handled by the continuous delivery pipeline on GitHub"
+    _fail "Releases must be handled by the continuous delivery pipeline on GitHub"
   fi
 
   case "$VERSION" in
@@ -23,11 +23,11 @@ release() {
       ;;
 
     "")
-      _fail "no version provided"
+      _fail "No version provided"
       ;;
 
     *)
-      _fail "unknown version pattern. Must be a semantic version (x.x.x)"
+      _fail "Unknown version pattern. Must be a semantic version (x.x.x)"
       ;;
 
   esac
@@ -109,5 +109,5 @@ _info() {
 _fail() {
   MESSAGE="$1"
 
-  fail "[release] Error: $MESSAGE"
+  fail "[release] $MESSAGE"
 }

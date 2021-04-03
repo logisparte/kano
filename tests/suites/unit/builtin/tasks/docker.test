@@ -2,6 +2,8 @@
 
 Include "$KANO_SOURCE_DIRECTORY/builtin/tasks/docker"
 
+DEVELOPMENT_IMAGE="kano_${KANO_PROJECT_NAME}:local"
+
 Describe "docker"
   fail() {
     # shellcheck disable=SC2034
@@ -79,8 +81,9 @@ Describe "docker"
       When run docker build
       The status should be success
       The variable docker_called_with should start_with "build"
-      The variable docker_called_with should include "--file $KANO_PROJECT_DIRECTORY/Dockerfile"
-      The variable docker_called_with should include "--tag kano_${KANO_PROJECT_NAME}:local"
+      The variable docker_called_with should include \
+        "--file $KANO_PROJECT_DIRECTORY/Dockerfile"
+      The variable docker_called_with should include "--tag $DEVELOPMENT_IMAGE"
       The variable docker_called_with should end_with "."
     End
 
@@ -89,7 +92,7 @@ Describe "docker"
       It "should build it from cache"
         When run docker build
         The status should be success
-        The variable docker_called_with should include "--cache-from kano_${KANO_PROJECT_NAME}:local"
+        The variable docker_called_with should include "--cache-from $DEVELOPMENT_IMAGE"
       End
     End
 
@@ -98,9 +101,11 @@ Describe "docker"
         When run docker build --build-arg some_argument=some_argument
         The status should be success
         The variable docker_called_with should start_with "build"
-        The variable docker_called_with should include "--file $KANO_PROJECT_DIRECTORY/Dockerfile"
-        The variable docker_called_with should include "--tag kano_${KANO_PROJECT_NAME}:local"
-        The variable docker_called_with should include "--build-arg some_argument=some_argument"
+        The variable docker_called_with should include \
+          "--file $KANO_PROJECT_DIRECTORY/Dockerfile"
+        The variable docker_called_with should include "--tag $DEVELOPMENT_IMAGE"
+        The variable docker_called_with should include \
+          "--build-arg some_argument=some_argument"
         The variable docker_called_with should end_with "."
       End
     End
@@ -120,7 +125,80 @@ Describe "docker"
       It "should delete it"
         When run docker delete
         The status should be success
-        The variable docker_called_with should equal "image rm kano_${KANO_PROJECT_NAME}:local"
+        The variable docker_called_with should equal "image rm $DEVELOPMENT_IMAGE"
+      End
+    End
+  End
+
+  Describe "run"
+    Context "when development image does not exist"
+      It "should fail with the expected error message"
+        When run docker run some_command
+        The status should be failure
+        The variable fail_called_with should equal \
+          "Development image does not exist. Run 'kano docker build'"
+      End
+    End
+
+    Context "when development image exists"
+      DOES_DEVELOPMENT_IMAGE_EXIST=true
+      It "should run command in container"
+        When run docker run some_command
+        The status should be success
+        The variable docker_called_with should start_with "run"
+        The variable docker_called_with should include "--rm"
+        The variable docker_called_with should include "--log-driver=none"
+        The variable docker_called_with should include "--volume $PWD:$PWD"
+        The variable docker_called_with should include "--workdir $PWD"
+        The variable docker_called_with should end_with "$DEVELOPMENT_IMAGE some_command"
+      End
+
+      Context "when passing extra docker run options"
+        It "should run command in container with extra arguments"
+          When run docker run \
+            --some-docker-run-option some_value \
+            some_command --some-command-option
+          The status should be success
+          The variable docker_called_with should start_with "run"
+          The variable docker_called_with should include "--some-docker-run-option some_value"
+          The variable docker_called_with should end_with \
+            "$DEVELOPMENT_IMAGE some_command --some-command-option"
+        End
+      End
+
+      Context "when passing extra docker run flags"
+        It "should run command in container with extra flags"
+          When run docker run \
+            --interactive \
+            some_command --some-command-option
+          The status should be success
+          The variable docker_called_with should start_with "run"
+          The variable docker_called_with should include "--interactive"
+          The variable docker_called_with should end_with \
+            "$DEVELOPMENT_IMAGE some_command --some-command-option"
+        End
+      End
+
+      Context "when passing extra docker run flags and options"
+        It "should run command in container with extra flags"
+          When run docker run \
+            --interactive \
+            --some-docker-run-option some_value \
+            --some-docker-other-run-option some_value \
+            --detach \
+            -it \
+            some_command --some-command-option
+          The status should be success
+          The variable docker_called_with should start_with "run"
+          The variable docker_called_with should include "--interactive"
+          The variable docker_called_with should include "--some-docker-run-option some_value"
+          The variable docker_called_with should include \
+            "--some-docker-other-run-option some_value"
+          The variable docker_called_with should include "--detach"
+          The variable docker_called_with should include "-it"
+          The variable docker_called_with should end_with \
+            "$DEVELOPMENT_IMAGE some_command --some-command-option"
+        End
       End
     End
   End
