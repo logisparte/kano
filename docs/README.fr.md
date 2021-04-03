@@ -66,21 +66,23 @@ Voir la [documentation](/docs/fr/usage.md)
 
 ### Setup
 
-Les _git hooks_ sont utilisés pour assurer l'intégrité des commits. Pour installer les _git
-hooks_ :
+Une image Docker de dévelopment est utilisée afin d'encapsuler les dépendances du projet ainsi
+que son environnement d'exécution. Des _git hooks_ sont aussi utilisés pour assurer l'intégrité
+des commits. Pour bâtir l'image et installer les _git hooks_ :
 
 ```shell
 kano setup
 ```
 
-> Faire juste après avoir cloné le dépôt
+> Exécuter juste après avoir cloné le dépôt
 
-### Teardown
+### Reset
 
-Pour défaire tout ce que `setup` a fait :
+Pour effacer l'image Docker de développement, désinstaller les _git hooks_ et effacer tous les
+fichiers générés :
 
 ```shell
-kano teardown
+kano reset
 ```
 
 ### Test

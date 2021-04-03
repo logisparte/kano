@@ -105,4 +105,23 @@ Describe "docker"
       End
     End
   End
+
+  Describe "delete"
+    Context "when development image does not exist"
+      It "should not invoke docker"
+        When run docker delete
+        The status should be success
+        The variable docker_called_with should be undefined
+      End
+    End
+
+    Context "when development image exists"
+      DOES_DEVELOPMENT_IMAGE_EXIST=true
+      It "should delete it"
+        When run docker delete
+        The status should be success
+        The variable docker_called_with should equal "image rm kano_${KANO_PROJECT_NAME}:local"
+      End
+    End
+  End
 End

@@ -63,20 +63,22 @@ See the [documentation](/docs/en/usage.md)
 
 ### Setup
 
-Git hooks are used to ensure commit integrity. To install the git hooks:
+A development docker image is used to encapsulate project dependencies and runtime environment.
+Git hooks are also used to ensure commit integrity. To build the image and install the git
+hooks:
 
 ```shell
 kano setup
 ```
 
-> This should be done right after cloning the repository
+> Execute right after cloning the repository
 
-### Teardown
+### Reset
 
-To undo whatever `setup` did:
+To delete the development docker image, uninstall the git hooks and delete all generated files:
 
 ```shell
-kano teardown
+kano reset
 ```
 
 ### Test

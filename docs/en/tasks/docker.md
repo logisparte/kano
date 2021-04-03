@@ -22,3 +22,9 @@ kano docker build
 ```
 
 > Usual `docker build` options and flags may be provided
+
+To delete it:
+
+```shell
+kano docker delete
+```
