@@ -4,7 +4,7 @@
 . "$KANO_SOURCE_DIRECTORY/builtin/helpers/does_file_exist"
 . "$KANO_SOURCE_DIRECTORY/builtin/helpers/fail"
 
-SYSTEM_DOCKER="$(command -v docker)"
+SYSTEM_DOCKER="$(command -v docker || echo)"
 DEVELOPMENT_IMAGE="kano_${KANO_PROJECT_NAME}:local"
 
 docker_help() {
