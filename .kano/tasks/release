@@ -40,7 +40,7 @@ _release_version() {
 
   _info "Packaging artifact..."
   _make_release
-  tar -czf "$ARTIFACT" "$RELEASE_DIRECTORY"
+  tar -czf "$ARTIFACT" -C "$RELEASE_DIRECTORY" .
   CHECKSUM="$(shasum -a 256 "$ARTIFACT" | cut -d " " -f 1)"
   _info "Packaged $ARTIFACT, checksum is: $CHECKSUM"
 
