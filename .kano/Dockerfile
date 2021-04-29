@@ -1,6 +1,6 @@
-FROM ghcr.io/logisparte/helot:2.0.0
+FROM ghcr.io/logisparte/helot:2.4.0
 
-ENV PATH="${PATH}:/usr/local/go/bin:/root/go/bin"
+ENV PATH="$PATH:/usr/local/go/bin:/root/go/bin"
 
 RUN DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
