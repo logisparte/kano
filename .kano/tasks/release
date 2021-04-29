@@ -53,18 +53,15 @@ _release_version() {
 _make_release() {
   rm -rf "$RELEASE_DIRECTORY"
   mkdir -p "$RELEASE_DIRECTORY"
-  PACKAGE_DIRECTORY="$RELEASE_DIRECTORY/kano"
-  mkdir -p "$PACKAGE_DIRECTORY"
+  cp LICENSE "$RELEASE_DIRECTORY"
+  cp distribution/install "$RELEASE_DIRECTORY"
+  cp distribution/uninstall "$RELEASE_DIRECTORY"
 
-  cp LICENSE "$PACKAGE_DIRECTORY"
-  cp distribution/install "$PACKAGE_DIRECTORY"
-  cp distribution/uninstall "$PACKAGE_DIRECTORY"
+  mkdir -p "$RELEASE_DIRECTORY/share/doc"
+  cp -R docs/* "$RELEASE_DIRECTORY/share/doc"
 
-  mkdir -p "$PACKAGE_DIRECTORY/share/doc"
-  cp -R docs/* "$PACKAGE_DIRECTORY/share/doc"
-
-  mkdir -p "$PACKAGE_DIRECTORY/libexec"
-  cp -R "$BUILD_DIRECTORY"/* "$PACKAGE_DIRECTORY/libexec"
+  mkdir -p "$RELEASE_DIRECTORY/libexec"
+  cp -R "$BUILD_DIRECTORY"/* "$RELEASE_DIRECTORY/libexec"
 }
 
 _login_to_github() {

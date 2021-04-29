@@ -131,7 +131,7 @@ them, task files must simply source their required helpers:
 
 . "$KANO_HELPERS/confirm"
 . "$KANO_HELPERS/report"
-. "$KANO_HELPERS/succeed"
+. "$KANO_HELPERS/fail"
 # ...
 ```
 
