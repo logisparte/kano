@@ -2,7 +2,8 @@
 
 Include "$KANO_SOURCE_DIRECTORY/builtin/tasks/docker"
 
-DEVELOPMENT_IMAGE="kano_${KANO_PROJECT_NAME}:local"
+DEVELOPMENT_IMAGE="kano_${KANO_PROJECT_NAME}"
+DEVELOPMENT_CONTAINER="${DEVELOPMENT_IMAGE}_container"
 
 Describe "docker"
   fail() {
@@ -30,6 +31,10 @@ Describe "docker"
     fi
   }
 
+  _is_inside_development_container() {
+    "$IS_INSIDE_DEVELOPMENT_CONTAINER"
+  }
+
   _is_docker_installed() {
     "$IS_DOCKER_INSTALLED"
   }
@@ -38,16 +43,32 @@ Describe "docker"
     "$DOES_DEVELOPMENT_IMAGE_EXIST"
   }
 
+  _does_development_container_exist() {
+    "$DOES_DEVELOPMENT_CONTAINER_EXIST"
+  }
+
   _docker() {
     # shellcheck disable=SC2034
     docker_called_with="$*"
     %preserve docker_called_with
   }
 
+  IS_INSIDE_DEVELOPMENT_CONTAINER=false
   IS_DOCKER_INSTALLED=true
   DOES_PROJECT_DIRECTORY_EXIST=true
   DOES_DOCKERFILE_EXIST=true
   DOES_DEVELOPMENT_IMAGE_EXIST=false
+  DOES_DEVELOPMENT_CONTAINER_EXIST=false
+
+  Context "when inside a development container"
+    IS_INSIDE_DEVELOPMENT_CONTAINER=true
+    It "should fail with the expected error message"
+      When run docker
+      The status should be failure
+      The variable fail_called_with should equal \
+        "Cannot run docker task inside a development container"
+    End
+  End
 
   Context "when docker is not installed"
     IS_DOCKER_INSTALLED=false
@@ -125,7 +146,7 @@ Describe "docker"
       It "should delete it"
         When run docker delete
         The status should be success
-        The variable docker_called_with should equal "image rm $DEVELOPMENT_IMAGE"
+        The variable docker_called_with should include "image rm $DEVELOPMENT_IMAGE"
       End
     End
   End
@@ -146,8 +167,10 @@ Describe "docker"
         When run docker run some_command
         The status should be success
         The variable docker_called_with should start_with "run"
+        The variable docker_called_with should include "--interactive"
+        The variable docker_called_with should include "--log-driver none"
         The variable docker_called_with should include "--rm"
-        The variable docker_called_with should include "--log-driver=none"
+        The variable docker_called_with should include "--tty"
         The variable docker_called_with should include "--volume $PWD:$PWD"
         The variable docker_called_with should include "--workdir $PWD"
         The variable docker_called_with should end_with "$DEVELOPMENT_IMAGE some_command"
@@ -169,11 +192,11 @@ Describe "docker"
       Context "when passing extra docker run flags"
         It "should run command in container with extra flags"
           When run docker run \
-            --interactive \
+            --disable-content-trust \
             some_command --some-command-option
           The status should be success
           The variable docker_called_with should start_with "run"
-          The variable docker_called_with should include "--interactive"
+          The variable docker_called_with should include "--disable-content-trust"
           The variable docker_called_with should end_with \
             "$DEVELOPMENT_IMAGE some_command --some-command-option"
         End
@@ -182,23 +205,105 @@ Describe "docker"
       Context "when passing extra docker run flags and options"
         It "should run command in container with extra flags"
           When run docker run \
-            --interactive \
+            --disable-content-trust \
             --some-docker-run-option some_value \
             --some-docker-other-run-option some_value \
             --detach \
-            -it \
             some_command --some-command-option
           The status should be success
           The variable docker_called_with should start_with "run"
-          The variable docker_called_with should include "--interactive"
+          The variable docker_called_with should include "--disable-content-trust"
           The variable docker_called_with should include "--some-docker-run-option some_value"
           The variable docker_called_with should include \
             "--some-docker-other-run-option some_value"
           The variable docker_called_with should include "--detach"
-          The variable docker_called_with should include "-it"
           The variable docker_called_with should end_with \
             "$DEVELOPMENT_IMAGE some_command --some-command-option"
         End
+      End
+    End
+  End
+
+  Describe "start"
+    Context "when development image does not exist"
+      It "should fail with the expected error message"
+        When run docker start
+        The status should be failure
+        The variable fail_called_with should equal \
+          "Development image does not exist. Run 'kano docker build'"
+      End
+    End
+
+    Context "when development image exists"
+      DOES_DEVELOPMENT_IMAGE_EXIST=true
+      It "should start container"
+        When run docker start
+        The status should be success
+        The variable docker_called_with should start_with "run"
+        The variable docker_called_with should include "--detach"
+        The variable docker_called_with should include "--interactive"
+        The variable docker_called_with should include "--log-driver none"
+        The variable docker_called_with should include "--name $DEVELOPMENT_CONTAINER"
+        The variable docker_called_with should include "--rm"
+        The variable docker_called_with should include "--tty"
+        The variable docker_called_with should include "--volume $PWD:$PWD"
+        The variable docker_called_with should include "--workdir $PWD"
+        The variable docker_called_with should end_with "$DEVELOPMENT_IMAGE"
+      End
+
+      Context "when passing extra docker run options"
+        It "should run command in container with extra arguments"
+          When run docker start --some-docker-run-option some_value
+          The status should be success
+          The variable docker_called_with should start_with "run"
+          The variable docker_called_with should include "--some-docker-run-option some_value"
+          The variable docker_called_with should end_with "$DEVELOPMENT_IMAGE"
+        End
+      End
+
+      Context "when passing extra docker run flags"
+        It "should run command in container with extra flags"
+          When run docker start --disable-content-trust
+          The status should be success
+          The variable docker_called_with should start_with "run"
+          The variable docker_called_with should include "--disable-content-trust"
+          The variable docker_called_with should end_with "$DEVELOPMENT_IMAGE"
+        End
+      End
+
+      Context "when passing extra docker run flags and options"
+        It "should run command in container with extra flags"
+          When run docker start \
+            --disable-content-trust \
+            --some-docker-run-option some_value \
+            --some-docker-other-run-option some_value \
+          The status should be success
+          The variable docker_called_with should start_with "run"
+          The variable docker_called_with should include "--disable-content-trust"
+          The variable docker_called_with should include "--some-docker-run-option some_value"
+          The variable docker_called_with should include \
+            "--some-docker-other-run-option some_value"
+          The variable docker_called_with should end_with "$DEVELOPMENT_IMAGE"
+        End
+      End
+    End
+  End
+
+  Describe "stop"
+    Context "when development container does not exist"
+      It "should fail with the expected error message"
+        When run docker stop
+        The status should be failure
+        The variable fail_called_with should equal "Development container does not exist. Run 'kano docker start'"
+      End
+    End
+
+    Context "when development container exists"
+      DOES_DEVELOPMENT_CONTAINER_EXIST=true
+      It "should stop container"
+        When run docker stop
+        The status should be success
+        The variable docker_called_with should equal "stop $DEVELOPMENT_CONTAINER"
       End
     End
   End
