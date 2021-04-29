@@ -42,5 +42,5 @@ _delete_artifacts() {
 _info() {
   MESSAGE="$1"
 
-  report info "[teardown] $MESSAGE"
+  report info "[reset] $MESSAGE"
 }
