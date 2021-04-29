@@ -4,14 +4,18 @@
 . "$KANO_SOURCE_DIRECTORY/builtin/helpers/does_file_exist"
 . "$KANO_SOURCE_DIRECTORY/builtin/helpers/fail"
 
-SYSTEM_DOCKER="$(command -v docker || echo)"
-DEVELOPMENT_IMAGE="kano_${KANO_PROJECT_NAME}:local"
+DEVELOPMENT_IMAGE="kano_${KANO_PROJECT_NAME}"
+DEVELOPMENT_CONTAINER="${DEVELOPMENT_IMAGE}_container"
 
 docker_help() {
   echo "Run project tasks inside a Docker container"
 }
 
 docker() {
+  if _is_inside_development_container; then
+    fail "Cannot run docker task inside a development container"
+  fi
+
   if ! _is_docker_installed; then
     fail "Docker is not installed"
   fi
@@ -45,12 +49,23 @@ docker() {
     fi
 
     # shellcheck disable=SC2046
-    _docker run \
-      --rm \
-      --log-driver=none \
-      --volume "$PWD:$PWD" \
-      --workdir "$PWD" \
-      $(_insert_image_between_docker_run_options_and_command "$@" | xargs)
+    _docker_run $(_insert_image_between_docker_run_options_and_command "$@" | xargs)
+  }
+
+  start() {
+    if ! _does_development_image_exist; then
+      fail "Development image does not exist. Run 'kano docker build'"
+    fi
+
+    _docker_run --detach --name "$DEVELOPMENT_CONTAINER" "$@" "$DEVELOPMENT_IMAGE"
+  }
+
+  stop() {
+    if ! _does_development_container_exist; then
+      fail "Development container does not exist. Run 'kano docker start'"
+    fi
+
+    _docker stop "$DEVELOPMENT_CONTAINER"
   }
 
   "$@"
@@ -61,6 +76,18 @@ _docker_build() {
     --file "$KANO_PROJECT_DIRECTORY/Dockerfile" \
     --tag "$DEVELOPMENT_IMAGE" \
     "$@" .
+}
+
+_docker_run() {
+  _docker run \
+    --env KANO_DOCKER_IS_INSIDE_DEVELOPMENT_CONTAINER=true \
+    --interactive \
+    --log-driver none \
+    --rm \
+    --tty \
+    --volume "$PWD:$PWD" \
+    --workdir "$PWD" \
+    "$@"
 }
 
 _insert_image_between_docker_run_options_and_command() {
@@ -127,15 +154,22 @@ _is_option_or_flag() {
 }
 
 _does_development_image_exist() {
-  _docker image inspect "$DEVELOPMENT_IMAGE" > /dev/null 2>&1
-  return $?
+  _docker image ls | grep -q "$DEVELOPMENT_IMAGE"
+}
+
+_does_development_container_exist() {
+  _docker ps -a | grep -q "$DEVELOPMENT_CONTAINER"
 }
 
 _is_docker_installed() {
-  [ -n "$SYSTEM_DOCKER" ]
+  _docker --help > /dev/null 2>&1
+}
+
+_is_inside_development_container() {
+  [ -n "$KANO_DOCKER_IS_INSIDE_DEVELOPMENT_CONTAINER" ]
   return $?
 }
 
 _docker() {
-  "$SYSTEM_DOCKER" "$@"
+  command docker "$@"
 }
