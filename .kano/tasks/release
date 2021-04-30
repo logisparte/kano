@@ -3,8 +3,9 @@
 . "$KANO_HELPERS/fail"
 . "$KANO_HELPERS/report"
 
-PACKAGE_NAME="kano"
-ARTIFACT="$PACKAGE_NAME.tar.gz"
+PACKAGE="kano"
+PACKAGE_ARCHIVE="$PACKAGE.tar.gz"
+PACKAGE_DIRECTORY="$RELEASE_DIRECTORY/$PACKAGE"
 
 release_help() {
   echo "Package the build and release it either locally (to preview) or to GitHub"
@@ -38,30 +39,30 @@ _release_version() {
 
   _info "Releasing version: $VERSION"
 
-  _info "Packaging artifact..."
-  _make_release
-  tar -czf "$ARTIFACT" -C "$RELEASE_DIRECTORY" .
-  CHECKSUM="$(shasum -a 256 "$ARTIFACT" | cut -d " " -f 1)"
-  _info "Packaged $ARTIFACT, checksum is: $CHECKSUM"
+  _info "Packaging..."
+  _make_package_directory
+  tar -czf "$PACKAGE_ARCHIVE" -C "$RELEASE_DIRECTORY" .
+  CHECKSUM="$(shasum -a 256 "$PACKAGE_ARCHIVE" | cut -d " " -f 1)"
+  _info "Packaged $PACKAGE_ARCHIVE, checksum is: $CHECKSUM"
 
   _login_to_github
   _release_to_github "$VERSION" "$CHECKSUM"
   _update_package_definition_in_index "$VERSION" "$CHECKSUM"
-  report success "[release] Pull request for $PACKAGE_NAME $VERSION opened in package index"
+  report success "[release] Pull request for $PACKAGE $VERSION opened in package index"
 }
 
-_make_release() {
-  rm -rf "$RELEASE_DIRECTORY"
-  mkdir -p "$RELEASE_DIRECTORY"
-  cp LICENSE "$RELEASE_DIRECTORY"
-  cp distribution/install "$RELEASE_DIRECTORY"
-  cp distribution/uninstall "$RELEASE_DIRECTORY"
+_make_package_directory() {
+  rm -rf "$PACKAGE_DIRECTORY"
+  mkdir -p "$PACKAGE_DIRECTORY"
+  cp LICENSE "$PACKAGE_DIRECTORY"
+  cp distribution/install "$PACKAGE_DIRECTORY"
+  cp distribution/uninstall "$PACKAGE_DIRECTORY"
 
-  mkdir -p "$RELEASE_DIRECTORY/share/doc"
-  cp -R docs/* "$RELEASE_DIRECTORY/share/doc"
+  mkdir -p "$PACKAGE_DIRECTORY/share/doc"
+  cp -R docs/* "$PACKAGE_DIRECTORY/share/doc"
 
-  mkdir -p "$RELEASE_DIRECTORY/libexec"
-  cp -R "$BUILD_DIRECTORY"/* "$RELEASE_DIRECTORY/libexec"
+  mkdir -p "$PACKAGE_DIRECTORY/libexec"
+  cp -R "$BUILD_DIRECTORY"/* "$PACKAGE_DIRECTORY/libexec"
 }
 
 _login_to_github() {
@@ -75,14 +76,14 @@ _release_to_github() {
 
   _info "Creating release"
   DESCRIPTION="$(git tag -n32 -l "$VERSION" | sed -E "s/$VERSION//" | awk '{$1=$1};1')"
-  gh release create "$VERSION" "$ARTIFACT" --title "$VERSION" --notes "$DESCRIPTION"
+  gh release create "$VERSION" "$PACKAGE_ARCHIVE" --title "$VERSION" --notes "$DESCRIPTION"
 }
 
 _update_package_definition_in_index() {
   VERSION="$1"
   CHECKSUM="$2"
   PROJECT_DIRECTORY="$PWD"
-  PACKAGE_INDEX_RELEASE_BRANCH_NAME="$PACKAGE_NAME-$VERSION"
+  PACKAGE_INDEX_RELEASE_BRANCH_NAME="$PACKAGE-$VERSION"
 
   _info "Updating package definition"
   cd .. || fail
@@ -93,9 +94,9 @@ _update_package_definition_in_index() {
    LANG=C sed \
     -e "s/\${VERSION}/$VERSION/g" \
     -e "s/\${CHECKSUM}/$CHECKSUM/g" \
-    "$PROJECT_DIRECTORY/distribution/formula.rb" > "$PACKAGE_NAME.rb"
+    "$PROJECT_DIRECTORY/distribution/formula.rb" > "$PACKAGE.rb"
 
-  git commit -a -m "chore($PACKAGE_NAME): released $VERSION"
+  git commit -a -m "chore($PACKAGE): released $VERSION"
   git push origin "$PACKAGE_INDEX_RELEASE_BRANCH_NAME"
   gh pr create --fill --base master
 }

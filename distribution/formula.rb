@@ -9,9 +9,9 @@ class Kano < Formula
   depends_on "docker" => :optional
 
   def install
-    libexec.install Dir["libexec/*"]
-    doc.install Dir["share/doc/*"]
-    prefix.install "LICENSE"
+    libexec.install Dir["kano/libexec/*"]
+    doc.install Dir["kano/share/doc/*"]
+    prefix.install "kano/LICENSE"
     bin.write_exec_script (libexec/"kano")
   end
 
