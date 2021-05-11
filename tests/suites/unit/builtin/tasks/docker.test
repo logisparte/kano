@@ -307,4 +307,43 @@ Describe "docker"
       End
     End
   End
+
+  Describe "attach"
+    Context "when development container does not exist"
+      It "should fail with the expected error message"
+        When run docker attach
+        The status should be failure
+        The variable fail_called_with should equal "Development container does not exist. Run 'kano docker start'"
+      End
+    End
+
+    Context "when development container exists"
+      DOES_DEVELOPMENT_CONTAINER_EXIST=true
+      It "should attach to container"
+        When run docker attach
+        The status should be success
+        The variable docker_called_with should equal "attach $DEVELOPMENT_CONTAINER"
+      End
+
+      Context "when passing extra docker attach flags"
+        It "should attach to container with extra flags"
+          When run docker attach --no-stdin
+          The status should be success
+          The variable docker_called_with should start_with "attach"
+          The variable docker_called_with should include "--no-stdin"
+          The variable docker_called_with should end_with "$DEVELOPMENT_CONTAINER"
+        End
+      End
+
+      Context "when passing extra docker attach options"
+        It "should attach to container with extra options"
+          When run docker attach --detach-keys ctrl-y
+          The status should be success
+          The variable docker_called_with should start_with "attach"
+          The variable docker_called_with should include "--detach-keys ctrl-y"
+          The variable docker_called_with should end_with "$DEVELOPMENT_CONTAINER"
+        End
+      End
+    End
+  End
 End
