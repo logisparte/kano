@@ -68,6 +68,14 @@ docker() {
     _docker stop "$DEVELOPMENT_CONTAINER"
   }
 
+  attach() {
+    if ! _does_development_container_exist; then
+      fail "Development container does not exist. Run 'kano docker start'"
+    fi
+
+    _docker attach "$@" "$DEVELOPMENT_CONTAINER"
+  }
+
   "$@"
 }
 

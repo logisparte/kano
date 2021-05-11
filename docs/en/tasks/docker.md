@@ -74,8 +74,24 @@ By default, this container will:
 
 ### Stop
 
-To stop a development container running in the background:
+To stop the running development container:
 
 ```shell
 kano docker stop
+```
+
+### Attach
+
+To attach to the running development container:
+
+```shell
+kano docker attach
+```
+
+> Usual `docker attach` options and flags may be provided
+
+When attached, to exit the container:
+
+```shell
+exit
 ```

@@ -55,7 +55,7 @@ Par défaut, ce conteneur:
 
 ### Start
 
-Pour démarrer un contenenur de développement en arrière-plan afin de s'y attacher plus tard :
+Pour démarrer un conteneneur de développement en arrière-plan afin de s'y attacher plus tard :
 
 ```shell
 kano docker start [OPTIONS]
@@ -74,8 +74,24 @@ Par défaut, ce conteneur:
 
 ### Stop
 
-Pour arrêter un conteneur de développement démarré en arrière-plan :
+Pour arrêter le conteneur de développement en arrière-plan :
 
 ```shell
 kano docker stop
+```
+
+### Attach
+
+Pour s'attacher au conteneur de développement en arrière-plan :
+
+```shell
+kano docker attach
+```
+
+> Les options usuelles de `docker attach` peuvent être utilisées
+
+Une fois attaché, pour quitter le conteneur :
+
+```shell
+exit
 ```
