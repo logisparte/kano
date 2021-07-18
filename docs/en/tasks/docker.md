@@ -95,3 +95,180 @@ When attached, to exit the container:
 ```shell
 exit
 ```
+
+## Customization
+
+The development container can be tailored to a user preferences using a proxying user scope task
+also named `docker` (more information on scopes [here](/docs/en/usage.md##scopes)). This task
+should have the following form:
+
+```shell
+#!/bin/sh
+
+docker_help() {
+  echo "Proxies the builtin docker task with personal configurations"
+}
+
+docker() {
+  SUBTASK="$1"
+
+  case "$SUBTASK" in
+    run | start)
+      shift
+      kano -b docker "$SUBTASK" \
+        # custom docker run flags and options \
+        "$@"
+      ;;
+
+    *)
+      kano -b docker "$@"
+      ;;
+  esac
+}
+```
+
+> The proxy is made possible by the override `-b` flag. More information on override flags can
+> be found [here](/docs/en/usage.md##scopes)
+
+The following sections describe how a user may want to customize the development container
+
+### TERM
+
+To have consistent terminal colors with the host OS:
+
+```shell
+--env TERM="$TERM" \
+```
+
+### bash
+
+First, `bash` should be installed in the docker image and ideally set as the default shell:
+
+```docker
+# Dockerfile
+CMD /bin/bash
+RUN chsh -s /bin/bash root
+```
+
+Then, to mount a user `bash` configuration:
+
+```shell
+--volume "$HOME/.bashrc:/root/.bashrc" \
+```
+
+### zsh
+
+First, `zsh` should be installed in the docker image and ideally set as the default shell:
+
+```docker
+# Dockerfile
+CMD /bin/zsh
+RUN chsh -s /bin/zsh root
+```
+
+Then, to mount a user `zsh` configuration:
+
+```shell
+--volume "$HOME/.zshenv:/root/.zshenv" \
+--volume "$HOME/.zshrc:/root/.zshrc" \
+```
+
+### git
+
+First, `git` should be installed in the docker image. Then, to mount a `git` user configuration:
+
+```shell
+--volume "$HOME/.gitconfig:/root/.gitconfig" \
+```
+
+### ssh
+
+First, `ssh-client` should be installed in the docker image. Then, to mount an `ssh` user
+configuration:
+
+```shell
+--volume "$HOME/.ssh:/root/.ssh" \
+--volume "$SSH_AUTH_SOCK:$SSH_AUTH_SOCK" \
+--env SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
+```
+
+> Mouting the `$SSH_AUTH_SOCK` will forward the host's ssh agent in the docker container
+
+#### ssh and macOS
+
+If macOS Keychain is used to manage ssh passphrases, mounting the host's `ssh` configuration
+will not work directly since Keychain will not be available in the container. To work around
+this situation, the following configuration can be added to `$HOME/.ssh/config` to prompt for
+passphrases once per session if Keychain is not found:
+
+```text
+IgnoreUnknown UseKeychain
+UseKeychain yes
+AddKeysToAgent yes
+```
+
+### gpg
+
+First, `gnupg2` should be installed in the docker image. Then, to mount a `gpg` user
+configuration:
+
+```shell
+--volume "$HOME/.gnupg:/root/.gnupg" \
+```
+
+#### gpg and macOS
+
+If macOS Keychain is used to manage gpg passphrases, mounting the host's `gpg` configuration
+will not work directly since Keychain will not be available in the container. To work around
+this situation, the following configuration can be added to `$HOME/.gnupg/gpg.conf` and
+`$HOME/.gnupg/gpg-agent.conf` respectively to prompt for passphrases once per session:
+
+```text
+use-agent
+default-key KEY_ID
+```
+
+### gpg + ssh
+
+- Add `enable-ssh-support` in `~/.gnupg/gpg-agent.conf`
+- Generate gpg key subkey for authentication
+  ([see](http://littlehandytips.com/using-gpg-for-ssh-access-on-github/))
+  - but use ed25519 encryption
+- Add subkey to `~/.gnupg/sshcontrol`
+- Add the following to `.zshrc`:
+
+```shell
+#!/bin/sh
+
+GPG_TTY=$(tty)
+export GPG_TTY
+
+# Configure SSH to go through GPG
+SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+export SSH_AUTH_SOCK
+gpgconf --launch gpg-agent
+gpg-connect-agent updatestartuptty /bye > /dev/null
+```
+
+Still mount ssh configuration to keep known hosts:
+
+```shell
+--volume "$HOME/.ssh:/root/.ssh" \
+```
+
+### vim
+
+The development image should have `vim` installed, and ideally set as the default editor:
+
+```docker
+# Dockerfile
+ENV EDITOR="/usr/bin/vim"
+```
+
+To mount a vim user configuration, the following options should be added in the proxying docker
+task:
+
+```shell
+--volume "$HOME/.vim:/root/.vim" \
+--volume "$HOME/.vimrc:/root/.vimrc" \
+```

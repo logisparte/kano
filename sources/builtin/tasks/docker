@@ -88,7 +88,7 @@ _docker_build() {
 
 _docker_run() {
   _docker run \
-    --env KANO_DOCKER_IS_INSIDE_DEVELOPMENT_CONTAINER=true \
+    --env KANO_IS_IN_DOCKER=true \
     --interactive \
     --log-driver none \
     --rm \
@@ -174,7 +174,7 @@ _is_docker_installed() {
 }
 
 _is_inside_development_container() {
-  [ -n "$KANO_DOCKER_IS_INSIDE_DEVELOPMENT_CONTAINER" ]
+  [ -n "$KANO_IS_IN_DOCKER" ]
   return $?
 }
 
