@@ -4,64 +4,23 @@ on:
   pull_request:
     branches: [master]
 
-env:
-  REGISTRY_URL: ghcr.io
-  HELOT_GITHUB_USERNAME: logisparte-helot
-  HELOT_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
-  REPOSITORY: ${{ github.repository }}
-  BRANCH: ${{ github.head_ref }}
-
 jobs:
-  build_dev_image:
-    runs-on: ubuntu-latest
-    outputs:
-      dev_image: ${{ steps.export_variables.outputs.dev_image }}
-    steps:
-      - name: Export variables
-        id: export_variables
-        run: |
-          DEV_IMAGE="$REGISTRY_URL/$REPOSITORY-dev:$BRANCH"
-          echo "DEV_IMAGE=$DEV_IMAGE" >> "$GITHUB_ENV"
-          echo "::set-output name=dev_image::$DEV_IMAGE"
-
-      - name: Clone
-        uses: actions/checkout@v2
-
-      - name: Login to registry
-        uses: docker/login-action@v1
-        with:
-          registry: ${{ env.REGISTRY_URL }}
-          username: ${{ env.HELOT_GITHUB_USERNAME }}
-          password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
-
-      - name: Pull existing branch image, if any
-        run: docker pull "$DEV_IMAGE" || true
-
-      - name: Build branch image
-        run: |
-          docker build \
-            --file .kano/Dockerfile \
-            --tag "$DEV_IMAGE" \
-            --cache-from "$DEV_IMAGE" \
-            .
-
-      - name: Push branch image
-        run: docker push "$DEV_IMAGE"
-
   run_ci:
     runs-on: ubuntu-latest
-    needs: build_dev_image
-    container:
-      image: ${{ needs.build_dev_image.outputs.dev_image }}
-      credentials:
-        username: ${{ env.HELOT_GITHUB_USERNAME }}
-        password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
     steps:
       - uses: actions/checkout@v2
         name: Clone
 
+      - name: Install kano
+        run: |
+          curl -L "https://github.com/logisparte/kano/releases/latest/download/kano.tar.gz" | tar -xz
+          sudo ./kano/install
+
+      - name: Build development image
+        run: kano docker build
+
       - name: Lint
-        run: kano lint
+        run: kano docker run kano lint
 
       - name: Test
-        run: kano test
+        run: kano docker run kano test

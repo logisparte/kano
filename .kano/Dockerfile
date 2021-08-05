@@ -1,4 +1,4 @@
-FROM ghcr.io/logisparte/helot:2.6.0
+FROM ghcr.io/logisparte/helot:2.7.0
 
 ENV PATH="$PATH:/usr/local/go/bin:/root/go/bin"
 
