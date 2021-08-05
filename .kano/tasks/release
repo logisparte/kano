@@ -8,7 +8,7 @@ PACKAGE_ARCHIVE="$PACKAGE.tar.gz"
 PACKAGE_DIRECTORY="$RELEASE_DIRECTORY/$PACKAGE"
 
 release_help() {
-  echo "Package the build and release it either locally (to preview) or to GitHub"
+  echo "Package the build and release it to GitHub"
 }
 
 release() {

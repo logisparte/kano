@@ -8,14 +8,14 @@ jobs:
   run_ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-        name: Clone
-
       - name: Install kano
         run: |
           curl -L https://github.com/logisparte/kano/releases/download/3.0.0/kano.tar.gz \
             | tar -xz
           sudo ./kano/install
+
+      - uses: actions/checkout@v2
+        name: Clone
 
       - name: Build development image
         run: kano docker build
