@@ -13,7 +13,8 @@ jobs:
 
       - name: Install kano
         run: |
-          curl -L "https://github.com/logisparte/kano/releases/latest/download/kano.tar.gz" | tar -xz
+          curl -L https://github.com/logisparte/kano/releases/download/3.0.0/kano.tar.gz \
+            | tar -xz
           sudo ./kano/install
 
       - name: Build development image

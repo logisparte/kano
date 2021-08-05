@@ -15,61 +15,29 @@ env:
   GITHUB_REF: ${{ github.ref }}
 
 jobs:
-  build_dev_image:
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.export_variables.outputs.version }}
-      dev_image: ${{ steps.export_variables.outputs.dev_image }}
-    steps:
-      - name: Export variables
-        id: export_variables
-        run: |
-          VERSION="$(echo "$GITHUB_REF" | cut -d "/" -f 3)"
-          DEV_IMAGE="$REGISTRY_URL/$REPOSITORY-dev:$VERSION"
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "DEV_IMAGE=$DEV_IMAGE" >> "$GITHUB_ENV"
-          echo "::set-output name=version::$VERSION"
-          echo "::set-output name=dev_image::$DEV_IMAGE"
-
-      - name: Clone
-        uses: actions/checkout@v2
-
-      - name: Build development image
-        run: docker build --file .kano/Dockerfile --tag "$DEV_IMAGE" .
-
-      - name: Login to registry
-        uses: docker/login-action@v1
-        with:
-          registry: ${{ env.REGISTRY_URL }}
-          username: ${{ env.HELOT_GITHUB_USERNAME }}
-          password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
-
-      - name: Push development image
-        run: docker push "$DEV_IMAGE"
-
   run_cd:
     runs-on: ubuntu-latest
-    needs: build_dev_image
-    container:
-      image: ${{ needs.build_dev_image.outputs.dev_image }}
-      env:
-        VERSION: ${{ needs.build_dev_image.outputs.version }}
-      credentials:
-        username: ${{ env.HELOT_GITHUB_USERNAME }}
-        password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
     steps:
-      - name: Configure github
+      - name: Install kano
         run: |
-          kano configure_github \
+          curl -L https://github.com/logisparte/kano/releases/download/3.0.0/kano.tar.gz \
+            | tar -xz
+          sudo ./kano/install
+
+      - uses: actions/checkout@v2
+        name: Clone project
+
+      - name: Build development image
+        run: kano docker build
+
+      - name: Build project
+        run: kano docker run kano build
+
+      - name: Release project
+        run: |
+          VERSION="$(echo "$GITHUB_REF" | cut -d "/" -f 3)"
+          kano docker run kano configure_github \
             "$HELOT_GIT_NAME" \
             "$HELOT_GIT_EMAIL" \
             "$HELOT_GITHUB_ACCESS_TOKEN"
-
-      - uses: actions/checkout@v2
-        name: Clone
-
-      - name: Build
-        run: kano build
-
-      - name: Release
-        run: kano release "$VERSION"
+          kano docker run kano release "$VERSION"
