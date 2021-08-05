@@ -45,7 +45,6 @@ _release_version() {
   CHECKSUM="$(shasum -a 256 "$PACKAGE_ARCHIVE" | cut -d " " -f 1)"
   _info "Packaged $PACKAGE_ARCHIVE, checksum is: $CHECKSUM"
 
-  _login_to_github
   _release_to_github "$VERSION" "$CHECKSUM"
   _update_package_definition_in_index "$VERSION" "$CHECKSUM"
   report success "[release] Pull request for $PACKAGE $VERSION opened in package index"
@@ -63,11 +62,6 @@ _make_package_directory() {
 
   mkdir -p "$PACKAGE_DIRECTORY/libexec"
   cp -R "$BUILD_DIRECTORY"/* "$PACKAGE_DIRECTORY/libexec"
-}
-
-_login_to_github() {
-  _info "Logging in to Github"
-  echo "$HELOT_GITHUB_ACCESS_TOKEN" | gh auth login --with-token
 }
 
 _release_to_github() {
