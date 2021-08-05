@@ -1,0 +1,111 @@
+#!/bin/sh
+
+Include "$KANO_SOURCE_DIRECTORY/router"
+
+SOME_FLAG="-u"
+SOME_SCOPE="some_scope"
+SOME_FLAG_SCOPE="some_flag_scope"
+SOME_NEXT_SCOPE="some_next_scope"
+SOME_TASK="some_task"
+SOME_PARAMETER="some_parameter"
+
+Describe "router"
+  fail() {
+    # shellcheck disable=SC2034
+    fail_called_with="$*"
+    %preserve fail_called_with
+    exit 1
+  }
+
+  scopes() {
+    from_flag() {
+      if [ "$1" = "$SOME_FLAG" ]; then
+        echo "$SOME_FLAG_SCOPE"
+
+      else
+        exit 1
+      fi
+    }
+
+    "$@"
+  }
+
+  tasks() {
+    find_scope() {
+      echo "$SOME_SCOPE"
+    }
+
+    find_next_scope() {
+      echo "$SOME_NEXT_SCOPE"
+    }
+
+    execute() {
+      # shellcheck disable=SC2034
+      execute_task_called_with="$*"
+      %preserve execute_task_called_with
+    }
+
+    "$@"
+  }
+
+  Describe "route"
+    Context "when a flag is provided"
+      Context "when no task is provided"
+        It "should fail with the expected error message"
+          When run router route "$SOME_FLAG"
+          The status should be failure
+          The variable fail_called_with should equal \
+            "Must provide a task name when overriding with a flag"
+        End
+      End
+
+      Context "when a task is provided"
+        Context "when flag is not -x or --next"
+          It "should execute task in specified scope"
+            When run router route "$SOME_FLAG" "$SOME_TASK" "$SOME_PARAMETER"
+            The status should be success
+            The variable execute_task_called_with should equal \
+              "$SOME_FLAG_SCOPE $SOME_TASK $SOME_PARAMETER"
+          End
+        End
+
+        Context "when flag is -x"
+          It "should execute task in next scope"
+            When run router route -x "$SOME_TASK" "$SOME_PARAMETER"
+            The status should be success
+            The variable execute_task_called_with should equal \
+              "$SOME_NEXT_SCOPE $SOME_TASK $SOME_PARAMETER"
+          End
+        End
+
+        Context "when flag is --next"
+          It "should execute task in next scope"
+            When run router route --next "$SOME_TASK" "$SOME_PARAMETER"
+            The status should be success
+            The variable execute_task_called_with should equal \
+              "$SOME_NEXT_SCOPE $SOME_TASK $SOME_PARAMETER"
+          End
+        End
+      End
+    End
+
+    Context "when no flag provided"
+      Context "when no task provided"
+        It "should execute help task"
+          When run router route
+          The status should be success
+          The variable execute_task_called_with should equal "$SOME_SCOPE help"
+        End
+      End
+
+      Context "when a task is provided"
+        It "should execute task"
+          When run router route "$SOME_TASK" "$SOME_PARAMETER"
+          The status should be success
+          The variable execute_task_called_with should equal \
+            "$SOME_SCOPE $SOME_TASK $SOME_PARAMETER"
+        End
+      End
+    End
+  End
+End

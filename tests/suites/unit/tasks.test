@@ -1,0 +1,360 @@
+#!/bin/sh
+
+Include "$KANO_SOURCE_DIRECTORY/tasks"
+
+SOME_SCOPE_1="some_scope_1"
+SOME_SCOPE_2="some_scope_2"
+SOME_SCOPE_3="some_scope_3"
+SOME_SCOPE_DIRECTORY_1="${SOME_SCOPE_1}_directory"
+SOME_SCOPE_DIRECTORY_2="${SOME_SCOPE_2}_directory"
+SOME_SCOPE_DIRECTORY_3="${SOME_SCOPE_3}_directory"
+SOME_ENVIRONMENT_FILE_1="$SOME_SCOPE_DIRECTORY_1/environment"
+SOME_ENVIRONMENT_FILE_2="$SOME_SCOPE_DIRECTORY_2/environment"
+SOME_ENVIRONMENT_FILE_3="$SOME_SCOPE_DIRECTORY_3/environment"
+SOME_TASK="some_task"
+SOME_TASK_FILE_1="$SOME_SCOPE_DIRECTORY_1/tasks/$SOME_TASK"
+SOME_TASK_FILE_2="$SOME_SCOPE_DIRECTORY_2/tasks/$SOME_TASK"
+SOME_TASK_FILE_3="$SOME_SCOPE_DIRECTORY_3/tasks/$SOME_TASK"
+SOME_PARAMETER="some_parameter"
+
+Describe "tasks"
+  fail() {
+    # shellcheck disable=SC2034
+    fail_called_with="$*"
+    %preserve fail_called_with
+    exit 1
+  }
+
+  _list_all_existing_in_order() {
+    echo "$SOME_SCOPE_1"
+  }
+
+  _list_all_existing_in_reverse() {
+    echo "$SOME_SCOPE_1"
+  }
+
+  scopes() {
+    list_all_existing_in_order() {
+      _list_all_existing_in_order
+    }
+
+    list_all_existing_in_reverse() {
+      _list_all_existing_in_reverse
+    }
+
+    to_directory() {
+      if [ "$1" = "$SOME_SCOPE_1" ]; then
+        echo "$SOME_SCOPE_DIRECTORY_1"
+
+      elif [ "$1" = "$SOME_SCOPE_2" ]; then
+        echo "$SOME_SCOPE_DIRECTORY_2"
+
+      elif [ "$1" = "$SOME_SCOPE_3" ]; then
+        echo "$SOME_SCOPE_DIRECTORY_3"
+
+      else
+        exit 1
+      fi
+    }
+
+    "$@"
+  }
+
+  does_file_exist() {
+    if [ "$1" = "$SOME_TASK_FILE_1" ]; then
+      "$DOES_TASK_FILE_1_EXISTS"
+
+    elif [ "$1" = "$SOME_TASK_FILE_2" ]; then
+      "$DOES_TASK_FILE_2_EXISTS"
+
+    elif [ "$1" = "$SOME_TASK_FILE_3" ]; then
+      "$DOES_TASK_FILE_3_EXISTS"
+
+    elif [ "$1" = "$SOME_ENVIRONMENT_FILE_1" ]; then
+      "$DOES_ENVIRONMENT_FILE_1_EXISTS"
+
+    elif [ "$1" = "$SOME_ENVIRONMENT_FILE_2" ]; then
+      "$DOES_ENVIRONMENT_FILE_2_EXISTS"
+
+    elif [ "$1" = "$SOME_ENVIRONMENT_FILE_3" ]; then
+      "$DOES_ENVIRONMENT_FILE_3_EXISTS"
+
+    else
+      false
+    fi
+  }
+
+  _import() {
+    if [ -n "$import_called_with" ]; then
+      import_called_with="$import_called_with|$*"
+
+    else
+      import_called_with="$*"
+    fi
+
+    %preserve import_called_with
+  }
+
+  DOES_TASK_FILE_1_EXISTS=false
+  DOES_TASK_FILE_2_EXISTS=false
+  DOES_TASK_FILE_3_EXISTS=false
+  DOES_ENVIRONMENT_FILE_1_EXISTS=false
+  DOES_ENVIRONMENT_FILE_2_EXISTS=false
+  DOES_ENVIRONMENT_FILE_3_EXISTS=false
+
+  Describe "find_scope"
+    Context "when there's only one scope"
+      Context "when task does not exist in scope"
+        It "should fail with the expected error message"
+          When run tasks find_scope "$SOME_TASK"
+          The status should be failure
+          The variable fail_called_with should equal \
+            "No task named '$SOME_TASK' in scopes: $SOME_SCOPE_1"
+        End
+      End
+
+      Context "when task exists"
+        DOES_TASK_FILE_1_EXISTS=true
+        It "should return scope"
+          When run tasks find_scope "$SOME_TASK"
+          The status should be success
+          The output should equal "$SOME_SCOPE_1"
+        End
+      End
+    End
+
+    Context "when there's multiple scopes"
+      _list_all_existing_in_order() {
+        echo "$SOME_SCOPE_1"
+        echo "$SOME_SCOPE_2"
+      }
+
+      Context "when task does not exist in any scope"
+        It "should fail with the expected error message"
+          When run tasks find_scope "$SOME_TASK"
+          The status should be failure
+          The variable fail_called_with should equal \
+            "No task named '$SOME_TASK' in scopes: $SOME_SCOPE_1, $SOME_SCOPE_2"
+        End
+      End
+
+      Context "when task exists in first scope"
+        DOES_TASK_FILE_1_EXISTS=true
+        It "should return first scope"
+          When run tasks find_scope "$SOME_TASK"
+          The status should be success
+          The output should equal "$SOME_SCOPE_1"
+        End
+      End
+
+      Context "when task exists in second scope"
+        DOES_TASK_FILE_2_EXISTS=true
+        It "should return second scope"
+          When run tasks find_scope "$SOME_TASK"
+          The status should be success
+          The output should equal "$SOME_SCOPE_2"
+        End
+      End
+
+      Context "when task exists in first and second scope"
+        DOES_TASK_FILE_1_EXISTS=true
+        DOES_TASK_FILE_2_EXISTS=true
+        It "should return first scope"
+          When run tasks find_scope "$SOME_TASK"
+          The status should be success
+          The output should equal "$SOME_SCOPE_1"
+        End
+      End
+    End
+  End
+
+  Describe "find_next_scope"
+    Context "when no current scope and task exists in first scope"
+      before_each() {
+        export INITIAL_KANO_CURRENT_SCOPE="$KANO_CURRENT_SCOPE"
+        export KANO_CURRENT_SCOPE=
+      }
+
+      after_each() {
+        export KANO_CURRENT_SCOPE="$INITIAL_KANO_CURRENT_SCOPE"
+      }
+
+      DOES_TASK_FILE_1_EXISTS=true
+      BeforeEach "before_each"
+      AfterEach "after_each"
+      It "should return first scope"
+        When run tasks find_next_scope "$SOME_TASK"
+        The status should be success
+        The output should equal "$SOME_SCOPE_1"
+      End
+    End
+
+    Context "when there are 3 scopes and current scope is the first one"
+      before_each() {
+        export INITIAL_KANO_CURRENT_SCOPE="$KANO_CURRENT_SCOPE"
+        export KANO_CURRENT_SCOPE="$SOME_SCOPE_1"
+      }
+
+      after_each() {
+        export KANO_CURRENT_SCOPE="$INITIAL_KANO_CURRENT_SCOPE"
+      }
+
+      _list_all_existing_in_order() {
+        echo "$SOME_SCOPE_1"
+        echo "$SOME_SCOPE_2"
+        echo "$SOME_SCOPE_3"
+      }
+
+      BeforeEach "before_each"
+      AfterEach "after_each"
+      Context "when task does not exist in any upper scope"
+        It "should fail with the expected error message"
+          When run tasks find_next_scope "$SOME_TASK"
+          The status should be failure
+          The variable fail_called_with should equal \
+            "No task named '$SOME_TASK' in scopes: $SOME_SCOPE_2, $SOME_SCOPE_3"
+        End
+      End
+
+      Context "when task only exists in second scope"
+        DOES_TASK_FILE_2_EXISTS=true
+        It "should return second scope"
+          When run tasks find_next_scope "$SOME_TASK"
+          The status should be success
+          The output should equal "$SOME_SCOPE_2"
+        End
+      End
+
+      Context "when task only exists in third scope"
+        DOES_TASK_FILE_3_EXISTS=true
+        It "should return third scope"
+          When run tasks find_next_scope "$SOME_TASK"
+          The status should be success
+          The output should equal "$SOME_SCOPE_3"
+        End
+      End
+
+      Context "when task exists in second and third scope"
+        DOES_TASK_FILE_2_EXISTS=true
+        DOES_TASK_FILE_3_EXISTS=true
+        It "should return second scope"
+          When run tasks find_next_scope "$SOME_TASK"
+          The status should be success
+          The output should equal "$SOME_SCOPE_2"
+        End
+      End
+    End
+
+    Context "when there are 3 scopes and current scope is the second one"
+      export KANO_CURRENT_SCOPE="$SOME_SCOPE_2"
+      _list_all_existing_in_order() {
+        echo "$SOME_SCOPE_1"
+        echo "$SOME_SCOPE_2"
+        echo "$SOME_SCOPE_3"
+      }
+
+      Context "when task only exists in first scope"
+        DOES_TASK_FILE_1_EXISTS=true
+        It "should fail with the expected error message"
+          When run tasks find_next_scope "$SOME_TASK"
+          The status should be failure
+          The variable fail_called_with should equal \
+            "No task named '$SOME_TASK' in scopes: $SOME_SCOPE_3"
+        End
+      End
+
+      Context "when task only exists in second scope"
+        DOES_TASK_FILE_2_EXISTS=true
+        It "should fail with the expected error message"
+          When run tasks find_next_scope "$SOME_TASK"
+          The status should be failure
+          The variable fail_called_with should equal \
+            "No task named '$SOME_TASK' in scopes: $SOME_SCOPE_3"
+        End
+      End
+
+      Context "when task only exists in third scope"
+        DOES_TASK_FILE_3_EXISTS=true
+        It "should return third scope"
+          When run tasks find_next_scope "$SOME_TASK"
+          The status should be success
+          The output should equal "$SOME_SCOPE_3"
+        End
+      End
+    End
+  End
+
+  Describe "execute"
+    Context "when task file does not exist"
+      It "should fail with the expected error message"
+        When run tasks execute "$SOME_SCOPE_1" "$SOME_TASK" "$SOME_PARAMETER"
+        The status should be failure
+        The variable fail_called_with should equal \
+          "No task named '$SOME_TASK' in scope: $SOME_SCOPE_1"
+      End
+    End
+
+    Context "when task file exists"
+      DOES_TASK_FILE_1_EXISTS=true
+      Context "when task is not correctly defined"
+        It "should fail with the expected error message"
+          When run tasks execute "$SOME_SCOPE_1" "$SOME_TASK" "$SOME_PARAMETER"
+          The status should be failure
+          The variable fail_called_with should equal \
+            "Task '$SOME_TASK' was not properly defined in '$SOME_TASK_FILE_1'"
+        End
+      End
+
+      Context "when task is correctly defined"
+        eval "$SOME_TASK() {
+          task_called_with=\"\$*\"
+          %preserve task_called_with
+        }"
+
+        It "should execute task"
+          When run tasks execute "$SOME_SCOPE_1" "$SOME_TASK" "$SOME_PARAMETER"
+          The status should be success
+          The variable import_called_with should include "$SOME_TASK_FILE_1"
+          The variable task_called_with should equal "$SOME_PARAMETER"
+        End
+
+        Context "when some scopes exist"
+          _list_all_existing_in_reverse() {
+            echo "$SOME_SCOPE_2"
+            echo "$SOME_SCOPE_1"
+          }
+
+          Context "when no environment files exist for current scope and up"
+            It "should not import any environment files"
+              When run tasks execute "$SOME_SCOPE_1" "$SOME_TASK" "$SOME_PARAMETER"
+              The status should be success
+              The variable import_called_with should not include "$SOME_ENVIRONMENT_FILE_1"
+              The variable import_called_with should not include "$SOME_ENVIRONMENT_FILE_2"
+            End
+          End
+
+          Context "when only one environment files exist for current scope and up"
+            DOES_ENVIRONMENT_FILE_1_EXISTS=true
+            It "should only import its environment files"
+              When run tasks execute "$SOME_SCOPE_1" "$SOME_TASK" "$SOME_PARAMETER"
+              The status should be success
+              The variable import_called_with should include "$SOME_ENVIRONMENT_FILE_1"
+              The variable import_called_with should not include "$SOME_ENVIRONMENT_FILE_2"
+            End
+          End
+
+          Context "when all scopes have environment files"
+            DOES_ENVIRONMENT_FILE_1_EXISTS=true
+            DOES_ENVIRONMENT_FILE_2_EXISTS=true
+            It "should import all environment files"
+              When run tasks execute "$SOME_SCOPE_1" "$SOME_TASK" "$SOME_PARAMETER"
+              The status should be success
+              The variable import_called_with should include "$SOME_ENVIRONMENT_FILE_1"
+              The variable import_called_with should include "$SOME_ENVIRONMENT_FILE_2"
+            End
+          End
+        End
+      End
+    End
+  End
+End

@@ -1,0 +1,57 @@
+#!/bin/sh
+
+. "$KANO_SOURCE_DIRECTORY/builtin/helpers/fail"
+. "$KANO_SOURCE_DIRECTORY/scopes"
+. "$KANO_SOURCE_DIRECTORY/tasks"
+
+router() {
+  route() {
+    case "$1" in
+      -*)
+        _route_with_flag "$@"
+        ;;
+
+      "")
+        _route_without_flag help
+        ;;
+
+      *)
+        _route_without_flag "$@"
+        ;;
+    esac
+  }
+
+  _route_with_flag() {
+    FLAG="$1"
+    TASK="$2"
+
+    if [ -z "$TASK" ]; then
+      fail "Must provide a task name when overriding with a flag"
+
+    else
+      shift 2
+    fi
+
+    case "$FLAG" in
+      -x | --next)
+        SCOPE="$(tasks find_next_scope "$TASK")"
+        ;;
+
+      *)
+        SCOPE="$(scopes from_flag "$FLAG")"
+        ;;
+    esac
+
+    tasks execute "$SCOPE" "$TASK" "$@"
+  }
+
+  _route_without_flag() {
+    TASK="$1"
+    shift
+
+    SCOPE="$(tasks find_scope "$TASK")"
+    tasks execute "$SCOPE" "$TASK" "$@"
+  }
+
+  "$@"
+}

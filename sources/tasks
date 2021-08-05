@@ -1,0 +1,115 @@
+#!/bin/sh
+
+. "$KANO_SOURCE_DIRECTORY/builtin/helpers/does_file_exist"
+. "$KANO_SOURCE_DIRECTORY/builtin/helpers/does_symbol_exist"
+. "$KANO_SOURCE_DIRECTORY/builtin/helpers/fail"
+. "$KANO_SOURCE_DIRECTORY/scopes"
+
+tasks() {
+  find_scope() {
+    TASK="$1"
+
+    _find_scope_with_iterator "$TASK" _iterate_all_scopes
+  }
+
+  find_next_scope() {
+    TASK="$1"
+
+    if [ -n "$KANO_CURRENT_SCOPE" ]; then
+      _find_scope_with_iterator "$TASK" _iterate_next_scopes
+
+    else
+      find_scope "$TASK"
+    fi
+  }
+
+  execute() {
+    SCOPE="$1"
+    TASK="$2"
+    shift 2
+
+    _import_all_environments_for_scope "$SCOPE"
+    _import_task "$SCOPE" "$TASK"
+    KANO_CURRENT_SCOPE="$SCOPE" "$TASK" "$@"
+  }
+
+  _find_scope_with_iterator() {
+    TASK="$1"
+    SCOPE_ITERATOR="$2"
+
+    SEARCHED_SCOPES=""
+    for SCOPE in $($SCOPE_ITERATOR); do
+      SCOPE_DIRECTORY="$(scopes to_directory "$SCOPE")"
+      if does_file_exist "$SCOPE_DIRECTORY/tasks/$TASK"; then
+        echo "$SCOPE"
+        return
+
+      else
+        if [ -z "$SEARCHED_SCOPES" ]; then
+          SEARCHED_SCOPES="$SCOPE"
+
+        else
+          SEARCHED_SCOPES="$SEARCHED_SCOPES, $SCOPE"
+        fi
+      fi
+    done
+
+    fail "No task named '$TASK' in scopes: $SEARCHED_SCOPES"
+  }
+
+  _iterate_all_scopes() {
+    scopes list_all_existing_in_order
+  }
+
+  _iterate_next_scopes() {
+    HAS_REACHED_CURRENT_SCOPE=false
+    for SCOPE in $(scopes list_all_existing_in_order); do
+      if ! "$HAS_REACHED_CURRENT_SCOPE"; then
+        if [ "$SCOPE" = "$KANO_CURRENT_SCOPE" ]; then
+          HAS_REACHED_CURRENT_SCOPE=true
+        fi
+
+        continue
+      fi
+
+      echo "$SCOPE"
+    done
+  }
+
+  _import_all_environments_for_scope() {
+    SCOPE="$1"
+
+    for WALKED_SCOPE in $(scopes list_all_existing_in_reverse); do
+      WALKED_SCOPE_DIRECTORY="$(scopes to_directory "$WALKED_SCOPE")"
+      if does_file_exist "$WALKED_SCOPE_DIRECTORY/environment"; then
+        _import "$WALKED_SCOPE_DIRECTORY/environment"
+      fi
+
+      if [ "$WALKED_SCOPE" = "$SCOPE" ]; then
+        return
+      fi
+    done
+  }
+
+  _import_task() {
+    SCOPE="$1"
+    TASK="$2"
+
+    SCOPE_DIRECTORY="$(scopes to_directory "$SCOPE")"
+    TASK_FILE="$SCOPE_DIRECTORY/tasks/$TASK"
+    if ! does_file_exist "$TASK_FILE"; then
+      fail "No task named '$TASK' in scope: $SCOPE"
+    fi
+
+    _import "$TASK_FILE"
+    if ! does_symbol_exist "$TASK"; then
+      fail "Task '$TASK' was not properly defined in '$TASK_FILE'"
+    fi
+  }
+
+  "$@"
+}
+
+_import() {
+  . "$1"
+}

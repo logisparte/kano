@@ -1,15 +1,16 @@
 #!/bin/sh
 
+. "$KANO_SOURCE_DIRECTORY/builtin/helpers/does_directory_exist"
 . "$KANO_SOURCE_DIRECTORY/builtin/helpers/fail"
 
-scope_mapper() {
+scopes() {
   PROJECT_SCOPE="project"
   USER_SCOPE="user"
   TEAM_SCOPE="team"
   SYSTEM_SCOPE="system"
   BUILTIN_SCOPE="builtin"
 
-  list_all_scopes_in_order() {
+  list_all_in_order() {
     echo "$PROJECT_SCOPE"
     echo "$USER_SCOPE"
 
@@ -21,11 +22,24 @@ scope_mapper() {
     echo "$BUILTIN_SCOPE"
   }
 
-  list_all_scopes_in_reverse() {
-    list_all_scopes_in_order | xargs | awk '{ for (i=NF; i>0; i--) printf "%s\n",$i; }'
+  list_all_existing_in_order() {
+    for SCOPE in $(list_all_in_order); do
+      SCOPE_DIRECTORY="$(to_directory "$SCOPE")"
+      if does_directory_exist "$SCOPE_DIRECTORY"; then
+        echo "$SCOPE"
+      fi
+    done
   }
 
-  map_name_from_flag() {
+  list_all_in_reverse() {
+    list_all_in_order | xargs | awk '{ for (i=NF; i>0; i--) printf "%s\n",$i; }'
+  }
+
+  list_all_existing_in_reverse() {
+    list_all_existing_in_order | xargs | awk '{ for (i=NF; i>0; i--) printf "%s\n",$i; }'
+  }
+
+  from_flag() {
     FLAG="$1"
 
      case "$FLAG" in
@@ -51,10 +65,10 @@ scope_mapper() {
     esac
   }
 
-  map_directory_from_name() {
-    NAME="$1"
+  to_directory() {
+    SCOPE="$1"
 
-    case "$NAME" in
+    case "$SCOPE" in
       "$PROJECT_SCOPE")
         echo "$KANO_PROJECT_DIRECTORY"
         ;;
@@ -81,7 +95,7 @@ scope_mapper() {
         ;;
 
       *)
-        fail "Invalid scope '$NAME'"
+        fail "Invalid scope '$SCOPE'"
         ;;
     esac
   }
