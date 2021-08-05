@@ -23,16 +23,16 @@ Describe "help"
     %preserve report_called_with
   }
 
-  scope_walker() {
-    walk_up() {
-      echo "$SOME_SCOPE_1"
-    }
-
-    "$@"
+  _list_all_existing_in_order() {
+    echo "$SOME_SCOPE_1"
   }
 
-  scope_mapper() {
-    map_directory_from_name() {
+  scopes() {
+    list_all_existing_in_order() {
+      _list_all_existing_in_order
+    }
+
+    to_directory() {
       if [ "$1" = "$SOME_SCOPE_1" ]; then
         echo "$SOME_DIRECTORY_1"
 
@@ -101,13 +101,9 @@ Describe "help"
   End
 
   Context "when tasks are defined in multiple scopes"
-    scope_walker() {
-      walk_up() {
-        echo "$SOME_SCOPE_1"
-        echo "$SOME_SCOPE_2"
-      }
-
-      "$@"
+    _list_all_existing_in_order() {
+      echo "$SOME_SCOPE_1"
+      echo "$SOME_SCOPE_2"
     }
 
     It "should print all scope sections"
@@ -119,12 +115,8 @@ Describe "help"
   End
 
   Context "when scope is project"
-    scope_walker() {
-      walk_up() {
-        echo "project"
-      }
-
-      "$@"
+    _list_all_existing_in_order() {
+      echo "project"
     }
 
     It "should print scope section in green"
@@ -135,12 +127,8 @@ Describe "help"
   End
 
   Context "when scope is user"
-    scope_walker() {
-      walk_up() {
-        echo "user"
-      }
-
-      "$@"
+    _list_all_existing_in_order() {
+      echo "user"
     }
 
     It "should print scope section in purple"
@@ -151,12 +139,8 @@ Describe "help"
   End
 
   Context "when scope is team"
-    scope_walker() {
-      walk_up() {
-        echo "team"
-      }
-
-      "$@"
+    _list_all_existing_in_order() {
+      echo "team"
     }
 
     export KANO_TEAM="$SOME_TEAM"
@@ -174,12 +158,8 @@ Describe "help"
   End
 
   Context "when scope is system"
-    scope_walker() {
-      walk_up() {
-        echo "system"
-      }
-
-      "$@"
+    _list_all_existing_in_order() {
+      echo "system"
     }
 
     It "should print scope section in gray"
@@ -190,12 +170,8 @@ Describe "help"
   End
 
   Context "when scope is builtin"
-    scope_walker() {
-      walk_up() {
-        echo "builtin"
-      }
-
-      "$@"
+    _list_all_existing_in_order() {
+      echo "builtin"
     }
 
     It "should print scope section in cyan"

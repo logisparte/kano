@@ -1,10 +1,10 @@
 #!/bin/sh
 
-Include "$KANO_SOURCE_DIRECTORY/scope_mapper"
+Include "$KANO_SOURCE_DIRECTORY/scopes"
 
 SOME_TEAM="some_team"
 
-Describe "scope_mapper"
+Describe "scopes"
   fail() {
     # shellcheck disable=SC2034
     fail_called_with="$*"
@@ -12,9 +12,9 @@ Describe "scope_mapper"
     exit 1
   }
 
-  Describe "list_all_scopes_in_order"
+  Describe "list_all_in_order"
     It "should list all scopes in order"
-      When run scope_mapper list_all_scopes_in_order
+      When run scopes list_all_in_order
       The status should be success
       The output should equal "project
 user
@@ -25,7 +25,7 @@ builtin"
     Context "when KANO_TEAM is set"
       export KANO_TEAM="$SOME_TEAM"
       It "should list all scopes in order, including team"
-        When run scope_mapper list_all_scopes_in_order
+        When run scopes list_all_in_order
         The status should be success
         The output should equal "project
 user
@@ -36,9 +36,9 @@ builtin"
     End
   End
 
-  Describe "list_all_scopes_in_reverse"
+  Describe "list_all_in_reverse"
     It "should list all scopes in reverse"
-      When run scope_mapper list_all_scopes_in_reverse
+      When run scopes list_all_in_reverse
       The status should be success
       The output should equal "builtin
 system
@@ -49,7 +49,7 @@ project"
     Context "when KANO_TEAM is set"
       export KANO_TEAM="$SOME_TEAM"
       It "should list all scopes in reverse, including team"
-        When run scope_mapper list_all_scopes_in_reverse
+        When run scopes list_all_in_reverse
         The status should be success
         The output should equal "builtin
 system
@@ -60,11 +60,11 @@ project"
     End
   End
 
-  Describe "map_name_from_flag"
+  Describe "from_flag"
     Context "when flag is unknown"
       SOME_UNKNOWN_FLAG="-x"
       It "should fail with the expected error message"
-        When run scope_mapper map_name_from_flag "$SOME_UNKNOWN_FLAG"
+        When run scopes from_flag "$SOME_UNKNOWN_FLAG"
         The status should be failure
         The variable fail_called_with should equal "Invalid flag '$SOME_UNKNOWN_FLAG'"
       End
@@ -72,7 +72,7 @@ project"
 
     Context "when flag is -u"
       It "should return user scope"
-        When run scope_mapper map_name_from_flag "-u"
+        When run scopes from_flag "-u"
         The status should be success
         The output should equal "user"
       End
@@ -80,7 +80,7 @@ project"
 
     Context "when flag is --user"
       It "should return user scope"
-        When run scope_mapper map_name_from_flag "--user"
+        When run scopes from_flag "--user"
         The status should be success
         The output should equal "user"
       End
@@ -88,7 +88,7 @@ project"
 
     Context "when flag is -t"
       It "should return team scope"
-        When run scope_mapper map_name_from_flag "-t"
+        When run scopes from_flag "-t"
         The status should be success
         The output should equal "team"
       End
@@ -96,7 +96,7 @@ project"
 
     Context "when flag is --team"
       It "should return team scope"
-        When run scope_mapper map_name_from_flag "--team"
+        When run scopes from_flag "--team"
         The status should be success
         The output should equal "team"
       End
@@ -104,7 +104,7 @@ project"
 
     Context "when flag is -s"
       It "should return system scope"
-        When run scope_mapper map_name_from_flag "-s"
+        When run scopes from_flag "-s"
         The status should be success
         The output should equal "system"
       End
@@ -112,7 +112,7 @@ project"
 
     Context "when flag is --system"
       It "should return system scope"
-        When run scope_mapper map_name_from_flag "--system"
+        When run scopes from_flag "--system"
         The status should be success
         The output should equal "system"
       End
@@ -120,7 +120,7 @@ project"
 
     Context "when flag is -b"
       It "should return builtin scope"
-        When run scope_mapper map_name_from_flag "-b"
+        When run scopes from_flag "-b"
         The status should be success
         The output should equal "builtin"
       End
@@ -128,18 +128,18 @@ project"
 
     Context "when flag is --builtin"
       It "should return builtin scope"
-        When run scope_mapper map_name_from_flag "--builtin"
+        When run scopes from_flag "--builtin"
         The status should be success
         The output should equal "builtin"
       End
     End
   End
 
-  Describe "map_directory_from_name"
+  Describe "to_directory"
     Context "when name is unknown"
       SOME_UNKNOWN_SCOPE="some_unknown_scope"
       It "should fail with the expected error message"
-        When run scope_mapper map_directory_from_name "$SOME_UNKNOWN_SCOPE"
+        When run scopes to_directory "$SOME_UNKNOWN_SCOPE"
         The status should be failure
         The variable fail_called_with should equal "Invalid scope '$SOME_UNKNOWN_SCOPE'"
       End
@@ -147,7 +147,7 @@ project"
 
     Context "when name is project"
       It "should return project directory"
-        When run scope_mapper map_directory_from_name "project"
+        When run scopes to_directory "project"
         The status should be success
         The output should equal "$KANO_PROJECT_DIRECTORY"
       End
@@ -155,7 +155,7 @@ project"
 
     Context "when name is user"
       It "should return user directory"
-        When run scope_mapper map_directory_from_name "user"
+        When run scopes to_directory "user"
         The status should be success
         The output should equal "$KANO_USER_DIRECTORY"
       End
@@ -164,7 +164,7 @@ project"
     Context "when name is team"
       Context "when KANO_TEAM is not set"
         It "should fail with the expected error message"
-          When run scope_mapper map_directory_from_name "team"
+          When run scopes to_directory "team"
           The status should be failure
           The variable fail_called_with should equal \
             "Cannot map team directory (KANO_TEAM is not set)"
@@ -174,7 +174,7 @@ project"
       Context "when KANO_TEAM is set"
         export KANO_TEAM="$SOME_TEAM"
         It "should return team's directory"
-          When run scope_mapper map_directory_from_name "team"
+          When run scopes to_directory "team"
           The status should be success
           The output should equal "$KANO_TEAMS_DIRECTORY/$SOME_TEAM"
         End
@@ -183,7 +183,7 @@ project"
 
     Context "when name is system"
       It "should return system directory"
-        When run scope_mapper map_directory_from_name "system"
+        When run scopes to_directory "system"
         The status should be success
         The output should equal "$KANO_SYSTEM_DIRECTORY"
       End
@@ -191,7 +191,7 @@ project"
 
     Context "when name is builtin"
       It "should return builtin directory"
-        When run scope_mapper map_directory_from_name "builtin"
+        When run scopes to_directory "builtin"
         The status should be success
         The output should equal "$KANO_BUILTIN_DIRECTORY"
       End

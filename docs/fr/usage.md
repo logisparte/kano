@@ -95,6 +95,10 @@ kano --builtin une_tache
 
 > Les tâches projet ont priorité par défaut
 
+Le _flag_ spécial `-x` ou `--next` peut aussi être utilisé à l'intérieur d'une tâche pour
+déléguer à un niveau plus haut. Ceci est utile lors d'une redéfinition d'une tâche d'un niveau
+plus haut. Voir le [guide Docker](/docs/fr/tasks/docker.md) pour un exemple concret
+
 ## Environnement
 
 Un fichier d'environnement est un simple fichier shell qui exporte des variables qui seront

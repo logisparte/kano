@@ -90,6 +90,10 @@ kano --builtin some_task
 
 > Project tasks have priority by default
 
+There is also a special flag `-x` or `--next` that can be used inside a task to delegate to the
+next scope. This is useful when overriding a task in a higher scope to delegate execution. See
+the [docker guide](/docs/en/tasks/docker.md) for a concrete example
+
 ## Environment
 
 An environment file is a simple shell file that exports variables that will be available in its

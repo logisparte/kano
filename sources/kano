@@ -14,8 +14,8 @@ kano() {
 
   export KANO_HELPERS="$KANO_BUILTIN_DIRECTORY/helpers"
 
-  . "$KANO_SOURCE_DIRECTORY/task_router"
-  task_router route_task "$@"
+  . "$KANO_SOURCE_DIRECTORY/router"
+  router route "$@"
 }
 
 _find_kano_installation_directory() {
