@@ -10,6 +10,7 @@ env:
   HELOT_GITHUB_USERNAME: logisparte-helot
   HELOT_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
   REPOSITORY: ${{ github.repository }}
+  COMMIT: ${{ github.sha }}
 
 jobs:
   ci_update_development_image:
@@ -34,16 +35,23 @@ jobs:
       - name: Export development image name
         run: |
           DEVELOPMENT_IMAGE="$REGISTRY_URL/$REPOSITORY-dev"
+          DEVELOPMENT_IMAGE_COMMIT_TAG="$DEVELOPMENT_IMAGE:$COMMIT"
+          DEVELOPMENT_IMAGE_LATEST_TAG="$DEVELOPMENT_IMAGE:latest"
           echo "DEVELOPMENT_IMAGE=$DEVELOPMENT_IMAGE" >> "$GITHUB_ENV"
+          echo "DEVELOPMENT_IMAGE_COMMIT_TAG=$DEVELOPMENT_IMAGE_COMMIT_TAG" >> "$GITHUB_ENV"
+          echo "DEVELOPMENT_IMAGE_LATEST_TAG=$DEVELOPMENT_IMAGE_LATEST_TAG" >> "$GITHUB_ENV"
 
       - name: Pull existing development image, if any
-        run: docker pull "$DEVELOPMENT_IMAGE" || true
+        run: docker pull "$DEVELOPMENT_IMAGE_LATEST_TAG" || true
 
       - name: Build development image from cache
         run: |
           kano docker build \
-            --tag "$DEVELOPMENT_IMAGE" \
+            --tag "$DEVELOPMENT_IMAGE_COMMIT_TAG" \
+            --tag "$DEVELOPMENT_IMAGE_LATEST_TAG" \
             --cache-from "$DEVELOPMENT_IMAGE"
 
       - name: Push development image
-        run: docker push "$DEVELOPMENT_IMAGE"
+        run: |
+          docker push "$DEVELOPMENT_IMAGE_COMMIT_TAG"
+          docker push "$DEVELOPMENT_IMAGE_LATEST_TAG"
