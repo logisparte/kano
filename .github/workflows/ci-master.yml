@@ -22,17 +22,7 @@ jobs:
             | tar -xz
           sudo ./kano/install
 
-      - name: Login to registry
-        uses: docker/login-action@v1
-        with:
-          registry: ${{ env.REGISTRY_URL }}
-          username: ${{ env.HELOT_GITHUB_USERNAME }}
-          password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
-
-      - uses: actions/checkout@v2
-        name: Clone
-
-      - name: Export development image name
+      - name: Export environment variables
         run: |
           DEVELOPMENT_IMAGE="$REGISTRY_URL/$REPOSITORY-dev"
           DEVELOPMENT_IMAGE_COMMIT_TAG="$DEVELOPMENT_IMAGE:$COMMIT"
@@ -40,6 +30,16 @@ jobs:
           echo "DEVELOPMENT_IMAGE=$DEVELOPMENT_IMAGE" >> "$GITHUB_ENV"
           echo "DEVELOPMENT_IMAGE_COMMIT_TAG=$DEVELOPMENT_IMAGE_COMMIT_TAG" >> "$GITHUB_ENV"
           echo "DEVELOPMENT_IMAGE_LATEST_TAG=$DEVELOPMENT_IMAGE_LATEST_TAG" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v2
+        name: Clone project
+
+      - name: Login to registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY_URL }}
+          username: ${{ env.HELOT_GITHUB_USERNAME }}
+          password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
 
       - name: Pull existing development image, if any
         run: docker pull "$DEVELOPMENT_IMAGE_LATEST_TAG" || true

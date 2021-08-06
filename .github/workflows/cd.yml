@@ -13,6 +13,7 @@ env:
   HELOT_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
   REPOSITORY: ${{ github.repository }}
   GITHUB_REF: ${{ github.ref }}
+  COMMIT: ${{ github.sha }}
 
 jobs:
   run_cd:
@@ -24,6 +25,19 @@ jobs:
             | tar -xz
           sudo ./kano/install
 
+      - name: Export environment variable
+        run: |
+          VERSION="$(echo "$GITHUB_REF" | cut -d "/" -f 3)"
+          DEVELOPMENT_IMAGE="$REGISTRY_URL/$REPOSITORY-dev"
+          DEVELOPMENT_IMAGE_COMMIT_TAG="$DEVELOPMENT_IMAGE:$COMMIT"
+          DEVELOPMENT_IMAGE_VERSION_TAG="$DEVELOPMENT_IMAGE:$VERSION"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "DEVELOPMENT_IMAGE_COMMIT_TAG=$DEVELOPMENT_IMAGE_COMMIT_TAG" >> "$GITHUB_ENV"
+          echo "DEVELOPMENT_IMAGE_VERSION_TAG=$DEVELOPMENT_IMAGE_VERSION_TAG" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v2
+        name: Clone project
+
       - name: Login to registry
         uses: docker/login-action@v1
         with:
@@ -31,28 +45,22 @@ jobs:
           username: ${{ env.HELOT_GITHUB_USERNAME }}
           password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
 
-      - uses: actions/checkout@v2
-        name: Clone project
+      - name: Pull existing development image
+        run: docker pull "$DEVELOPMENT_IMAGE_COMMIT_TAG"
 
-      - name: Export development image name
-        run: |
-          DEVELOPMENT_IMAGE="$REGISTRY_URL/$REPOSITORY-dev"
-          echo "DEVELOPMENT_IMAGE=$DEVELOPMENT_IMAGE" >> "$GITHUB_ENV"
-
-      - name: Pull existing development image, if any
-        run: docker pull "$DEVELOPMENT_IMAGE" || true
-
-      - name: Build development image from cache
-        run: kano docker build --cache-from "$DEVELOPMENT_IMAGE"
+      - name: Tag development image with version
+        run: docker tag "$DEVELOPMENT_IMAGE_COMMIT_TAG" "$DEVELOPMENT_IMAGE_VERSION_TAG"
 
       - name: Build project
         run: kano docker run kano build
 
       - name: Release project
         run: |
-          VERSION="$(echo "$GITHUB_REF" | cut -d "/" -f 3)"
           kano docker run kano release \
             "$VERSION" \
             "$HELOT_GIT_NAME" \
             "$HELOT_GIT_EMAIL" \
             "$HELOT_GITHUB_ACCESS_TOKEN"
+
+      - name: Push development image version tag
+        run: docker push "$DEVELOPMENT_IMAGE_VERSION_TAG"

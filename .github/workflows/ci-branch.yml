@@ -21,6 +21,14 @@ jobs:
             | tar -xz
           sudo ./kano/install
 
+      - name: Export environment variables
+        run: |
+          DEVELOPMENT_IMAGE="$REGISTRY_URL/$REPOSITORY-dev"
+          echo "DEVELOPMENT_IMAGE=$DEVELOPMENT_IMAGE" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v2
+        name: Clone project
+
       - name: Login to registry
         uses: docker/login-action@v1
         with:
@@ -28,22 +36,14 @@ jobs:
           username: ${{ env.HELOT_GITHUB_USERNAME }}
           password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
 
-      - uses: actions/checkout@v2
-        name: Clone
-
-      - name: Export development image name
-        run: |
-          DEVELOPMENT_IMAGE="$REGISTRY_URL/$REPOSITORY-dev"
-          echo "DEVELOPMENT_IMAGE=$DEVELOPMENT_IMAGE" >> "$GITHUB_ENV"
-
       - name: Pull existing development image, if any
         run: docker pull "$DEVELOPMENT_IMAGE" || true
 
       - name: Build development image from cache
         run: kano docker build --cache-from "$DEVELOPMENT_IMAGE"
 
-      - name: Lint
+      - name: Lint project
         run: kano docker run kano lint
 
-      - name: Test
+      - name: Test project
         run: kano docker run kano test
