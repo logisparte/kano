@@ -32,7 +32,9 @@ jobs:
         name: Clone
 
       - name: Export development image name
-        run: export DEVELOPMENT_IMAGE="$REGISTRY_URL/$REPOSITORY-dev"
+        run: |
+          DEVELOPMENT_IMAGE="$REGISTRY_URL/$REPOSITORY-dev"
+          echo "DEVELOPMENT_IMAGE=$DEVELOPMENT_IMAGE" >> "$GITHUB_ENV"
 
       - name: Pull existing development image, if any
         run: docker pull "$DEVELOPMENT_IMAGE" || true
