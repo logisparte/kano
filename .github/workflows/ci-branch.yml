@@ -1,21 +1,18 @@
-﻿name: cd
+﻿name: ci-branch
 
 on:
-  push:
-    tags:
-      - '[0-9]+.[0-9]+.[0-9]+'
+  pull_request:
+    branches:
+      - master
 
 env:
   REGISTRY_URL: ghcr.io
-  HELOT_GIT_NAME: helot
-  HELOT_GIT_EMAIL: logisparte-helot@users.noreply.github.com
   HELOT_GITHUB_USERNAME: logisparte-helot
   HELOT_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
   REPOSITORY: ${{ github.repository }}
-  GITHUB_REF: ${{ github.ref }}
 
 jobs:
-  run_cd:
+  run_ci:
     runs-on: ubuntu-latest
     env:
       DEVELOPMENT_IMAGE: ${{ env.REGISTRY_URL }}/${{ env.REPOSITORY }}-dev
@@ -34,7 +31,7 @@ jobs:
           password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
 
       - uses: actions/checkout@v2
-        name: Clone project
+        name: Clone
 
       - name: Pull existing development image, if any
         run: docker pull "$DEVELOPMENT_IMAGE" || true
@@ -42,14 +39,8 @@ jobs:
       - name: Build development image from cache
         run: kano docker build --cache-from "$DEVELOPMENT_IMAGE"
 
-      - name: Build project
-        run: kano docker run kano build
+      - name: Lint
+        run: kano docker run kano lint
 
-      - name: Release project
-        run: |
-          VERSION="$(echo "$GITHUB_REF" | cut -d "/" -f 3)"
-          kano docker run kano release \
-            "$VERSION" \
-            "$HELOT_GIT_NAME" \
-            "$HELOT_GIT_EMAIL" \
-            "$HELOT_GITHUB_ACCESS_TOKEN"
+      - name: Test
+        run: kano docker run kano test
