@@ -1,10 +1,9 @@
 FROM ghcr.io/logisparte/helot:3.1.0
 
-LABEL name="kano-dev" \
-    url="https://github.com/logisparte/kano" \
-    author="logisparte" \
-    author_email="info@logisparte.com" \
-    description="Development image for kano"
+LABEL org.opencontainers.image.title="kano-dev" \
+    org.opencontainers.image.description="Development image for kano" \
+    org.opencontainers.image.authors="logisparte <info@logisparte.com>" \
+    org.opencontainers.image.source="https://github.com/logisparte/kano"
 
 ENV PATH="$PATH:/usr/local/go/bin:/root/go/bin"
 
