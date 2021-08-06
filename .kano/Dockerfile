@@ -1,5 +1,11 @@
 FROM ghcr.io/logisparte/helot:3.1.0
 
+LABEL name="kano-dev" \
+    url="https://github.com/logisparte/kano" \
+    author="logisparte" \
+    author_email="info@logisparte.com" \
+    description="Development image for kano"
+
 ENV PATH="$PATH:/usr/local/go/bin:/root/go/bin"
 
 RUN DEBIAN_FRONTEND=noninteractive \
