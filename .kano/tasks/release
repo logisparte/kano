@@ -13,15 +13,14 @@ release_help() {
 
 release() {
   VERSION="$1"
-  GITHUB_ACCESS_TOKEN="$2"
+  GIT_NAME="$2"
+  GIT_EMAIL="$3"
+  GITHUB_ACCESS_TOKEN="$4"
 
   case "$VERSION" in
     *.*.*)
-      if [ -z "$GITHUB_ACCESS_TOKEN" ]; then
-        _fail "No GitHub access token provided"
-      fi
-
-      _release_version "$VERSION" "$GITHUB_ACCESS_TOKEN"
+      _login_to_github "$GIT_NAME" "$GIT_EMAIL" "$GITHUB_ACCESS_TOKEN"
+      _release_version "$VERSION"
       ;;
 
     "")
@@ -35,9 +34,35 @@ release() {
   esac
 }
 
+_login_to_github() {
+  GIT_NAME="$1"
+  GIT_EMAIL="$2"
+  GITHUB_ACCESS_TOKEN="$3"
+
+  if [ -z "$GIT_NAME" ]; then
+    _fail "No git name provided"
+  fi
+
+  if [ -z "$GIT_EMAIL" ]; then
+    _fail "No git email provided"
+  fi
+
+  if [ -z "$GITHUB_ACCESS_TOKEN" ]; then
+    _fail "No GitHub access token provided"
+  fi
+
+  _info "Configuring git for GitHub"
+  kano configure_github --global \
+    "$GIT_NAME" \
+    "$GIT_EMAIL" \
+    "$GITHUB_ACCESS_TOKEN"
+
+  _info "Logging in to GitHub"
+  echo "$GITHUB_ACCESS_TOKEN" | gh auth login --with-token
+}
+
 _release_version() {
   VERSION="$1"
-  GITHUB_ACCESS_TOKEN="$2"
 
   _info "Releasing version: $VERSION"
 
@@ -47,7 +72,6 @@ _release_version() {
   CHECKSUM="$(shasum -a 256 "$PACKAGE_ARCHIVE" | cut -d " " -f 1)"
   _info "Packaged $PACKAGE_ARCHIVE, checksum is: $CHECKSUM"
 
-  _login_to_github "$GITHUB_ACCESS_TOKEN"
   _release_to_github "$VERSION" "$CHECKSUM"
   _update_package_definition_in_index "$VERSION" "$CHECKSUM"
   report success "[release] Pull request for $PACKAGE $VERSION opened in package index"
@@ -65,13 +89,6 @@ _make_package_directory() {
 
   mkdir -p "$PACKAGE_DIRECTORY/libexec"
   cp -R "$BUILD_DIRECTORY"/* "$PACKAGE_DIRECTORY/libexec"
-}
-
-_login_to_github() {
-  GITHUB_ACCESS_TOKEN="$1"
-
-  _info "Logging in to GitHub"
-  echo "$GITHUB_ACCESS_TOKEN" | gh auth login --with-token
 }
 
 _release_to_github() {
