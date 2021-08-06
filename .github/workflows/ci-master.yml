@@ -14,8 +14,6 @@ env:
 jobs:
   ci_update_development_image:
     runs-on: ubuntu-latest
-    env:
-      DEVELOPMENT_IMAGE: ${{ env.REGISTRY_URL }}/${{ env.REPOSITORY }}-dev
     steps:
       - name: Install kano
         run: |
@@ -32,6 +30,9 @@ jobs:
 
       - uses: actions/checkout@v2
         name: Clone
+
+      - name: Export development image name
+        run: export DEVELOPMENT_IMAGE="$REGISTRY_URL/$REPOSITORY-dev"
 
       - name: Pull existing development image, if any
         run: docker pull "$DEVELOPMENT_IMAGE" || true
