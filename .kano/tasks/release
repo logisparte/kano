@@ -13,14 +13,15 @@ release_help() {
 
 release() {
   VERSION="$1"
-
-  if [ -z "$CI" ]; then
-    _fail "Releases must be handled by the continuous delivery pipeline on GitHub"
-  fi
+  GITHUB_ACCESS_TOKEN="$2"
 
   case "$VERSION" in
     *.*.*)
-      _release_version "$VERSION"
+      if [ -z "$GITHUB_ACCESS_TOKEN" ]; then
+        _fail "No GitHub access token provided"
+      fi
+
+      _release_version "$VERSION" "$GITHUB_ACCESS_TOKEN"
       ;;
 
     "")
@@ -36,6 +37,7 @@ release() {
 
 _release_version() {
   VERSION="$1"
+  GITHUB_ACCESS_TOKEN="$2"
 
   _info "Releasing version: $VERSION"
 
@@ -45,7 +47,7 @@ _release_version() {
   CHECKSUM="$(shasum -a 256 "$PACKAGE_ARCHIVE" | cut -d " " -f 1)"
   _info "Packaged $PACKAGE_ARCHIVE, checksum is: $CHECKSUM"
 
-  _login_to_github
+  _login_to_github "$GITHUB_ACCESS_TOKEN"
   _release_to_github "$VERSION" "$CHECKSUM"
   _update_package_definition_in_index "$VERSION" "$CHECKSUM"
   report success "[release] Pull request for $PACKAGE $VERSION opened in package index"
@@ -66,8 +68,10 @@ _make_package_directory() {
 }
 
 _login_to_github() {
-  _info "Logging in to Github"
-  echo "$HELOT_GITHUB_ACCESS_TOKEN" | gh auth login --with-token
+  GITHUB_ACCESS_TOKEN="$1"
+
+  _info "Logging in to GitHub"
+  echo "$GITHUB_ACCESS_TOKEN" | gh auth login --with-token
 }
 
 _release_to_github() {

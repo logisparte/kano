@@ -40,4 +40,4 @@ jobs:
             "$HELOT_GIT_NAME" \
             "$HELOT_GIT_EMAIL" \
             "$HELOT_GITHUB_ACCESS_TOKEN"
-          kano docker run --env CI="$CI" kano release "$VERSION"
+          kano docker run kano release "$VERSION" "$HELOT_GITHUB_ACCESS_TOKEN"
