@@ -12,7 +12,7 @@ Utiliser la tâche `docker` pour exécuter d'autres tâches dans un conteneur Do
 
 Si un `Dockerfile` est présent dans le répertoire `.kano` local, il sera utilisé pour créer
 l'image de l'environnement de développement du projet. Cette image sera utilisée pour créer le
-conteneur de développement et devrait contenir toutes le dépendances du projet
+conteneur de développement et devrait contenir toutes les dépendances systèmes du projet
 
 ### Build
 
@@ -24,7 +24,10 @@ kano docker build
 
 > Les options usuelles de `docker build` peuvent être utilisées
 
-L'image sera nommée `kano_${PROJECT_NAME}`
+L'image sera nommée `${PROJECT_NAME}-dev`
+
+> Le nom de l'image peut être personnalisé via la variable d'environnement
+> `KANO_DEVELOPMENT_IMAGE` dans le fichier `.kano/environment` du projet
 
 ### Delete
 
@@ -65,12 +68,15 @@ kano docker start [OPTIONS]
 
 Par défaut, ce conteneur:
 
-- Sera nommé `kano_${PROJECT_NAME}_container`
+- Sera nommé `${PROJECT_NAME}-dev-container`
 - Sera interactif
 - Sera non-persistent
 - Ne créera pas de fichiers de log
 - Aura le répertoire du projet embarqué comme volume
 - Aura le répertoire du projet configuré comme répertoire de travail
+
+> Le nom du conteneur peut être personnalisé via la variable d'environnement
+> `KANO_DEVELOPMENT_CONTAINER` dans le fichier `.kano/environment` du projet
 
 ### Stop
 
