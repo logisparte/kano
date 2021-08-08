@@ -2,8 +2,8 @@
 
 Include "$KANO_SOURCE_DIRECTORY/builtin/tasks/docker"
 
-DEVELOPMENT_IMAGE="kano_${KANO_PROJECT_NAME}"
-DEVELOPMENT_CONTAINER="${DEVELOPMENT_IMAGE}_container"
+DEVELOPMENT_IMAGE="$KANO_PROJECT_NAME-dev"
+DEVELOPMENT_CONTAINER="$KANO_PROJECT_NAME-dev-container"
 
 Describe "docker"
   fail() {
@@ -60,6 +60,21 @@ Describe "docker"
   DOES_DEVELOPMENT_IMAGE_EXIST=false
   DOES_DEVELOPMENT_CONTAINER_EXIST=false
 
+  before_all() {
+    export INITIAL_KANO_DEVELOPMENT_IMAGE="$KANO_DEVELOPMENT_IMAGE"
+    export INITIAL_KANO_DEVELOPMENT_CONTAINER="$KANO_DEVELOPMENT_CONTAINER"
+    export KANO_DEVELOPMENT_IMAGE=""
+    export KANO_DEVELOPMENT_CONTAINER=""
+  }
+
+  after_all() {
+    export KANO_DEVELOPMENT_IMAGE="$INITIAL_KANO_DEVELOPMENT_IMAGE"
+    export KANO_DEVELOPMENT_CONTAINER="$INITIAL_KANO_DEVELOPMENT_CONTAINER"
+  }
+
+  BeforeAll "before_all"
+  AfterAll "after_all"
+
   Context "when inside a development container"
     IS_INSIDE_DEVELOPMENT_CONTAINER=true
     It "should fail with the expected error message"
@@ -106,6 +121,25 @@ Describe "docker"
         "--file $KANO_PROJECT_DIRECTORY/Dockerfile"
       The variable docker_called_with should include "--tag $DEVELOPMENT_IMAGE"
       The variable docker_called_with should end_with "."
+    End
+
+    Context "when using a custom image name"
+      SOME_CUSTOM_NAME="some-custom-name"
+      before_each() {
+        export KANO_DEVELOPMENT_IMAGE="$SOME_CUSTOM_NAME"
+      }
+
+      after_each() {
+        export KANO_DEVELOPMENT_IMAGE=""
+      }
+
+      BeforeEach "before_each"
+      AfterEach "after_each"
+      It "should build it with custom name"
+        When run docker build
+        The status should be success
+        The variable docker_called_with should include "--tag $SOME_CUSTOM_NAME"
+      End
     End
 
     Context "when development image already exist"
@@ -249,6 +283,25 @@ Describe "docker"
         The variable docker_called_with should include "--volume $PWD:$PWD"
         The variable docker_called_with should include "--workdir $PWD"
         The variable docker_called_with should end_with "$DEVELOPMENT_IMAGE"
+      End
+
+      Context "when using a custom container name"
+        SOME_CUSTOM_NAME="some-custom-container-name"
+        before_each() {
+          export KANO_DEVELOPMENT_CONTAINER="$SOME_CUSTOM_NAME"
+        }
+
+        after_each() {
+          export KANO_DEVELOPMENT_CONTAINER=""
+        }
+
+        BeforeEach "before_each"
+        AfterEach "after_each"
+        It "should start it with custom name"
+          When run docker start
+          The status should be success
+          The variable docker_called_with should include "--name $SOME_CUSTOM_NAME"
+        End
       End
 
       Context "when passing extra docker run options"

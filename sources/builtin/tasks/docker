@@ -4,14 +4,19 @@
 . "$KANO_SOURCE_DIRECTORY/builtin/helpers/does_file_exist"
 . "$KANO_SOURCE_DIRECTORY/builtin/helpers/fail"
 
-DEVELOPMENT_IMAGE="kano_${KANO_PROJECT_NAME}"
-DEVELOPMENT_CONTAINER="${DEVELOPMENT_IMAGE}_container"
-
 docker_help() {
   echo "Run project tasks inside a Docker container"
 }
 
 docker() {
+  if [ -z "$KANO_DEVELOPMENT_IMAGE" ]; then
+    KANO_DEVELOPMENT_IMAGE="$KANO_PROJECT_NAME-dev"
+  fi
+
+  if [ -z "$KANO_DEVELOPMENT_CONTAINER" ]; then
+    KANO_DEVELOPMENT_CONTAINER="$KANO_PROJECT_NAME-dev-container"
+  fi
+
   if _is_inside_development_container; then
     fail "Cannot run docker task inside a development container"
   fi
@@ -30,7 +35,7 @@ docker() {
 
   build() {
     if _does_development_image_exist; then
-      _docker_build --cache-from "$DEVELOPMENT_IMAGE" "$@"
+      _docker_build --cache-from "$KANO_DEVELOPMENT_IMAGE" "$@"
 
     else
       _docker_build "$@"
@@ -39,7 +44,7 @@ docker() {
 
   delete() {
     if _does_development_image_exist; then
-      _docker image rm "$DEVELOPMENT_IMAGE"
+      _docker image rm "$KANO_DEVELOPMENT_IMAGE"
     fi
   }
 
@@ -57,7 +62,7 @@ docker() {
       fail "Development image does not exist. Run 'kano docker build'"
     fi
 
-    _docker_run --detach --name "$DEVELOPMENT_CONTAINER" "$@" "$DEVELOPMENT_IMAGE"
+    _docker_run --detach --name "$KANO_DEVELOPMENT_CONTAINER" "$@" "$KANO_DEVELOPMENT_IMAGE"
   }
 
   stop() {
@@ -65,7 +70,7 @@ docker() {
       fail "Development container does not exist. Run 'kano docker start'"
     fi
 
-    _docker stop "$DEVELOPMENT_CONTAINER"
+    _docker stop "$KANO_DEVELOPMENT_CONTAINER"
   }
 
   attach() {
@@ -73,7 +78,7 @@ docker() {
       fail "Development container does not exist. Run 'kano docker start'"
     fi
 
-    _docker attach "$@" "$DEVELOPMENT_CONTAINER"
+    _docker attach "$@" "$KANO_DEVELOPMENT_CONTAINER"
   }
 
   "$@"
@@ -82,13 +87,13 @@ docker() {
 _docker_build() {
   _docker build \
     --file "$KANO_PROJECT_DIRECTORY/Dockerfile" \
-    --tag "$DEVELOPMENT_IMAGE" \
+    --tag "$KANO_DEVELOPMENT_IMAGE" \
     "$@" .
 }
 
 _docker_run() {
   _docker run \
-    --env KANO_DOCKER_IS_INSIDE_DEVELOPMENT_CONTAINER=true \
+    --env KANO_IS_IN_DOCKER=true \
     --interactive \
     --log-driver none \
     --rm \
@@ -117,7 +122,7 @@ _insert_image_between_docker_run_options_and_command() {
       IS_EXPECTING_VALUE=false
 
     else
-      echo "$DEVELOPMENT_IMAGE"
+      echo "$KANO_DEVELOPMENT_IMAGE"
       echo "$ARGUMENT"
       HAS_INSERTED_IMAGE=true
     fi
@@ -162,11 +167,11 @@ _is_option_or_flag() {
 }
 
 _does_development_image_exist() {
-  _docker image ls | grep -q "$DEVELOPMENT_IMAGE"
+  _docker image ls | grep -q "$KANO_DEVELOPMENT_IMAGE"
 }
 
 _does_development_container_exist() {
-  _docker ps -a | grep -q "$DEVELOPMENT_CONTAINER"
+  _docker ps -a | grep -q "$KANO_DEVELOPMENT_CONTAINER"
 }
 
 _is_docker_installed() {
@@ -174,7 +179,7 @@ _is_docker_installed() {
 }
 
 _is_inside_development_container() {
-  [ -n "$KANO_DOCKER_IS_INSIDE_DEVELOPMENT_CONTAINER" ]
+  [ -n "$KANO_IS_IN_DOCKER" ]
   return $?
 }
 
