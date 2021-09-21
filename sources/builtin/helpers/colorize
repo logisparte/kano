@@ -72,5 +72,5 @@ colorize() {
       ;;
   esac
 
-  printf "\e[38;${COLOR_MODIFIER};${COLOR_CODE}m%s\e[0m" "$TEXT"
+  printf "\033[38;${COLOR_MODIFIER};${COLOR_CODE}m%s\033[0m" "$TEXT"
 }

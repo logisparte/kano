@@ -18,7 +18,7 @@ Describe "colorize"
       It "should return the text in white"
         When run colorize "$SOME_TEXT"
         The status should be success
-        The output should equal "$(printf "\e[38;5;15m%s\e[0m" "$SOME_TEXT")"
+        The output should equal "$(printf "\033[38;5;15m%s\033[0m" "$SOME_TEXT")"
       End
     End
 
@@ -37,7 +37,7 @@ Describe "colorize"
           It "should return the text in corresponding color"
             When run colorize "$SOME_TEXT" "0"
             The status should be success
-            The output should equal "$(printf "\e[38;5;0m%s\e[0m" "$SOME_TEXT")"
+            The output should equal "$(printf "\033[38;5;0m%s\033[0m" "$SOME_TEXT")"
           End
         End
 
@@ -45,7 +45,7 @@ Describe "colorize"
           It "should return the text in corresponding color"
             When run colorize "$SOME_TEXT" "255"
             The status should be success
-            The output should equal "$(printf "\e[38;5;255m%s\e[0m" "$SOME_TEXT")"
+            The output should equal "$(printf "\033[38;5;255m%s\033[0m" "$SOME_TEXT")"
           End
         End
 
@@ -62,7 +62,7 @@ Describe "colorize"
         It "should return the text in white"
           When run colorize "$SOME_TEXT" "white"
           The status should be success
-          The output should equal "$(printf "\e[38;5;15m%s\e[0m" "$SOME_TEXT")"
+          The output should equal "$(printf "\033[38;5;15m%s\033[0m" "$SOME_TEXT")"
         End
       End
 
@@ -70,7 +70,7 @@ Describe "colorize"
         It "should return the text in bold white"
           When run colorize "$SOME_TEXT" "bold_white"
           The status should be success
-          The output should equal "$(printf "\e[38;1;15m%s\e[0m" "$SOME_TEXT")"
+          The output should equal "$(printf "\033[38;1;15m%s\033[0m" "$SOME_TEXT")"
         End
       End
 
@@ -78,7 +78,7 @@ Describe "colorize"
         It "should return the text in gray"
           When run colorize "$SOME_TEXT" "gray"
           The status should be success
-          The output should equal "$(printf "\e[38;5;8m%s\e[0m" "$SOME_TEXT")"
+          The output should equal "$(printf "\033[38;5;8m%s\033[0m" "$SOME_TEXT")"
         End
       End
 
@@ -86,7 +86,7 @@ Describe "colorize"
         It "should return the text in black"
           When run colorize "$SOME_TEXT" "black"
           The status should be success
-          The output should equal "$(printf "\e[38;5;0m%s\e[0m" "$SOME_TEXT")"
+          The output should equal "$(printf "\033[38;5;0m%s\033[0m" "$SOME_TEXT")"
         End
       End
 
@@ -94,7 +94,7 @@ Describe "colorize"
         It "should return the text in red"
           When run colorize "$SOME_TEXT" "red"
           The status should be success
-          The output should equal "$(printf "\e[38;5;9m%s\e[0m" "$SOME_TEXT")"
+          The output should equal "$(printf "\033[38;5;9m%s\033[0m" "$SOME_TEXT")"
         End
       End
 
@@ -102,7 +102,7 @@ Describe "colorize"
         It "should return the text in yellow"
           When run colorize "$SOME_TEXT" "yellow"
           The status should be success
-          The output should equal "$(printf "\e[38;5;11m%s\e[0m" "$SOME_TEXT")"
+          The output should equal "$(printf "\033[38;5;11m%s\033[0m" "$SOME_TEXT")"
         End
       End
 
@@ -110,7 +110,7 @@ Describe "colorize"
         It "should return the text in green"
           When run colorize "$SOME_TEXT" "green"
           The status should be success
-          The output should equal "$(printf "\e[38;5;10m%s\e[0m" "$SOME_TEXT")"
+          The output should equal "$(printf "\033[38;5;10m%s\033[0m" "$SOME_TEXT")"
         End
       End
 
@@ -118,7 +118,7 @@ Describe "colorize"
         It "should return the text in cyan"
           When run colorize "$SOME_TEXT" "cyan"
           The status should be success
-          The output should equal "$(printf "\e[38;5;14m%s\e[0m" "$SOME_TEXT")"
+          The output should equal "$(printf "\033[38;5;14m%s\033[0m" "$SOME_TEXT")"
         End
       End
 
@@ -126,7 +126,7 @@ Describe "colorize"
         It "should return the text in blue"
           When run colorize "$SOME_TEXT" "blue"
           The status should be success
-          The output should equal "$(printf "\e[38;5;12m%s\e[0m" "$SOME_TEXT")"
+          The output should equal "$(printf "\033[38;5;12m%s\033[0m" "$SOME_TEXT")"
         End
       End
 
@@ -134,7 +134,7 @@ Describe "colorize"
         It "should return the text in purple"
           When run colorize "$SOME_TEXT" "purple"
           The status should be success
-          The output should equal "$(printf "\e[38;5;5m%s\e[0m" "$SOME_TEXT")"
+          The output should equal "$(printf "\033[38;5;5m%s\033[0m" "$SOME_TEXT")"
         End
       End
     End
