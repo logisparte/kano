@@ -10,11 +10,11 @@ docker_help() {
 
 docker() {
   if [ -z "$KANO_DEVELOPMENT_IMAGE" ]; then
-    KANO_DEVELOPMENT_IMAGE="$KANO_PROJECT_NAME-dev"
+    export KANO_DEVELOPMENT_IMAGE="$KANO_PROJECT_NAME-dev"
   fi
 
   if [ -z "$KANO_DEVELOPMENT_CONTAINER" ]; then
-    KANO_DEVELOPMENT_CONTAINER="$KANO_PROJECT_NAME-dev-container"
+    export KANO_DEVELOPMENT_CONTAINER="$KANO_PROJECT_NAME-dev-container"
   fi
 
   if _is_inside_development_container; then
