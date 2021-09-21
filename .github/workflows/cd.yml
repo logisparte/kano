@@ -51,6 +51,9 @@ jobs:
       - name: Tag development image with version
         run: docker tag "$DEVELOPMENT_IMAGE_COMMIT_TAG" "$DEVELOPMENT_IMAGE_VERSION_TAG"
 
+      - name: Rebuild development image from cache
+        run: kano docker build --cache-from "$DEVELOPMENT_IMAGE_COMMIT_TAG"
+
       - name: Build project
         run: kano docker run kano build
 
