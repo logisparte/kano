@@ -14,7 +14,7 @@ To execute a task inside a development container :
 kano dockered TASK
 ```
 
-> `kano` must also be installed in your development image
+> `kano` must also be installed in the development image
 
 ### Note
 

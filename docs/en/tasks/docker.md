@@ -101,3 +101,11 @@ When attached, to exit the container:
 ```shell
 exit
 ```
+
+### Enter
+
+To [start](###start) and [attach](###attach) at once:
+
+```shell
+kano docker enter
+```

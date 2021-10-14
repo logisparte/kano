@@ -6,6 +6,18 @@ DEVELOPMENT_IMAGE="$KANO_PROJECT_NAME-dev"
 DEVELOPMENT_CONTAINER="$KANO_PROJECT_NAME-dev-container"
 
 Describe "docker"
+  sh() {
+    shift
+    # shellcheck disable=SC2068
+    $@
+  }
+
+  kano() {
+    # shellcheck disable=SC2034
+    kano_called_with="$*"
+    %preserve kano_called_with
+  }
+
   fail() {
     # shellcheck disable=SC2034
     fail_called_with="$*"
@@ -401,6 +413,20 @@ Describe "docker"
           The variable docker_called_with should end_with "$DEVELOPMENT_CONTAINER"
         End
       End
+    End
+  End
+
+  Describe "enter"
+    It "should invoke docker start task"
+      When run docker enter
+      The status should be success
+      The variable kano_called_with should start_with "docker start"
+    End
+
+    It "should invoke docker start task"
+      When run docker enter
+      The status should be success
+      The variable kano_called_with should end_with "docker attach"
     End
   End
 End
