@@ -13,23 +13,21 @@ env:
   COMMIT: ${{ github.sha }}
 
 jobs:
-  ci_update_development_image:
+  update_development_image:
     runs-on: ubuntu-latest
     steps:
       - name: Install kano
         run: |
-          curl -L https://github.com/logisparte/kano/releases/download/3.1.3/kano.tar.gz \
+          curl -L https://github.com/logisparte/kano/releases/download/3.2.1/kano.tar.gz \
             | tar -xz
           sudo ./kano/install
 
       - name: Export environment variables
         run: |
           DEVELOPMENT_IMAGE="$REGISTRY_URL/$REPOSITORY-dev"
-          DEVELOPMENT_IMAGE_COMMIT_TAG="$DEVELOPMENT_IMAGE:$COMMIT"
-          DEVELOPMENT_IMAGE_LATEST_TAG="$DEVELOPMENT_IMAGE:latest"
-          echo "DEVELOPMENT_IMAGE=$DEVELOPMENT_IMAGE" >> "$GITHUB_ENV"
-          echo "DEVELOPMENT_IMAGE_COMMIT_TAG=$DEVELOPMENT_IMAGE_COMMIT_TAG" >> "$GITHUB_ENV"
-          echo "DEVELOPMENT_IMAGE_LATEST_TAG=$DEVELOPMENT_IMAGE_LATEST_TAG" >> "$GITHUB_ENV"
+          echo "DEVELOPMENT_IMAGE_COMMIT_TAG=$DEVELOPMENT_IMAGE:$COMMIT" >> "$GITHUB_ENV"
+          echo "DEVELOPMENT_IMAGE_LATEST_TAG=$DEVELOPMENT_IMAGE:latest" >> "$GITHUB_ENV"
+          echo "KANO_DEVELOPMENT_IMAGE=$DEVELOPMENT_IMAGE" >> "$GITHUB_ENV"
 
       - uses: actions/checkout@v2
         name: Clone project
@@ -42,16 +40,15 @@ jobs:
           password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
 
       - name: Pull existing development image, if any
-        run: docker pull "$DEVELOPMENT_IMAGE_LATEST_TAG" || true
+        run: docker pull "$KANO_DEVELOPMENT_IMAGE" || true
 
-      - name: Build development image from cache
+      - name: Build new development image
         run: |
           kano docker build \
             --tag "$DEVELOPMENT_IMAGE_COMMIT_TAG" \
-            --tag "$DEVELOPMENT_IMAGE_LATEST_TAG" \
-            --cache-from "$DEVELOPMENT_IMAGE"
+            --tag "$DEVELOPMENT_IMAGE_LATEST_TAG"
 
-      - name: Push development image
+      - name: Push new development image
         run: |
           docker push "$DEVELOPMENT_IMAGE_COMMIT_TAG"
           docker push "$DEVELOPMENT_IMAGE_LATEST_TAG"
