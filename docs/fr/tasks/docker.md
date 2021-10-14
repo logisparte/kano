@@ -101,3 +101,11 @@ Une fois attaché, pour quitter le conteneur :
 ```shell
 exit
 ```
+
+### Enter
+
+Pour démarrer ([start](###start)) et s'attacher ([attach](###attach)) d'un coup:
+
+```shell
+kano docker enter
+```

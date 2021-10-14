@@ -86,6 +86,10 @@ docker() {
     _docker attach "$@" "$KANO_DEVELOPMENT_CONTAINER"
   }
 
+  enter() {
+    sh -c "kano docker start && kano docker attach"
+  }
+
   "$@"
 }
 
