@@ -170,11 +170,11 @@ _is_option_or_flag() {
 }
 
 _does_development_image_exist() {
-  _docker image ls | grep -q "$KANO_DEVELOPMENT_IMAGE"
+  _docker image inspect "$KANO_DEVELOPMENT_IMAGE" > /dev/null 2>&1
 }
 
 _does_development_container_exist() {
-  _docker ps -a | grep -q "$KANO_DEVELOPMENT_CONTAINER"
+  _docker container inspect "$KANO_DEVELOPMENT_CONTAINER" > /dev/null 2>&1
 }
 
 _is_docker_installed() {
