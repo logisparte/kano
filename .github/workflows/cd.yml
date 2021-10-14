@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Install kano
         run: |
-          curl -L https://github.com/logisparte/kano/releases/download/3.2.1/kano.tar.gz \
+          curl -L https://github.com/logisparte/kano/releases/download/3.3.0/kano.tar.gz \
             | tar -xz
           sudo ./kano/install
 
@@ -50,11 +50,11 @@ jobs:
         run: docker pull "$KANO_DEVELOPMENT_IMAGE"
 
       - name: Build project
-        run: kano docker run kano build
+        run: kano dockered build
 
       - name: Release project
         run: |
-          kano docker run kano release \
+          kano dockered release \
             "$VERSION" \
             "$HELOT_GIT_NAME" \
             "$HELOT_GIT_EMAIL" \
