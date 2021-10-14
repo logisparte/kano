@@ -62,7 +62,12 @@ docker() {
       fail "Development image does not exist. Run 'kano docker build'"
     fi
 
-    _docker_run --detach --name "$KANO_DEVELOPMENT_CONTAINER" "$@" "$KANO_DEVELOPMENT_IMAGE"
+    _docker_run \
+      --detach \
+      --interactive \
+      --name "$KANO_DEVELOPMENT_CONTAINER" \
+      --tty \
+      "$@" "$KANO_DEVELOPMENT_IMAGE"
   }
 
   stop() {
@@ -94,10 +99,8 @@ _docker_build() {
 _docker_run() {
   _docker run \
     --env KANO_IS_IN_DOCKER=true \
-    --interactive \
     --log-driver none \
     --rm \
-    --tty \
     --volume "$PWD:$PWD" \
     --workdir "$PWD" \
     "$@"

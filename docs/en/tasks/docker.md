@@ -50,7 +50,7 @@ kano docker run [OPTIONS] COMMAND
 By default, this container will:
 
 - Have an auto-generated name
-- Be interactive
+- Be non-interactive
 - Be non-persistent
 - Not create log files
 - Have the project directory mounted as a volume

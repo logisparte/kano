@@ -201,10 +201,8 @@ Describe "docker"
         When run docker run some_command
         The status should be success
         The variable docker_called_with should start_with "run"
-        The variable docker_called_with should include "--interactive"
         The variable docker_called_with should include "--log-driver none"
         The variable docker_called_with should include "--rm"
-        The variable docker_called_with should include "--tty"
         The variable docker_called_with should include "--volume $PWD:$PWD"
         The variable docker_called_with should include "--workdir $PWD"
         The variable docker_called_with should end_with "$DEVELOPMENT_IMAGE some_command"
