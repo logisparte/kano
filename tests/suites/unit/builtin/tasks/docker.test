@@ -75,6 +75,12 @@ Describe "docker"
   BeforeAll "before_all"
   AfterAll "after_all"
 
+  It "has a help message"
+    When run docker_help
+    The status should be success
+    The output should equal "Work in an isolated development docker container"
+  End
+
   Context "when inside a development container"
     IS_INSIDE_DEVELOPMENT_CONTAINER=true
     It "should fail with the expected error message"

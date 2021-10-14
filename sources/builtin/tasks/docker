@@ -5,7 +5,7 @@
 . "$KANO_SOURCE_DIRECTORY/builtin/helpers/fail"
 
 docker_help() {
-  echo "Run project tasks inside a Docker container"
+  echo "Work in an isolated development docker container"
 }
 
 docker() {
