@@ -1,6 +1,5 @@
 #!/bin/sh
 
-export KANO_DEVELOPMENT_IMAGE="ghcr.io/logisparte/kano-dev"
 export BUILD_DIRECTORY="$PWD/build"
 export RELEASE_DIRECTORY="$PWD/release"
 export SOURCE_DIRECTORY="$PWD/sources"

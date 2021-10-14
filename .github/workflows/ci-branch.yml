@@ -12,19 +12,17 @@ env:
   REPOSITORY: ${{ github.repository }}
 
 jobs:
-  run_ci:
+  check_branch:
     runs-on: ubuntu-latest
     steps:
       - name: Install kano
         run: |
-          curl -L https://github.com/logisparte/kano/releases/download/3.1.3/kano.tar.gz \
+          curl -L https://github.com/logisparte/kano/releases/download/3.2.1/kano.tar.gz \
             | tar -xz
           sudo ./kano/install
 
       - name: Export environment variables
-        run: |
-          DEVELOPMENT_IMAGE="$REGISTRY_URL/$REPOSITORY-dev"
-          echo "DEVELOPMENT_IMAGE=$DEVELOPMENT_IMAGE" >> "$GITHUB_ENV"
+        run: echo "KANO_DEVELOPMENT_IMAGE=$REGISTRY_URL/$REPOSITORY-dev" >> "$GITHUB_ENV"
 
       - uses: actions/checkout@v2
         name: Clone project
@@ -37,10 +35,10 @@ jobs:
           password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
 
       - name: Pull existing development image, if any
-        run: docker pull "$DEVELOPMENT_IMAGE" || true
+        run: docker pull "$KANO_DEVELOPMENT_IMAGE" || true
 
-      - name: Build development image from cache
-        run: kano docker build --cache-from "$DEVELOPMENT_IMAGE"
+      - name: Build branch development image
+        run: kano docker build
 
       - name: Lint project
         run: kano docker run kano lint
