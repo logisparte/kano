@@ -4,7 +4,7 @@
 
 ## Description
 
-Utiliser la tâche `docker` pour exécuter d'autres tâches dans un conteneur Docker
+Utiliser la tâche `docker` pour travailler dans un conteneur de développement isolé
 
 > Cette tâche requiert [Docker](https://github.com/docker)
 
@@ -42,7 +42,7 @@ kano docker delete
 Pour exécuter une commande dans un conteneur de développement éphémère :
 
 ```shell
-kano docker run [OPTIONS] COMMAND
+kano docker run [OPTIONS] COMMANDE
 ```
 
 > Les options usuelles de `docker run` peuvent être utilisées

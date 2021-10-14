@@ -4,7 +4,7 @@
 
 ## Description
 
-Use the `docker` task to run other tasks inside a Docker container
+Use the `docker` task to work in an isolated development docker container
 
 > This task requires [Docker](https://github.com/docker)
 
