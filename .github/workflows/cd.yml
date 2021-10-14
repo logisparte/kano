@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Install kano
         run: |
-          curl -L https://github.com/logisparte/kano/releases/download/3.0.0/kano.tar.gz \
+          curl -L https://github.com/logisparte/kano/releases/download/3.1.3/kano.tar.gz \
             | tar -xz
           sudo ./kano/install
 
@@ -50,9 +50,6 @@ jobs:
 
       - name: Tag development image with version
         run: docker tag "$DEVELOPMENT_IMAGE_COMMIT_TAG" "$DEVELOPMENT_IMAGE_VERSION_TAG"
-
-      - name: Rebuild development image from cache
-        run: kano docker build --cache-from "$DEVELOPMENT_IMAGE_COMMIT_TAG"
 
       - name: Build project
         run: kano docker run kano build
