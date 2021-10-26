@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Install kano
         run: |
-          curl -L https://github.com/logisparte/kano/releases/download/3.3.0/kano.tar.gz \
+          curl -L https://github.com/logisparte/kano/releases/download/3.3.1/kano.tar.gz \
             | tar -xz
           sudo ./kano/install
 
