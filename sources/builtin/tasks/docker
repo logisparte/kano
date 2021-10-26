@@ -17,7 +17,15 @@ docker() {
     export KANO_DEVELOPMENT_CONTAINER="$KANO_PROJECT_NAME-dev-container"
   fi
 
-  if _is_inside_development_container; then
+  if ! does_directory_exist "$KANO_PROJECT_DIRECTORY"; then
+    fail "No kano directory exists in project"
+  fi
+
+  if ! does_file_exist "$KANO_PROJECT_DIRECTORY/Dockerfile"; then
+    fail "No Dockerfile in project kano directory"
+  fi
+
+  if "$KANO_IS_IN_DOCKER"; then
     fail "Cannot run docker task inside a development container"
   fi
 
@@ -27,14 +35,6 @@ docker() {
 
   if ! _is_docker_daemon_running; then
     fail "Docker daemon is not running"
-  fi
-
-  if ! does_directory_exist "$KANO_PROJECT_DIRECTORY"; then
-    fail "No kano directory exists in project"
-  fi
-
-  if ! does_file_exist "$KANO_PROJECT_DIRECTORY/Dockerfile"; then
-    fail "No Dockerfile in project kano directory"
   fi
 
   build() {
@@ -177,14 +177,6 @@ _is_option_or_flag() {
   esac
 }
 
-_does_development_image_exist() {
-  _docker image inspect "$KANO_DEVELOPMENT_IMAGE" > /dev/null 2>&1
-}
-
-_does_development_container_exist() {
-  _docker container inspect "$KANO_DEVELOPMENT_CONTAINER" > /dev/null 2>&1
-}
-
 _is_docker_installed() {
   _docker --help > /dev/null 2>&1
 }
@@ -193,8 +185,12 @@ _is_docker_daemon_running() {
   _docker system info > /dev/null 2>&1
 }
 
-_is_inside_development_container() {
-  [ -n "$KANO_IS_IN_DOCKER" ]
+_does_development_image_exist() {
+  _docker image inspect "$KANO_DEVELOPMENT_IMAGE" > /dev/null 2>&1
+}
+
+_does_development_container_exist() {
+  _docker container inspect "$KANO_DEVELOPMENT_CONTAINER" > /dev/null 2>&1
 }
 
 _docker() {

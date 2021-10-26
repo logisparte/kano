@@ -43,10 +43,6 @@ Describe "docker"
     fi
   }
 
-  _is_inside_development_container() {
-    "$IS_INSIDE_DEVELOPMENT_CONTAINER"
-  }
-
   _is_docker_installed() {
     "$IS_DOCKER_INSTALLED"
   }
@@ -69,7 +65,6 @@ Describe "docker"
     %preserve docker_called_with
   }
 
-  IS_INSIDE_DEVELOPMENT_CONTAINER=false
   IS_DOCKER_INSTALLED=true
   IS_DOCKER_DAEMON_RUNNING=true
   DOES_PROJECT_DIRECTORY_EXIST=true
@@ -80,13 +75,16 @@ Describe "docker"
   before_all() {
     export INITIAL_KANO_DEVELOPMENT_IMAGE="$KANO_DEVELOPMENT_IMAGE"
     export INITIAL_KANO_DEVELOPMENT_CONTAINER="$KANO_DEVELOPMENT_CONTAINER"
+    export INITIAL_KANO_IS_IN_DOCKER="$KANO_IS_IN_DOCKER"
     export KANO_DEVELOPMENT_IMAGE=""
     export KANO_DEVELOPMENT_CONTAINER=""
+    export KANO_IS_IN_DOCKER=false
   }
 
   after_all() {
     export KANO_DEVELOPMENT_IMAGE="$INITIAL_KANO_DEVELOPMENT_IMAGE"
     export KANO_DEVELOPMENT_CONTAINER="$INITIAL_KANO_DEVELOPMENT_CONTAINER"
+    export KANO_IS_IN_DOCKER="$INITIAL_KANO_IS_IN_DOCKER"
   }
 
   BeforeAll "before_all"
@@ -98,8 +96,26 @@ Describe "docker"
     The output should equal "Work in an isolated development docker container"
   End
 
+  Context "when project kano directory does not exist"
+    DOES_PROJECT_DIRECTORY_EXIST=false
+    It "should fail with the expected error message"
+      When run docker
+      The status should be failure
+      The variable fail_called_with should equal "No kano directory exists in project"
+    End
+  End
+
+  Context "when no Dockerfile in project kano directory"
+    DOES_DOCKERFILE_EXIST=false
+    It "should fail with the expected error message"
+      When run docker
+      The status should be failure
+      The variable fail_called_with should equal "No Dockerfile in project kano directory"
+    End
+  End
+
   Context "when inside a development container"
-    IS_INSIDE_DEVELOPMENT_CONTAINER=true
+    KANO_IS_IN_DOCKER=true
     It "should fail with the expected error message"
       When run docker
       The status should be failure
@@ -123,24 +139,6 @@ Describe "docker"
       When run docker
       The status should be failure
       The variable fail_called_with should equal "Docker daemon is not running"
-    End
-  End
-
-  Context "when project kano directory does not exist"
-    DOES_PROJECT_DIRECTORY_EXIST=false
-    It "should fail with the expected error message"
-      When run docker
-      The status should be failure
-      The variable fail_called_with should equal "No kano directory exists in project"
-    End
-  End
-
-  Context "when no Dockerfile in project kano directory"
-    DOES_DOCKERFILE_EXIST=false
-    It "should fail with the expected error message"
-      When run docker
-      The status should be failure
-      The variable fail_called_with should equal "No Dockerfile in project kano directory"
     End
   End
 
