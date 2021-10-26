@@ -25,6 +25,10 @@ docker() {
     fail "Docker is not installed"
   fi
 
+  if ! _is_docker_daemon_running; then
+    fail "Docker daemon is not running"
+  fi
+
   if ! does_directory_exist "$KANO_PROJECT_DIRECTORY"; then
     fail "No kano directory exists in project"
   fi
@@ -185,9 +189,12 @@ _is_docker_installed() {
   _docker --help > /dev/null 2>&1
 }
 
+_is_docker_daemon_running() {
+  _docker system info > /dev/null 2>&1
+}
+
 _is_inside_development_container() {
   [ -n "$KANO_IS_IN_DOCKER" ]
-  return $?
 }
 
 _docker() {
