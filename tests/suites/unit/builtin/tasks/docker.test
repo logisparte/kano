@@ -51,6 +51,10 @@ Describe "docker"
     "$IS_DOCKER_INSTALLED"
   }
 
+  _is_docker_daemon_running() {
+    "$IS_DOCKER_DAEMON_RUNNING"
+  }
+
   _does_development_image_exist() {
     "$DOES_DEVELOPMENT_IMAGE_EXIST"
   }
@@ -67,6 +71,7 @@ Describe "docker"
 
   IS_INSIDE_DEVELOPMENT_CONTAINER=false
   IS_DOCKER_INSTALLED=true
+  IS_DOCKER_DAEMON_RUNNING=true
   DOES_PROJECT_DIRECTORY_EXIST=true
   DOES_DOCKERFILE_EXIST=true
   DOES_DEVELOPMENT_IMAGE_EXIST=false
@@ -109,6 +114,15 @@ Describe "docker"
       When run docker
       The status should be failure
       The variable fail_called_with should equal "Docker is not installed"
+    End
+  End
+
+  Context "when docker daemon is not running"
+    IS_DOCKER_DAEMON_RUNNING=false
+    It "should fail with the expected error message"
+      When run docker
+      The status should be failure
+      The variable fail_called_with should equal "Docker daemon is not running"
     End
   End
 
