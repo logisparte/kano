@@ -25,7 +25,7 @@ docker() {
     fail "No Dockerfile in project kano directory"
   fi
 
-  if "$KANO_IS_IN_DOCKER"; then
+  if [ -n "$KANO_IS_IN_DOCKER" ] && "$KANO_IS_IN_DOCKER"; then
     fail "Cannot run docker task inside a development container"
   fi
 
