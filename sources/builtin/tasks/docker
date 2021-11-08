@@ -33,9 +33,7 @@ docker() {
     fail "Docker is not installed"
   fi
 
-  if ! _is_docker_daemon_running; then
-    fail "Docker daemon is not running"
-  fi
+  _ensure_docker_daemon_is_running
 
   build() {
     if _does_development_image_exist; then
@@ -181,16 +179,16 @@ _is_docker_installed() {
   _docker --help > /dev/null 2>&1
 }
 
-_is_docker_daemon_running() {
-  _docker system info > /dev/null 2>&1
+_ensure_docker_daemon_is_running() {
+  _docker version > /dev/null
 }
 
 _does_development_image_exist() {
-  _docker image inspect "$KANO_DEVELOPMENT_IMAGE" > /dev/null 2>&1
+  [ -n "$(_docker image ls --quiet --filter reference="$KANO_DEVELOPMENT_IMAGE")" ]
 }
 
 _does_development_container_exist() {
-  _docker container inspect "$KANO_DEVELOPMENT_CONTAINER" > /dev/null 2>&1
+  [ -n "$(_docker container ls --quiet --filter name="$KANO_DEVELOPMENT_CONTAINER")" ]
 }
 
 _docker() {
