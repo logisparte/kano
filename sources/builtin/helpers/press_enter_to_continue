@@ -11,5 +11,5 @@ press_enter_to_continue() {
 }
 
 _read_enter() {
-  read -r
+  read -r _
 }
