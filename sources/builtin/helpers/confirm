@@ -37,10 +37,12 @@ confirm() {
 
   case "$ANSWER" in
     [yY])
+      unset ANSWER
       true
       ;;
 
     *)
+      unset ANSWER
       false
       ;;
   esac

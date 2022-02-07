@@ -12,4 +12,5 @@ press_enter_to_continue() {
 
 _read_enter() {
   read -r _
+  unset _
 }
