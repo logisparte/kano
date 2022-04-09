@@ -105,6 +105,8 @@ _docker_build() {
 _docker_run() {
   _docker run \
     --env KANO_IS_IN_DOCKER=true \
+    --env KANO_DEVELOPMENT_IMAGE \
+    --env KANO_DEVELOPMENT_CONTAINER \
     --log-driver none \
     --rm \
     --volume "$PWD:$PWD" \
