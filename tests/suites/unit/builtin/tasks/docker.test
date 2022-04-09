@@ -301,6 +301,9 @@ Describe "docker"
         When run docker start
         The status should be success
         The variable docker_called_with should start_with "run"
+        The variable docker_called_with should include "--env KANO_IS_IN_DOCKER=true"
+        The variable docker_called_with should include "--env KANO_DEVELOPMENT_IMAGE"
+        The variable docker_called_with should include "--env KANO_DEVELOPMENT_CONTAINER"
         The variable docker_called_with should include "--detach"
         The variable docker_called_with should include "--interactive"
         The variable docker_called_with should include "--log-driver none"
