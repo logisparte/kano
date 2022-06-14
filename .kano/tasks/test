@@ -64,7 +64,8 @@ _test() {
     --kcov \
     --kcov-options="\
       --exclude-pattern=$SOURCE_DIRECTORY/kano \
-      --include-pattern=$SOURCE_DIRECTORY/"
+      --include-pattern=$SOURCE_DIRECTORY/" \
+    --covdir "$TEST_COVERAGE_DIRECTORY"
   RESULT=$?
 
   # Reset environment

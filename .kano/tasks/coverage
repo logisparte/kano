@@ -1,24 +1,18 @@
 #!/bin/sh
 
-. "$KANO_HELPERS/does_directory_exist"
+. "$KANO_HELPERS/does_file_exist"
 . "$KANO_HELPERS/fail"
-. "$KANO_HELPERS/report"
+
+COVERAGE_REPORT="$TEST_COVERAGE_DIRECTORY/index.html"
 
 coverage_help() {
   echo "View the coverage report for the last test run"
 }
 
 coverage() {
-  if ! does_directory_exist "$TEST_COVERAGE_DIRECTORY"; then
+  if ! does_file_exist "$COVERAGE_REPORT"; then
     fail "No coverage report found. Run tests with coverage first"
   fi
 
-  report info "[coverage] Opening coverage report in browser..."
-
-  if uname -a | grep -q "Linux"; then
-    xdg-open "$TEST_COVERAGE_DIRECTORY/index.html"
-
-  elif uname -a | grep -q "Darwin"; then
-    open "$TEST_COVERAGE_DIRECTORY/index.html"
-  fi
+  echo "file://$COVERAGE_REPORT"
 }

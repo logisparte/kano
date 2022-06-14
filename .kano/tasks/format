@@ -7,20 +7,18 @@ format_help() {
 }
 
 format() {
-  _format_shell && _format_markdown_and_yaml
-  return $?
+  _format_shell
+  _format_markdown_and_yaml
 }
 
 _format_shell() {
   _info "Formatting shell files"
   shfmt -p -w -bn -ci -sr -kp -i 2 .kano sources tests
-  return $?
 }
 
 _format_markdown_and_yaml() {
   _info "Formatting markdown and yaml files"
   prettier --write .github docs
-  return $?
 }
 
 _info() {
