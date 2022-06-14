@@ -61,24 +61,35 @@ See the [documentation](/docs/en/usage.md)
 
 ## Contributors
 
-### Setup
+### Docker
 
 A development docker image is used to encapsulate project dependencies and runtime environment.
-Git hooks are also used to ensure commit integrity. To build the image and install the git
-hooks:
+To build the image:
 
 ```shell
-kano setup
+kano docker build
 ```
 
-> Execute right after cloning the repository
+> See the [Docker user guide](/docs/en/tasks/docker.md) for more information
 
-### Reset
+### Format
 
-To delete the development docker image, uninstall the git hooks and delete all generated files:
+[shfmt](https://github.com/mvdan/sh) is used to format shell files.
+[Prettier](https://github.com/prettier/prettier) is used to format markdown and yaml files. To
+format all files:
 
 ```shell
-kano reset
+kano format
+```
+
+### Lint
+
+[ShellCheck](https://github.com/koalaman/shellcheck) is used to analyze shell code.
+[MarkdownLint](https://github.com/igorshubovych/markdownlint-cli) is used to analyze markdown
+code. To analyze all code:
+
+```shell
+kano lint
 ```
 
 ### Test
@@ -98,30 +109,6 @@ view the coverage report after a test run:
 ```shell
 kano coverage
 ```
-
-### Format
-
-[shfmt](https://github.com/mvdan/sh) is used to format shell files.
-[Prettier](https://github.com/prettier/prettier) is used to format markdown and yaml files. To
-format all files:
-
-```shell
-kano format
-```
-
-> The `pre-commit` git hook ensures commited code is formatted
-
-### Lint
-
-[ShellCheck](https://github.com/koalaman/shellcheck) is used to analyze shell code.
-[MarkdownLint](https://github.com/igorshubovych/markdownlint-cli) is used to analyze markdown
-code. To analyze all code:
-
-```shell
-kano lint
-```
-
-> The `pre-commit` git hook prevents committing code with lint errors
 
 ### Dev
 
@@ -154,6 +141,14 @@ kano build
 ```
 
 > The `/build` directory will contain the artifact
+
+### Clean
+
+To delete all generated files (artifacts, reports, etc.):
+
+```shell
+kano clean
+```
 
 ### Release
 

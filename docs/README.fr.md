@@ -64,25 +64,35 @@ Voir la [documentation](/docs/fr/usage.md)
 
 ## Contributeurs
 
-### Setup
+### Docker
 
 Une image Docker de dévelopment est utilisée afin d'encapsuler les dépendances du projet ainsi
-que son environnement d'exécution. Des _git hooks_ sont aussi utilisés pour assurer l'intégrité
-des commits. Pour bâtir l'image et installer les _git hooks_ :
+que son environnement d'exécution. Pour bâtir l'image :
 
 ```shell
-kano setup
+kano docker build
 ```
 
-> Exécuter juste après avoir cloné le dépôt
+> Voir le [guide d'utilisation Docker](/docs/fr/tasks/docker.md) pour plus d'informations
 
-### Reset
+### Format
 
-Pour effacer l'image Docker de développement, désinstaller les _git hooks_ et effacer tous les
-fichiers générés :
+[shfmt](https://github.com/mvdan/sh) est utilisé pour formatter les fichiers shell.
+[Prettier](https://github.com/prettier/prettier) est utilisé pour formatter les fichiers
+markdown et yaml. Pour formatter tous les fichiers :
 
 ```shell
-kano reset
+kano format
+```
+
+### Lint
+
+[ShellCheck](https://github.com/koalaman/shellcheck) est utilisé pour analyser le code shell.
+[MarkdownLint](https://github.com/igorshubovych/markdownlint-cli) est utilisé pour analyser le
+code markdown. Pour analyser tout le code :
+
+```shell
+kano lint
 ```
 
 ### Test
@@ -102,30 +112,6 @@ pendant les tests. Pour voir le rapport de couverture après une exécution des 
 ```shell
 kano coverage
 ```
-
-### Format
-
-[shfmt](https://github.com/mvdan/sh) est utilisé pour formatter les fichiers shell.
-[Prettier](https://github.com/prettier/prettier) est utilisé pour formatter les fichiers
-markdown et yaml. Pour formatter tous les fichiers :
-
-```shell
-kano format
-```
-
-> Le _git hook_ `pre-commit` s'assure que le code commis est formatté
-
-### Lint
-
-[ShellCheck](https://github.com/koalaman/shellcheck) est utilisé pour analyser le code shell.
-[MarkdownLint](https://github.com/igorshubovych/markdownlint-cli) est utilisé pour analyser le
-code markdown. Pour analyser tout le code :
-
-```shell
-kano lint
-```
-
-> Le _git hook_ `pre-commit` empêche de commettre du code avec des erreurs de lint
 
 ### Dev
 
@@ -158,6 +144,14 @@ kano build
 ```
 
 > Le répertoire `/build` contiendra l'artefact
+
+### Clean
+
+Pour effacer tous les fichiers générés (artefacts, rapports, etc.) :
+
+```shell
+kano clean
+```
 
 ### Release
 
