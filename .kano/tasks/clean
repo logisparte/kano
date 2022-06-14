@@ -1,0 +1,22 @@
+#!/bin/sh
+
+. "$KANO_HELPERS/report"
+
+clean_help() {
+  echo "Delete all generated files"
+}
+
+clean() {
+  report info "[clean] Deleting generated files"
+  if [ -d "$BUILD_DIRECTORY" ]; then
+    rm -rf "$BUILD_DIRECTORY"
+  fi
+
+  if [ -d "$RELEASE_DIRECTORY" ]; then
+    rm -rf "$RELEASE_DIRECTORY"
+  fi
+
+  if [ -d "$TEST_COVERAGE_DIRECTORY" ]; then
+    rm -rf "$TEST_COVERAGE_DIRECTORY"
+  fi
+}
