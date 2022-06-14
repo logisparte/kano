@@ -10,6 +10,7 @@ env:
   HELOT_GITHUB_USERNAME: logisparte-helot
   HELOT_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
   REPOSITORY: ${{ github.repository }}
+  DOCKER_BUILDKIT: true
 
 jobs:
   check_branch:
