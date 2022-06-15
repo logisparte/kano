@@ -96,8 +96,8 @@ _release_to_github() {
   CHECKSUM="$2"
 
   _info "Creating release"
-  DESCRIPTION="$(git tag -n32 -l "$VERSION" | sed -E "s/$VERSION//" | awk '{$1=$1};1')"
-  gh release create "$VERSION" "$PACKAGE_ARCHIVE" --title "$VERSION" --notes "$DESCRIPTION"
+  DESCRIPTION="$(git tag -n100 "$VERSION" | awk '{$1=$1; print}' | cut -d ' ' -f 2-)"
+  gh release create --title "$VERSION" --notes "$DESCRIPTION" "$VERSION" "$PACKAGE_ARCHIVE"
 }
 
 _update_package_definition_in_index() {

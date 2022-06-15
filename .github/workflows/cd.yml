@@ -37,8 +37,8 @@ jobs:
           echo "DEVELOPMENT_IMAGE_VERSION_TAG=$DEVELOPMENT_IMAGE_VERSION_TAG" >> "$GITHUB_ENV"
           echo "KANO_DEVELOPMENT_IMAGE=$DEVELOPMENT_IMAGE_COMMIT_TAG" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@v2
-        name: Clone project
+      - name: Clone project
+        uses: actions/checkout@v2
 
       - name: Login to registry
         uses: docker/login-action@v1
