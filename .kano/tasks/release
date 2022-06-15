@@ -6,6 +6,7 @@
 PACKAGE="kano"
 PACKAGE_ARCHIVE="$PACKAGE.tar.gz"
 PACKAGE_DIRECTORY="$RELEASE_DIRECTORY/$PACKAGE"
+export GIT_CEILING_DIRECTORIES="$PWD"
 
 release_help() {
   echo "Package the build and release it to GitHub"
@@ -96,8 +97,12 @@ _release_to_github() {
   CHECKSUM="$2"
 
   _info "Creating release"
+  git config --global --add safe.directory "$PWD"
   DESCRIPTION="$(git tag -n100 "$VERSION" | awk '{$1=$1; print}' | cut -d ' ' -f 2-)"
-  gh release create --title "$VERSION" --notes "$DESCRIPTION" "$VERSION" "$PACKAGE_ARCHIVE"
+  gh release create \
+    --title "$VERSION" \
+    --notes "$DESCRIPTION" \
+    "$VERSION" "$PACKAGE_ARCHIVE"
 }
 
 _update_package_definition_in_index() {
@@ -110,6 +115,7 @@ _update_package_definition_in_index() {
   cd .. || fail
   gh repo clone logisparte/homebrew-packages
   cd homebrew-packages || fail
+  git config --global --add safe.directory "$PWD"
   git checkout -b "$PACKAGE_INDEX_RELEASE_BRANCH_NAME"
 
    LANG=C sed \
