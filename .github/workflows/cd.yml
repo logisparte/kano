@@ -15,6 +15,7 @@ env:
   GITHUB_REF: ${{ github.ref }}
   COMMIT: ${{ github.sha }}
   DOCKER_BUILDKIT: true
+  GIT_CEILING_DIRECTORIES: ${{ github.workspace }}
 
 jobs:
   release:
