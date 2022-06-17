@@ -42,7 +42,7 @@ jobs:
         run: kano dockered build
 
       - name: Lint project
-        run: kano dockered lint
+        run: kano dockered lint all
 
       - name: Test project
         run: kano dockered test
