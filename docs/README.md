@@ -108,20 +108,32 @@ kano docker image build
 
 [shfmt](https://github.com/mvdan/sh) is used to format shell files.
 [Prettier](https://github.com/prettier/prettier) is used to format markdown and yaml files. To
-format all files:
+format dirty files:
 
 ```shell
 kano format
+```
+
+To format all files:
+
+```shell
+kano format all
 ```
 
 ### Lint
 
 [ShellCheck](https://github.com/koalaman/shellcheck) is used to analyze shell code.
 [MarkdownLint](https://github.com/igorshubovych/markdownlint-cli) is used to analyze markdown
-code. To analyze all code:
+code. To analyze dirty files:
 
 ```shell
 kano lint
+```
+
+To analyze all files:
+
+```shell
+kano lint all
 ```
 
 ### Test

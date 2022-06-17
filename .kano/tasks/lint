@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. "$KANO_HELPERS/git/get_all_files"
+. "$KANO_HELPERS/git/get_dirty_files"
 . "$KANO_HELPERS/report"
 
 lint_help() {
@@ -7,18 +9,52 @@ lint_help() {
 }
 
 lint() {
-  _lint_shell
-  _lint_markdown
+  FILTER="$1"
+
+  case "$FILTER" in
+    dirty | "")
+      FILTERED_FILES="$(get_dirty_files)"
+      ;;
+
+    all)
+      FILTERED_FILES="$(get_all_files)"
+      ;;
+
+    *)
+      fail "Unknown filter: $FILTER"
+      ;;
+  esac
+
+  _lint_shell "$FILTERED_FILES"
+  _lint_markdown "$FILTERED_FILES"
 }
 
 _lint_shell() {
+  FILES="$1"
+
+  SHELL_FILES="$(echo "$FILES" | grep "\.kano\|sources\|tests" | grep -v "Dockerfile" || true)"
+  if [ -z "$SHELL_FILES" ]; then
+    return
+  fi
+
   _info "Linting shell files"
-  find "$SOURCE_DIRECTORY" -type f -exec shellcheck {} +
+  report message "$SHELL_FILES" "gray"
+  # shellcheck disable=SC2046
+  shellcheck $(echo "$SHELL_FILES" | xargs)
 }
 
 _lint_markdown() {
+  FILES="$1"
+
+  MARKDOWN_FILES="$(echo "$FILES" | grep -e "\.md$" || true)"
+  if [ -z "$MARKDOWN_FILES" ]; then
+    return
+  fi
+
   _info "Linting markdown files"
-  markdownlint '**/*.md'
+  report message "$MARKDOWN_FILES" "gray"
+  # shellcheck disable=SC2046
+  markdownlint $(echo "$MARKDOWN_FILES" | xargs)
 }
 
 _info() {
