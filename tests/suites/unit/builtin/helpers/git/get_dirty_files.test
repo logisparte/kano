@@ -18,11 +18,9 @@ RENAMED_MODIFIED="RM"
 Describe "get_dirty_files"
   git() {
     status() {
-      --short() {
+      if [ "$1" = "--short" ]; then
         echo "$GIT_STATUS_SHORT"
-      }
-
-      "$@"
+      fi
     }
 
     "$@"
@@ -80,6 +78,15 @@ Describe "get_dirty_files"
       When run get_dirty_files
       The status should be success
       The output should include "$SOME_FILE"
+    End
+
+    Context "when staged file was modified but changes were not yet staged for commit"
+      GIT_STATUS_SHORT="$MODIFIED_MODIFIED $SOME_FILE"
+      It "should return file"
+        When run get_dirty_files
+        The status should be success
+        The output should include "$SOME_FILE"
+      End
     End
   End
 
