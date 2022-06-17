@@ -1,4 +1,4 @@
-FROM ghcr.io/logisparte/helot:4.0.0
+FROM ghcr.io/logisparte/helot:4.2.0
 
 LABEL org.opencontainers.image.title="kano-dev"
 LABEL org.opencontainers.image.description="kano's development image"
