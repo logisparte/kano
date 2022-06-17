@@ -1,0 +1,50 @@
+#!/bin/sh
+
+Include "$KANO_SOURCE_DIRECTORY/builtin/helpers/git/get_all_files"
+
+SOME_FILE_1="/some_directory/some_file_1"
+SOME_FILE_2="/some_directory/some_file_2"
+
+Describe "get_all_files"
+  git() {
+    # shellcheck disable=SC3033
+    ls-tree() {
+      if [ "$*" = "--full-tree --name-only -r HEAD" ]; then
+        for FILE in $TRACKED_FILES; do
+          echo "$FILE"
+        done
+      fi
+    }
+
+    "$@"
+  }
+
+  TRACKED_FILES=""
+
+  Context "when no tracked files"
+    It "should return nothing"
+      When run get_all_files
+      The status should be success
+      The output should equal ""
+    End
+  End
+
+  Context "when one tracked file"
+    TRACKED_FILES="$SOME_FILE_1"
+    It "should return file"
+      When run get_all_files
+      The status should be success
+      The output should include "$SOME_FILE_1"
+    End
+  End
+
+  Context "when multiple tracked file"
+    TRACKED_FILES="$SOME_FILE_1 $SOME_FILE_2"
+    It "should return all files"
+      When run get_all_files
+      The status should be success
+      The output should include "$SOME_FILE_1"
+      The output should include "$SOME_FILE_2"
+    End
+  End
+End
