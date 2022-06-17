@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. "$KANO_HELPERS/git/get_all_files"
+. "$KANO_HELPERS/git/get_dirty_files"
 . "$KANO_HELPERS/report"
 
 format_help() {
@@ -7,18 +9,51 @@ format_help() {
 }
 
 format() {
-  _format_shell
-  _format_markdown_and_yaml
+  FILTER="$1"
+
+  case "$FILTER" in
+    dirty | "")
+      FILTERED_FILES="$(get_dirty_files)"
+      ;;
+
+    all)
+      FILTERED_FILES="$(get_all_files)"
+      ;;
+
+    *)
+      fail "Unknown filter: $FILTER"
+      ;;
+  esac
+
+  _format_shell "$FILTERED_FILES"
+  _format_markdown_and_yaml "$FILTERED_FILES"
 }
 
 _format_shell() {
+  FILES="$1"
+
+  SHELL_FILES="$(echo "$FILES" | grep "\.kano\|sources" | grep -v "Dockerfile" || true)"
+  if [ -z "$SHELL_FILES" ]; then
+    return
+  fi
+
   _info "Formatting shell files"
-  shfmt -p -w -bn -ci -sr -i 2 .kano sources tests templates
+  report message "$SHELL_FILES" "gray"
+  # shellcheck disable=SC2046
+  shfmt -p -w -bn -ci -sr -kp -i 2 $(echo "$SHELL_FILES" | xargs)
 }
 
 _format_markdown_and_yaml() {
+  FILES="$1"
+
+  MARKDOWN_YAML_FILES="$(echo "$FILES" | grep -e "\.md$\|.yml$\|.yaml$" || true)"
+  if [ -z "$MARKDOWN_YAML_FILES" ]; then
+    return
+  fi
+
   _info "Formatting markdown and yaml files"
-  prettier --write .github docs
+  # shellcheck disable=SC2046
+  prettier --write $(echo "$MARKDOWN_YAML_FILES" | xargs)
 }
 
 _info() {
