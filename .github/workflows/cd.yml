@@ -6,15 +6,13 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+'
 
 env:
-  REGISTRY_URL: ghcr.io
-  HELOT_GIT_NAME: helot
-  HELOT_GIT_EMAIL: logisparte-helot@users.noreply.github.com
-  HELOT_GITHUB_USERNAME: logisparte-helot
-  HELOT_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
-  REPOSITORY: ${{ github.repository }}
-  GITHUB_REF: ${{ github.ref }}
-  COMMIT: ${{ github.sha }}
   DOCKER_BUILDKIT: true
+  DOCKER_REGISTRY: ghcr.io
+  DOCKER_USERNAME: logisparte-helot
+  DOCKER_PASSWORD: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
+  GIT_NAME: helot
+  GIT_EMAIL: logisparte-helot@users.noreply.github.com
+  RELEASE_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
 
 jobs:
   release:
@@ -28,13 +26,9 @@ jobs:
 
       - name: Export environment variable
         run: |
-          VERSION="$(echo "$GITHUB_REF" | cut -d "/" -f 3)"
-          DEVELOPMENT_IMAGE="$REGISTRY_URL/$REPOSITORY-dev"
-          DEVELOPMENT_IMAGE_COMMIT_TAG="$DEVELOPMENT_IMAGE:$COMMIT"
-          DEVELOPMENT_IMAGE_VERSION_TAG="$DEVELOPMENT_IMAGE:$VERSION"
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "DEVELOPMENT_IMAGE_COMMIT_TAG=$DEVELOPMENT_IMAGE_COMMIT_TAG" >> "$GITHUB_ENV"
-          echo "DEVELOPMENT_IMAGE_VERSION_TAG=$DEVELOPMENT_IMAGE_VERSION_TAG" >> "$GITHUB_ENV"
+          DEVELOPMENT_IMAGE="$DOCKER_REGISTRY/$GITHUB_REPOSITORY-dev"
+          echo "DEVELOPMENT_IMAGE_COMMIT_TAG=$DEVELOPMENT_IMAGE:$GITHUB_SHA" >> "$GITHUB_ENV"
+          echo "DEVELOPMENT_IMAGE_VERSION_TAG=$DEVELOPMENT_IMAGE:$GITHUB_REF_NAME" >> "$GITHUB_ENV"
           echo "KANO_DEVELOPMENT_IMAGE=$DEVELOPMENT_IMAGE_COMMIT_TAG" >> "$GITHUB_ENV"
 
       - name: Clone project
@@ -43,9 +37,9 @@ jobs:
       - name: Login to registry
         uses: docker/login-action@v1
         with:
-          registry: ${{ env.REGISTRY_URL }}
-          username: ${{ env.HELOT_GITHUB_USERNAME }}
-          password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Pull existing development image
         run: docker pull "$KANO_DEVELOPMENT_IMAGE"
@@ -56,13 +50,12 @@ jobs:
       - name: Release project
         run: |
           kano dockered release \
-            "$VERSION" \
-            "$HELOT_GIT_NAME" \
-            "$HELOT_GIT_EMAIL" \
-            "$HELOT_GITHUB_ACCESS_TOKEN"
+            "$GITHUB_REF_NAME" \
+            "$GIT_NAME" \
+            "$GIT_EMAIL" \
+            "$RELEASE_GITHUB_ACCESS_TOKEN"
 
-      - name: Tag development image with version
-        run: docker tag "$DEVELOPMENT_IMAGE_COMMIT_TAG" "$DEVELOPMENT_IMAGE_VERSION_TAG"
-
-      - name: Push versioned development image to registry
-        run: docker push "$DEVELOPMENT_IMAGE_VERSION_TAG"
+      - name: Tag versioned image
+        run: |
+          docker tag "$DEVELOPMENT_IMAGE_COMMIT_TAG" "$DEVELOPMENT_IMAGE_VERSION_TAG"
+          docker push "$DEVELOPMENT_IMAGE_VERSION_TAG"
