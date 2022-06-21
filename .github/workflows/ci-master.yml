@@ -6,12 +6,10 @@ on:
       - master
 
 env:
-  REGISTRY_URL: ghcr.io
-  HELOT_GITHUB_USERNAME: logisparte-helot
-  HELOT_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
-  REPOSITORY: ${{ github.repository }}
-  COMMIT: ${{ github.sha }}
   DOCKER_BUILDKIT: true
+  DOCKER_REGISTRY: ghcr.io
+  DOCKER_USERNAME: logisparte-helot
+  DOCKER_PASSWORD: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
 
 jobs:
   update_development_image:
@@ -25,8 +23,8 @@ jobs:
 
       - name: Export environment variables
         run: |
-          DEVELOPMENT_IMAGE="$REGISTRY_URL/$REPOSITORY-dev"
-          echo "DEVELOPMENT_IMAGE_COMMIT_TAG=$DEVELOPMENT_IMAGE:$COMMIT" >> "$GITHUB_ENV"
+          DEVELOPMENT_IMAGE="$DOCKER_REGISTRY/$GITHUB_REPOSITORY-dev"
+          echo "DEVELOPMENT_IMAGE_COMMIT_TAG=$DEVELOPMENT_IMAGE:$GITHUB_SHA" >> "$GITHUB_ENV"
           echo "DEVELOPMENT_IMAGE_LATEST_TAG=$DEVELOPMENT_IMAGE:latest" >> "$GITHUB_ENV"
           echo "KANO_DEVELOPMENT_IMAGE=$DEVELOPMENT_IMAGE" >> "$GITHUB_ENV"
 
@@ -36,9 +34,9 @@ jobs:
       - name: Login to registry
         uses: docker/login-action@v1
         with:
-          registry: ${{ env.REGISTRY_URL }}
-          username: ${{ env.HELOT_GITHUB_USERNAME }}
-          password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Build new development image
         run: |

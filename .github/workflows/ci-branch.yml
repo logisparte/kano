@@ -6,11 +6,10 @@ on:
       - master
 
 env:
-  REGISTRY_URL: ghcr.io
-  HELOT_GITHUB_USERNAME: logisparte-helot
-  HELOT_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
-  REPOSITORY: ${{ github.repository }}
   DOCKER_BUILDKIT: true
+  DOCKER_REGISTRY: ghcr.io
+  DOCKER_USERNAME: logisparte-helot
+  DOCKER_PASSWORD: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
 
 jobs:
   check_branch:
@@ -23,7 +22,8 @@ jobs:
           sudo ./kano/install
 
       - name: Export environment variables
-        run: echo "KANO_DEVELOPMENT_IMAGE=$REGISTRY_URL/$REPOSITORY-dev" >> "$GITHUB_ENV"
+        run:
+          echo "KANO_DEVELOPMENT_IMAGE=$DOCKER_REGISTRY/$GITHUB_REPOSITORY-dev" >> "$GITHUB_ENV"
 
       - name: Clone project
         uses: actions/checkout@v2
@@ -31,9 +31,9 @@ jobs:
       - name: Login to registry
         uses: docker/login-action@v1
         with:
-          registry: ${{ env.REGISTRY_URL }}
-          username: ${{ env.HELOT_GITHUB_USERNAME }}
-          password: ${{ env.HELOT_GITHUB_ACCESS_TOKEN }}
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Build branch development image
         run: kano docker build --pull
