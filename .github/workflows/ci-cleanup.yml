@@ -1,28 +1,33 @@
-﻿name: ci-branch
+name: ci-beta-cleanup
 
 on:
-  pull_request:
-    branches:
-      - master
+  delete
 
 env:
   DOCKER_BUILDKIT: true
   DOCKER_REGISTRY: ghcr.io
   DOCKER_USERNAME: logisparte-helot
   DOCKER_PASSWORD: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
+  GIT_NAME: helot
+  GIT_EMAIL: logisparte-helot@users.noreply.github.com
+  RELEASE_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
 
 jobs:
-  check_branch:
-    runs-on: ubuntu-latest
+  cleanup_beta:
+    if: github.event.ref_type == 'branch' && startsWith(github.event.ref, 'beta-')
+    runs-on: ubuntu-22.04
+    env:
+      BETA_NAME: ${{ github.event.ref }}
     steps:
       - name: Install kano
         run: |
-          curl -L https://github.com/logisparte/kano/releases/download/3.6.0/kano.tar.gz \
-            | tar -xz
+          curl --silent --show-error --location \
+            https://github.com/logisparte/kano/releases/download/3.6.0/kano.tar.gz \
+              | tar --extract --gzip
           sudo ./kano/install
 
       - name: Export environment variables
-        run:
+        run: |
           echo "KANO_DEVELOPMENT_IMAGE=$DOCKER_REGISTRY/$GITHUB_REPOSITORY-dev" >> "$GITHUB_ENV"
 
       - name: Clone project
@@ -38,17 +43,10 @@ jobs:
       - name: Build branch development image
         run: kano docker build --pull
 
-      - name: Lint project
-        run: kano dockered lint
-
-      - name: Test project
-        run: kano dockered test
-
-      - name: Release beta version
-        if: startsWith(github.head_ref, 'beta-')
+      - name: Unrelease beta version
         run: |
-          kano dockered release \
-            "$GITHUB_HEAD_REF" \
+          kano dockered unrelease \
+            "$BETA_NAME" \
             "$GIT_NAME" \
             "$GIT_EMAIL" \
             "$RELEASE_GITHUB_ACCESS_TOKEN"

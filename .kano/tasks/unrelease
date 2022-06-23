@@ -1,0 +1,106 @@
+#!/bin/sh
+
+. "$KANO_HELPERS/fail"
+. "$KANO_HELPERS/report"
+
+unrelease_help() {
+  echo "Unrelease a version from GitHub"
+}
+
+unrelease() {
+  VERSION="$1"
+  GIT_NAME="$2"
+  GIT_EMAIL="$3"
+  GITHUB_ACCESS_TOKEN="$4"
+
+  case "$VERSION" in
+    beta-*)
+      _login_to_github "$GIT_NAME" "$GIT_EMAIL" "$GITHUB_ACCESS_TOKEN"
+      _unrelease_beta "$VERSION"
+      ;;
+
+    *.*.*)
+      _fail "Cannot unrelease a public version"
+      ;;
+
+    "")
+      _fail "No version provided"
+      ;;
+
+    *)
+      _fail \
+        "Unknown version pattern. Must be a beta name (beta-x)"
+      ;;
+  esac
+}
+
+_login_to_github() {
+  GIT_NAME="$1"
+  GIT_EMAIL="$2"
+  GITHUB_ACCESS_TOKEN="$3"
+
+  if [ -z "$GIT_NAME" ]; then
+    _fail "No git name provided"
+  fi
+
+  if [ -z "$GIT_EMAIL" ]; then
+    _fail "No git email provided"
+  fi
+
+  if [ -z "$GITHUB_ACCESS_TOKEN" ]; then
+    _fail "No GitHub access token provided"
+  fi
+
+  _info "Configuring git for GitHub"
+  git config --global --add safe.directory "$PWD"
+  kano configure_github --global \
+    "$GIT_NAME" \
+    "$GIT_EMAIL" \
+    "$GITHUB_ACCESS_TOKEN"
+
+  _info "Logging in to GitHub"
+  echo "$GITHUB_ACCESS_TOKEN" | gh auth login --with-token
+}
+
+_unrelease_beta() {
+  BETA_TAG="$1"
+
+  if ! gh release list | grep -q "$BETA_TAG"; then
+    _fail "No beta release named: $BETA_TAG"
+  fi
+
+  _info "Unreleasing $BETA_TAG"
+  gh release delete --yes "$BETA_TAG"
+  git tag --delete "$BETA_TAG"
+  git push --delete origin "$BETA_TAG"
+
+  gh repo clone "logisparte/homebrew-beta-packages" "../homebrew-beta-packages"
+  cd "../homebrew-beta-packages" || fail
+  BETA_PACKAGE="$PACKAGE-$BETA_TAG"
+  PACKAGE_INDEX_BRANCH="delete-$BETA_PACKAGE"
+  git checkout -b "$PACKAGE_INDEX_BRANCH"
+  rm "$BETA_PACKAGE.rb"
+  git add --all
+  git commit --message "x: deleted $BETA_PACKAGE"
+  git push --set-upstream origin "$PACKAGE_INDEX_BRANCH"
+  gh pr create --fill --base master
+  _success "Pull request to delete $BETA_PACKAGE opened in package index"
+}
+
+_info() {
+  MESSAGE="$1"
+
+  report info "[unrelease] $MESSAGE"
+}
+
+_success() {
+  MESSAGE="$1"
+
+  report success "[unrelease] $MESSAGE"
+}
+
+_fail() {
+  MESSAGE="$1"
+
+  fail "[unrelease] $MESSAGE"
+}

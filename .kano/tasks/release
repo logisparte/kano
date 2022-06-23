@@ -31,7 +31,6 @@ release() {
     *)
       _fail "Unknown version pattern. Must be a semantic version (x.x.x)"
       ;;
-
   esac
 }
 
@@ -92,40 +91,86 @@ _make_package_directory() {
   cp -R "$BUILD_DIRECTORY"/* "$PACKAGE_DIRECTORY/libexec"
 }
 
-_release_to_github() {
-  VERSION="$1"
-  CHECKSUM="$2"
+_release_public() {
+  TAG="$1"
 
-  _info "Creating release"
-  git config --global --add safe.directory "$PWD"
-  DESCRIPTION="$(git tag -n100 "$VERSION" | awk '{$1=$1; print}' | cut -d ' ' -f 2-)"
+  _info "Creating public release"
+  DESCRIPTION="$(git tag -n100 "$TAG" | awk '{$1=$1; print}' | cut -d ' ' -f 2-)"
   gh release create \
-    --title "$VERSION" \
+    --title "$TAG" \
     --notes "$DESCRIPTION" \
-    "$VERSION" "$PACKAGE_ARCHIVE"
-}
-
-_update_package_definition_in_index() {
-  VERSION="$1"
-  CHECKSUM="$2"
-  PROJECT_DIRECTORY="$PWD"
-  PACKAGE_INDEX_RELEASE_BRANCH_NAME="$PACKAGE-$VERSION"
+    "$TAG" "$PACKAGE_ARCHIVE"
 
   _info "Updating package definition"
-  cd .. || fail
-  gh repo clone logisparte/homebrew-packages
-  cd homebrew-packages || fail
-  git config --global --add safe.directory "$PWD"
-  git checkout -b "$PACKAGE_INDEX_RELEASE_BRANCH_NAME"
-
-   LANG=C sed \
-    -e "s/\${VERSION}/$VERSION/g" \
+  PROJECT_DIRECTORY="$PWD"
+  PACKAGE_INDEX_BRANCH="$PACKAGE-$TAG"
+  gh repo clone "logisparte/homebrew-packages" "../homebrew-packages"
+  cd "../homebrew-packages" || fail
+  git checkout -b "$PACKAGE_INDEX_BRANCH"
+  LANG=C sed \
+    -e "s/\${PASCAL_CASED_PACKAGE}/$(_case_dashed_to_pascal "$PACKAGE")/g" \
+    -e "s/\${RELEASE}/$TAG/g" \
+    -e "s/\${VERSION}/$TAG/g" \
     -e "s/\${CHECKSUM}/$CHECKSUM/g" \
     "$PROJECT_DIRECTORY/distribution/formula.rb" > "$PACKAGE.rb"
-
-  git commit -a -m "chore($PACKAGE): released $VERSION"
-  git push origin "$PACKAGE_INDEX_RELEASE_BRANCH_NAME"
+  git add --all
+  git commit --message "x($PACKAGE): released $TAG"
+  git push --set-upstream origin "$PACKAGE_INDEX_BRANCH"
   gh pr create --fill --base master
+  _success "Pull request for $PACKAGE $TAG opened in package index"
+}
+
+_release_beta() {
+  BETA_TAG="$1"
+
+  if gh release list | grep -q "$BETA_TAG"; then
+    _info "Updating beta release"
+    gh release delete --yes "$BETA_TAG"
+
+  else
+    _info "Creating beta release"
+  fi
+
+  git tag --force "$BETA_TAG"
+  git push --tags --force
+  COMMIT="$(git rev-parse HEAD | cut -c 1-7)"
+  gh release create \
+    --prerelease \
+    --title "$BETA_TAG" \
+    --notes "$COMMIT" \
+    "$BETA_TAG" "$PACKAGE_ARCHIVE"
+
+  _info "Updating package definition"
+  PROJECT_DIRECTORY="$PWD"
+  BETA_PACKAGE="$PACKAGE-$BETA_TAG"
+  PACKAGE_INDEX_BRANCH="$BETA_PACKAGE-$COMMIT"
+  gh repo clone "logisparte/homebrew-beta-packages" "../homebrew-beta-packages"
+  cd "../homebrew-beta-packages" || fail
+  git checkout -b "$PACKAGE_INDEX_BRANCH"
+  LANG=C sed \
+    -e "s/\${PASCAL_CASED_PACKAGE}/$(_case_dashed_to_pascal "$BETA_PACKAGE")/g" \
+    -e "s/\${RELEASE}/$BETA_TAG/g" \
+    -e "s/\${VERSION}/0.0.0-$COMMIT/g" \
+    -e "s/\${CHECKSUM}/$CHECKSUM/g" \
+    "$PROJECT_DIRECTORY/distribution/formula.rb" > "$BETA_PACKAGE.rb"
+  git add --all
+  git commit --message "x($BETA_PACKAGE): released $COMMIT"
+  git push --set-upstream origin "$PACKAGE_INDEX_BRANCH"
+  gh pr create --fill --base master
+  _success "Pull request for $BETA_PACKAGE (commit $COMMIT) opened in package index"
+}
+
+_case_dashed_to_pascal() {
+  DASHED_CASED_STRING="$*"
+
+  PASCAL_CASED_STRING=""
+  for WORD in $(echo "$DASHED_CASED_STRING" | tr '-' ' '); do
+    CAPITALIZED_FIRST_LETTER="$(echo "$WORD" | cut -c 1 | tr '[:lower:]' '[:upper:]')"
+    REST_OF_WORD="$(echo "$WORD" | cut -c 2-)"
+    PASCAL_CASED_STRING="${PASCAL_CASED_STRING}${CAPITALIZED_FIRST_LETTER}${REST_OF_WORD}"
+  done
+
+  echo "$PASCAL_CASED_STRING"
 }
 
 _info() {
