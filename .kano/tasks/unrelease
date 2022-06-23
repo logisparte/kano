@@ -3,6 +3,8 @@
 . "$KANO_HELPERS/fail"
 . "$KANO_HELPERS/report"
 
+PACKAGE="kano"
+
 unrelease_help() {
   echo "Unrelease a version from GitHub"
 }
