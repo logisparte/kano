@@ -160,7 +160,7 @@ kano clean
 Pour publier une version du projet sur GitHub et mettre à jour l'index de paquet de logisparte :
 
 ```shell
-kano release VERSION
+kano release VERSION GIT_NAME GIT_EMAIL GITHUB_ACCESS_TOKEN
 ```
 
 > `VERSION` devrait être en format sémantique standard ou un nom de beta

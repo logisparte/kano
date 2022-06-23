@@ -157,7 +157,7 @@ kano clean
 To release a version of the project on GitHub and update logisparte's package index:
 
 ```shell
-kano release VERSION
+kano release VERSION GIT_NAME GIT_EMAIL GITHUB_ACCESS_TOKEN
 ```
 
 > `VERSION` should be in standard semantic versioning format or a beta name
