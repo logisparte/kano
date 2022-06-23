@@ -16,19 +16,22 @@ env:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Install kano
         run: |
-          curl -L https://github.com/logisparte/kano/releases/download/3.6.0/kano.tar.gz \
-            | tar -xz
+          curl --silent --show-error --location \
+            https://github.com/logisparte/kano/releases/download/3.6.0/kano.tar.gz \
+              | tar --extract --gzip
           sudo ./kano/install
 
       - name: Export environment variable
         run: |
           DEVELOPMENT_IMAGE="$DOCKER_REGISTRY/$GITHUB_REPOSITORY-dev"
-          echo "DEVELOPMENT_IMAGE_COMMIT_TAG=$DEVELOPMENT_IMAGE:$GITHUB_SHA" >> "$GITHUB_ENV"
-          echo "DEVELOPMENT_IMAGE_VERSION_TAG=$DEVELOPMENT_IMAGE:$GITHUB_REF_NAME" >> "$GITHUB_ENV"
+          DEVELOPMENT_IMAGE_COMMIT_TAG="$DEVELOPMENT_IMAGE:$GITHUB_SHA"
+          DEVELOPMENT_IMAGE_VERSION_TAG="$DEVELOPMENT_IMAGE:$GITHUB_REF_NAME"
+          echo "DEVELOPMENT_IMAGE_COMMIT_TAG=$DEVELOPMENT_IMAGE_COMMIT_TAG" >> "$GITHUB_ENV"
+          echo "DEVELOPMENT_IMAGE_VERSION_TAG=$DEVELOPMENT_IMAGE_VERSION_TAG" >> "$GITHUB_ENV"
           echo "KANO_DEVELOPMENT_IMAGE=$DEVELOPMENT_IMAGE_COMMIT_TAG" >> "$GITHUB_ENV"
 
       - name: Clone project

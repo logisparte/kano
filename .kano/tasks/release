@@ -6,7 +6,6 @@
 PACKAGE="kano"
 PACKAGE_ARCHIVE="$PACKAGE.tar.gz"
 PACKAGE_DIRECTORY="$RELEASE_DIRECTORY/$PACKAGE"
-export GIT_CEILING_DIRECTORIES="$PWD"
 
 release_help() {
   echo "Package the build and release it to GitHub"
@@ -19,9 +18,9 @@ release() {
   GITHUB_ACCESS_TOKEN="$4"
 
   case "$VERSION" in
-    *.*.*)
+    *.*.* | beta-*)
       _login_to_github "$GIT_NAME" "$GIT_EMAIL" "$GITHUB_ACCESS_TOKEN"
-      _release_version "$VERSION"
+      _release "$VERSION"
       ;;
 
     "")
@@ -29,7 +28,8 @@ release() {
       ;;
 
     *)
-      _fail "Unknown version pattern. Must be a semantic version (x.x.x)"
+      _fail \
+        "Unknown version pattern. Must be a semantic version (x.x.x) or a beta name (beta-x)"
       ;;
   esac
 }
@@ -52,6 +52,7 @@ _login_to_github() {
   fi
 
   _info "Configuring git for GitHub"
+  git config --global --add safe.directory "$PWD"
   kano configure_github --global \
     "$GIT_NAME" \
     "$GIT_EMAIL" \
@@ -61,20 +62,30 @@ _login_to_github() {
   echo "$GITHUB_ACCESS_TOKEN" | gh auth login --with-token
 }
 
-_release_version() {
+_release() {
   VERSION="$1"
 
-  _info "Releasing version: $VERSION"
+  _info "Releasing: $VERSION"
 
   _info "Packaging..."
   _make_package_directory
-  tar -czf "$PACKAGE_ARCHIVE" -C "$RELEASE_DIRECTORY" .
-  CHECKSUM="$(shasum -a 256 "$PACKAGE_ARCHIVE" | cut -d " " -f 1)"
+  tar --create --gzip --file "$PACKAGE_ARCHIVE" --directory "$RELEASE_DIRECTORY" .
+  CHECKSUM="$(shasum --algorithm 256 "$PACKAGE_ARCHIVE" | cut -d " " -f 1)"
   _info "Packaged $PACKAGE_ARCHIVE, checksum is: $CHECKSUM"
 
-  _release_to_github "$VERSION" "$CHECKSUM"
-  _update_package_definition_in_index "$VERSION" "$CHECKSUM"
-  report success "[release] Pull request for $PACKAGE $VERSION opened in package index"
+  case "$VERSION" in
+    *.*.*)
+      _release_public "$VERSION"
+      ;;
+
+    beta-*)
+      _release_beta "$VERSION"
+      ;;
+
+    *)
+      _fail "Unexpected version: $VERSION"
+      ;;
+  esac
 }
 
 _make_package_directory() {
@@ -173,10 +184,29 @@ _case_dashed_to_pascal() {
   echo "$PASCAL_CASED_STRING"
 }
 
+_case_dashed_to_pascal() {
+  DASHED_CASED_STRING="$*"
+
+  PASCAL_CASED_STRING=""
+  for WORD in $(echo "$DASHED_CASED_STRING" | tr '-' ' '); do
+    CAPITALIZED_FIRST_LETTER="$(echo "$WORD" | cut -c 1 | tr '[:lower:]' '[:upper:]')"
+    REST_OF_WORD="$(echo "$WORD" | cut -c 2-)"
+    PASCAL_CASED_STRING="${PASCAL_CASED_STRING}${CAPITALIZED_FIRST_LETTER}${REST_OF_WORD}"
+  done
+
+  echo "$PASCAL_CASED_STRING"
+}
+
 _info() {
   MESSAGE="$1"
 
   report info "[release] $MESSAGE"
+}
+
+_success() {
+  MESSAGE="$1"
+
+  report success "[release] $MESSAGE"
 }
 
 _fail() {
