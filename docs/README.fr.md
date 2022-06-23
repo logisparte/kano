@@ -54,8 +54,10 @@ brew install kano
 Télécharger le paquet et exécuter le script d'installation:
 
 ```shell
-curl -L "https://github.com/logisparte/kano/releases/latest/download/kano.tar.gz" | tar -xz
-./kano/install
+curl --silent --show-error --location \
+  "https://github.com/logisparte/kano/releases/latest/download/kano.tar.gz" \
+    | tar --extract --gzip
+sudo ./kano/install
 ```
 
 ### Usage
