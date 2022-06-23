@@ -2,7 +2,7 @@
 
 > Read in [English](/docs/README.md)
 
-CLI de gestion de tâches d'ingénierie logicielle
+ILC d'automatisation de flux de travaux d'ingénierie logicielle
 
 ## À propos
 
