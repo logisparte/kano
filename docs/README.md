@@ -2,7 +2,7 @@
 
 > Lire en [Français](/docs/README.fr.md)
 
-Software engineering task management CLI
+Software engineering workflow automation CLI
 
 ## About
 
