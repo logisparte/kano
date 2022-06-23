@@ -71,9 +71,9 @@ _unrelease_beta() {
 
   _info "Unreleasing $BETA_TAG"
   gh release delete --yes "$BETA_TAG"
+  git fetch --tags
   git tag --delete "$BETA_TAG"
   git push --delete origin "$BETA_TAG"
-
   gh repo clone "logisparte/homebrew-beta-packages" "../homebrew-beta-packages"
   cd "../homebrew-beta-packages" || fail
   BETA_PACKAGE="$PACKAGE-$BETA_TAG"
