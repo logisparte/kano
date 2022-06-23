@@ -160,4 +160,4 @@ To release a version of the project on GitHub and update logisparte's package in
 kano release VERSION
 ```
 
-> `VERSION` should be in standard semantic versioning format
+> `VERSION` should be in standard semantic versioning format or a beta name

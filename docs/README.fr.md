@@ -163,4 +163,4 @@ Pour publier une version du projet sur GitHub et mettre à jour l'index de paque
 kano release VERSION
 ```
 
-> `VERSION` devrait être en format sémantique standard
+> `VERSION` devrait être en format sémantique standard ou un nom de beta
