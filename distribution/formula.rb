@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Kano < Formula
+class ${PASCAL_CASED_PACKAGE} < Formula
   desc "Software engineering task management CLI"
   homepage "https://github.com/logisparte/kano"
   url "https://github.com/logisparte/kano/releases/download/${RELEASE}/kano.tar.gz"
@@ -8,6 +8,7 @@ class Kano < Formula
   sha256 "${CHECKSUM}"
   license "GPL-3.0-only"
   depends_on "docker" => :optional
+  depends_on "git" => :optional
 
   def install
     libexec.install Dir["libexec/*"]

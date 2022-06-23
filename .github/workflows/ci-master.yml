@@ -13,12 +13,13 @@ env:
 
 jobs:
   update_development_image:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Install kano
         run: |
-          curl -L https://github.com/logisparte/kano/releases/download/3.6.0/kano.tar.gz \
-            | tar -xz
+          curl --silent --show-error --location \
+            https://github.com/logisparte/kano/releases/download/3.6.0/kano.tar.gz \
+              | tar --extract --gzip
           sudo ./kano/install
 
       - name: Export environment variables
