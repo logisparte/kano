@@ -121,7 +121,7 @@ _release_public() {
   LANG=C sed \
     -e "s/\${PASCAL_CASED_PACKAGE}/$(_case_dashed_to_pascal "$PACKAGE")/g" \
     -e "s/\${RELEASE}/$TAG/g" \
-    -e "s/version \"\${VERSION}\"//g" \
+    -e "/version \"\${VERSION}\"/d" \
     -e "s/\${CHECKSUM}/$CHECKSUM/g" \
     "$PROJECT_DIRECTORY/distribution/formula.rb" > "$PACKAGE.rb"
   git add --all
