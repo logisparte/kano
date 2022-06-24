@@ -17,15 +17,13 @@ class ${PASCAL_CASED_PACKAGE} < Formula
   end
 
   def caveats
-    <<~EOS
+    <<~EOF
       Homebrew formula does not support this syntax:
         depends_on cask: "docker" => :optional
 
-      So, optionally do:
+      So to (optionally) install Docker Desktop, do:
         brew install --cask docker
-
-      To install Docker Desktop
-    EOS
+    EOF
   end
 
   test do

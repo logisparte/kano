@@ -121,7 +121,7 @@ _release_public() {
   LANG=C sed \
     -e "s/\${PASCAL_CASED_PACKAGE}/$(_case_dashed_to_pascal "$PACKAGE")/g" \
     -e "s/\${RELEASE}/$TAG/g" \
-    -e "s/\${VERSION}/$TAG/g" \
+    -e "s/version \"\${VERSION}\"//g" \
     -e "s/\${CHECKSUM}/$CHECKSUM/g" \
     "$PROJECT_DIRECTORY/distribution/formula.rb" > "$PACKAGE.rb"
   git add --all
@@ -169,19 +169,6 @@ _release_beta() {
   git push --set-upstream origin "$PACKAGE_INDEX_BRANCH"
   gh pr create --fill --base master
   _success "Pull request for $BETA_PACKAGE (commit $COMMIT) opened in package index"
-}
-
-_case_dashed_to_pascal() {
-  DASHED_CASED_STRING="$*"
-
-  PASCAL_CASED_STRING=""
-  for WORD in $(echo "$DASHED_CASED_STRING" | tr '-' ' '); do
-    CAPITALIZED_FIRST_LETTER="$(echo "$WORD" | cut -c 1 | tr '[:lower:]' '[:upper:]')"
-    REST_OF_WORD="$(echo "$WORD" | cut -c 2-)"
-    PASCAL_CASED_STRING="${PASCAL_CASED_STRING}${CAPITALIZED_FIRST_LETTER}${REST_OF_WORD}"
-  done
-
-  echo "$PASCAL_CASED_STRING"
 }
 
 _case_dashed_to_pascal() {
