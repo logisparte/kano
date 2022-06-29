@@ -73,18 +73,18 @@ Describe "docker"
   DOES_DEVELOPMENT_CONTAINER_EXIST=false
 
   before_all() {
-    export INITIAL_KANO_DEVELOPMENT_IMAGE="$KANO_DEVELOPMENT_IMAGE"
-    export INITIAL_KANO_DEVELOPMENT_CONTAINER="$KANO_DEVELOPMENT_CONTAINER"
-    export INITIAL_KANO_IS_IN_DOCKER="$KANO_IS_IN_DOCKER"
-    export KANO_DEVELOPMENT_IMAGE=""
-    export KANO_DEVELOPMENT_CONTAINER=""
-    export KANO_IS_IN_DOCKER=false
+    export INITIAL_KANO_DOCKER_IMAGE="$KANO_DOCKER_IMAGE"
+    export INITIAL_KANO_DOCKER_CONTAINER="$KANO_DOCKER_CONTAINER"
+    export INITIAL_KANO_DOCKER="$KANO_DOCKER"
+    export KANO_DOCKER_IMAGE=""
+    export KANO_DOCKER_CONTAINER=""
+    export KANO_DOCKER=false
   }
 
   after_all() {
-    export KANO_DEVELOPMENT_IMAGE="$INITIAL_KANO_DEVELOPMENT_IMAGE"
-    export KANO_DEVELOPMENT_CONTAINER="$INITIAL_KANO_DEVELOPMENT_CONTAINER"
-    export KANO_IS_IN_DOCKER="$INITIAL_KANO_IS_IN_DOCKER"
+    export KANO_DOCKER_IMAGE="$INITIAL_KANO_DOCKER_IMAGE"
+    export KANO_DOCKER_CONTAINER="$INITIAL_KANO_DOCKER_CONTAINER"
+    export KANO_DOCKER="$INITIAL_KANO_DOCKER"
   }
 
   BeforeAll "before_all"
@@ -115,7 +115,7 @@ Describe "docker"
   End
 
   Context "when inside a development container"
-    KANO_IS_IN_DOCKER=true
+    KANO_DOCKER=true
     It "should fail with the expected error message"
       When run docker
       The status should be failure
@@ -155,11 +155,11 @@ Describe "docker"
     Context "when using a custom image name"
       SOME_CUSTOM_NAME="some-custom-name"
       before_each() {
-        export KANO_DEVELOPMENT_IMAGE="$SOME_CUSTOM_NAME"
+        export KANO_DOCKER_IMAGE="$SOME_CUSTOM_NAME"
       }
 
       after_each() {
-        export KANO_DEVELOPMENT_IMAGE=""
+        export KANO_DOCKER_IMAGE=""
       }
 
       BeforeEach "before_each"
@@ -301,9 +301,9 @@ Describe "docker"
         When run docker start
         The status should be success
         The variable docker_called_with should start_with "run"
-        The variable docker_called_with should include "--env KANO_IS_IN_DOCKER=true"
-        The variable docker_called_with should include "--env KANO_DEVELOPMENT_IMAGE"
-        The variable docker_called_with should include "--env KANO_DEVELOPMENT_CONTAINER"
+        The variable docker_called_with should include "--env KANO_DOCKER=true"
+        The variable docker_called_with should include "--env KANO_DOCKER_IMAGE"
+        The variable docker_called_with should include "--env KANO_DOCKER_CONTAINER"
         The variable docker_called_with should include "--detach"
         The variable docker_called_with should include "--interactive"
         The variable docker_called_with should include "--log-driver none"
@@ -318,11 +318,11 @@ Describe "docker"
       Context "when using a custom container name"
         SOME_CUSTOM_NAME="some-custom-container-name"
         before_each() {
-          export KANO_DEVELOPMENT_CONTAINER="$SOME_CUSTOM_NAME"
+          export KANO_DOCKER_CONTAINER="$SOME_CUSTOM_NAME"
         }
 
         after_each() {
-          export KANO_DEVELOPMENT_CONTAINER=""
+          export KANO_DOCKER_CONTAINER=""
         }
 
         BeforeEach "before_each"

@@ -1,7 +1,6 @@
 name: ci-beta-cleanup
 
-on:
-  delete
+on: delete
 
 env:
   DOCKER_BUILDKIT: true
