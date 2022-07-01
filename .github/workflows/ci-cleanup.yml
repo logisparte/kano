@@ -30,10 +30,10 @@ jobs:
           echo "KANO_DEVELOPMENT_IMAGE=$DOCKER_REGISTRY/$GITHUB_REPOSITORY-dev" >> "$GITHUB_ENV"
 
       - name: Clone project
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Login to registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: ${{ env.DOCKER_REGISTRY }}
           username: ${{ env.DOCKER_USERNAME }}
