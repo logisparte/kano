@@ -2,7 +2,7 @@
 
 . "$KANO_HELPERS/report"
 
-EXECUTABLE_DIRECTORY="/usr/local/bin"
+EXECUTABLE_DIRECTORY="$(dirname "$0")"
 
 dev_help() {
   echo "Toggle between using the version of kano under development and the installed one"
