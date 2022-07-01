@@ -5,26 +5,10 @@
 . "$KANO_SOURCE_DIRECTORY/builtin/helpers/fail"
 
 docker_help() {
-  echo "Work in an isolated development docker container"
+  echo "Develop in a docker container"
 }
 
 docker() {
-  if [ -z "$KANO_DOCKER_IMAGE" ]; then
-    export KANO_DOCKER_IMAGE="$KANO_PROJECT_NAME-dev"
-  fi
-
-  if [ -z "$KANO_DOCKER_CONTAINER" ]; then
-    export KANO_DOCKER_CONTAINER="$KANO_PROJECT_NAME-dev-container"
-  fi
-
-  if ! does_directory_exist "$KANO_PROJECT_DIRECTORY"; then
-    fail "No kano directory exists in project"
-  fi
-
-  if ! does_file_exist "$KANO_PROJECT_DIRECTORY/Dockerfile"; then
-    fail "No Dockerfile in project kano directory"
-  fi
-
   if [ -n "$KANO_DOCKER" ] && "$KANO_DOCKER"; then
     fail "Cannot run docker task inside a development container"
   fi
@@ -35,146 +19,203 @@ docker() {
 
   _ensure_docker_daemon_is_running
 
-  build() {
-    if _does_development_image_exist; then
-      _docker_build --cache-from "$KANO_DOCKER_IMAGE" "$@"
+  if [ -z "$KANO_DOCKER_IMAGE" ]; then
+    export KANO_DOCKER_IMAGE="$KANO_PROJECT_NAME-dev"
+  fi
 
+  if [ -z "$KANO_DOCKER_CONTAINER" ]; then
+    export KANO_DOCKER_CONTAINER="$KANO_PROJECT_NAME-dev-container"
+  fi
+
+  image() {
+    build() {
+      if ! does_directory_exist "$KANO_PROJECT_DIRECTORY"; then
+        fail "No kano directory exists in project"
+      fi
+
+      if ! does_file_exist "$KANO_PROJECT_DIRECTORY/Dockerfile"; then
+        fail "No Dockerfile in project kano directory"
+      fi
+
+      # shellcheck disable=SC2046
+      _docker image build \
+        --file "$KANO_PROJECT_DIRECTORY/Dockerfile" \
+        --tag "$KANO_DOCKER_IMAGE" \
+        $(_does_image_exist && echo "--cache-from $KANO_DOCKER_IMAGE") \
+        "$@" .
+    }
+
+    rm() {
+      if ! _does_image_exist; then
+        fail "Development image does not exist"
+      fi
+
+      _docker image rm "$@" "$KANO_DOCKER_IMAGE"
+    }
+
+    "$@"
+  }
+
+  container() {
+    create() {
+      if ! _does_image_exist; then
+        fail "Development image does not exist. Run 'kano docker image build'"
+      fi
+
+      if _does_container_exist; then
+        fail "Development container already exists"
+      fi
+
+      _docker container create \
+        --env KANO_DOCKER=true \
+        --env KANO_DOCKER_IMAGE \
+        --env KANO_DOCKER_CONTAINER \
+        --interactive \
+        --log-driver none \
+        --name "$KANO_DOCKER_CONTAINER" \
+        --rm \
+        --tty \
+        --volume "$PWD:$PWD" \
+        --workdir "$PWD" \
+        "$@" \
+        "$KANO_DOCKER_IMAGE" \
+        /bin/sh -c "\
+sudo useradd --uid $(id -u) --gid sudo --home-dir $HOME $(id -un); \
+sudo passwd --delete $(id -un) > /dev/null; \
+echo \"Press ENTER to exit\"; \
+read -r _;"
+    }
+
+    rm() {
+      if ! _does_container_exist; then
+        fail "Development container does not exist"
+      fi
+
+      if _is_container_running; then
+        fail "Development container is running. Run 'kano docker container stop'"
+      fi
+
+      _docker container rm "$@" "$KANO_DOCKER_CONTAINER"
+    }
+
+    start() {
+      if ! _does_container_exist; then
+        fail "Development container does not exist. Run 'kano docker container create'"
+      fi
+
+      if _is_container_running; then
+        fail "Development container is already running"
+      fi
+
+      _docker container start "$@" "$KANO_DOCKER_CONTAINER"
+    }
+
+    stop() {
+      if ! _does_container_exist; then
+        fail "Development container does not exist"
+      fi
+
+      if ! _is_container_running; then
+        fail "Development container is not running"
+      fi
+
+      _docker container stop "$@" "$KANO_DOCKER_CONTAINER"
+    }
+
+    exec_() {
+      if ! _does_container_exist; then
+        fail "Development container does not exist. Run 'kano docker container create'"
+      fi
+
+      if ! _is_container_running; then
+        fail "Development container is not running. Run 'kano docker container start'"
+      fi
+
+      _docker container exec \
+        --interactive \
+        --tty \
+        --user "$(id -un)" \
+        --workdir "$PWD" \
+        "$KANO_DOCKER_CONTAINER" \
+        "$@"
+    }
+
+    if [ "$1" = "exec" ]; then
+      shift
+      exec_ "$@"
     else
-      _docker_build "$@"
+      "$@"
     fi
   }
 
-  delete() {
-    if _does_development_image_exist; then
-      _docker image rm "$KANO_DOCKER_IMAGE"
-    fi
+  build() {
+    image build "$@"
   }
 
-  run() {
-    if ! _does_development_image_exist; then
-      fail "Development image does not exist. Run 'kano docker build'"
-    fi
+  rmi() {
+    image rm "$@"
+  }
 
-    # shellcheck disable=SC2046
-    _docker_run $(_insert_image_between_docker_run_options_and_command "$@" | xargs)
+  create() {
+    container create "$@"
+  }
+
+  rm() {
+    container rm "$@"
   }
 
   start() {
-    if ! _does_development_image_exist; then
-      fail "Development image does not exist. Run 'kano docker build'"
-    fi
-
-    _docker_run \
-      --detach \
-      --interactive \
-      --name "$KANO_DOCKER_CONTAINER" \
-      --tty \
-      "$@" "$KANO_DOCKER_IMAGE"
+    container start "$@"
   }
 
   stop() {
-    if ! _does_development_container_exist; then
-      fail "Development container does not exist. Run 'kano docker start'"
+    container stop "$@"
+  }
+
+  exec_() {
+    container exec_ "$@"
+  }
+
+  execute() {
+    if ! _does_image_exist; then
+      kano docker image build
     fi
 
-    _docker stop "$KANO_DOCKER_CONTAINER"
-  }
-
-  attach() {
-    if ! _does_development_container_exist; then
-      fail "Development container does not exist. Run 'kano docker start'"
+    if ! _does_container_exist; then
+      kano docker container create
     fi
 
-    _docker attach "$@" "$KANO_DOCKER_CONTAINER"
+    if ! _is_container_running; then
+      kano docker container start
+    fi
+
+    kano docker container exec_ "$@"
   }
 
-  enter() {
-    sh -c "kano docker start && kano docker attach"
+  shell() {
+    execute "$SHELL" --login
   }
 
-  "$@"
-}
+  clean() {
+    if _is_container_running; then
+      kano docker container stop
+    fi
 
-_docker_build() {
-  _docker build \
-    --file "$KANO_PROJECT_DIRECTORY/Dockerfile" \
-    --tag "$KANO_DOCKER_IMAGE" \
-    "$@" .
-}
+    if _does_container_exist; then
+      kano docker container rm
+    fi
 
-_docker_run() {
-  _docker run \
-    --env KANO_DOCKER=true \
-    --env KANO_DOCKER_IMAGE \
-    --env KANO_DOCKER_CONTAINER \
-    --log-driver none \
-    --rm \
-    --volume "$PWD:$PWD" \
-    --workdir "$PWD" \
+    if _does_image_exist; then
+      kano docker image rm
+    fi
+  }
+
+  if [ "$1" = "exec" ]; then
+    shift
+    exec_ "$@"
+  else
     "$@"
-}
-
-_insert_image_between_docker_run_options_and_command() {
-  HAS_INSERTED_IMAGE=false
-  IS_EXPECTING_VALUE=false
-  for ARGUMENT in "$@"; do
-    if $HAS_INSERTED_IMAGE; then
-      echo "$ARGUMENT"
-
-    elif _is_docker_run_flag "$ARGUMENT"; then
-      echo "$ARGUMENT"
-
-    elif _is_option_or_flag "$ARGUMENT"; then
-      echo "$ARGUMENT"
-      IS_EXPECTING_VALUE=true
-
-    elif $IS_EXPECTING_VALUE; then
-      echo "$ARGUMENT"
-      IS_EXPECTING_VALUE=false
-
-    else
-      echo "$KANO_DOCKER_IMAGE"
-      echo "$ARGUMENT"
-      HAS_INSERTED_IMAGE=true
-    fi
-  done
-}
-
-_is_docker_run_flag() {
-  case "$1" in
-    --detach | \
-      -d* | \
-      --disable-content-trust | \
-      --help | \
-      --init | \
-      --interactive | \
-      -i* | \
-      --no-healthcheck | \
-      --privileged | \
-      --read-only | \
-      --rm | \
-      --sig-proxy | \
-      --tty | \
-      -t*)
-      true
-      ;;
-
-    *)
-      false
-      ;;
-  esac
-}
-
-_is_option_or_flag() {
-  case "$1" in
-    -*)
-      true
-      ;;
-
-    *)
-      false
-      ;;
-  esac
+  fi
 }
 
 _is_docker_installed() {
@@ -185,11 +226,15 @@ _ensure_docker_daemon_is_running() {
   _docker version > /dev/null
 }
 
-_does_development_image_exist() {
+_does_image_exist() {
   [ -n "$(_docker image ls --quiet --filter reference="$KANO_DOCKER_IMAGE")" ]
 }
 
-_does_development_container_exist() {
+_does_container_exist() {
+  [ -n "$(_docker container ls --all --quiet --filter name="$KANO_DOCKER_CONTAINER")" ]
+}
+
+_is_container_running() {
   [ -n "$(_docker container ls --quiet --filter name="$KANO_DOCKER_CONTAINER")" ]
 }
 
