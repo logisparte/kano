@@ -30,10 +30,10 @@ jobs:
           echo "KANO_DEVELOPMENT_IMAGE=$DOCKER_REGISTRY/$GITHUB_REPOSITORY-dev" >> "$GITHUB_ENV"
 
       - name: Clone project
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Login to registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: ${{ env.DOCKER_REGISTRY }}
           username: ${{ env.DOCKER_USERNAME }}
@@ -43,18 +43,18 @@ jobs:
         run: kano docker build --pull
 
       - name: Build project
-        run: kano dockered build
+        run: kano docker run sudo kano build
 
       - name: Lint project
         run: kano dockered lint
 
       - name: Test project
-        run: kano dockered test
+        run: kano docker run sudo kano test
 
       - name: Release beta version
         if: startsWith(github.head_ref, 'beta-')
         run: |
-          kano dockered release \
+          kano docker run sudo kano release \
             "$GITHUB_HEAD_REF" \
             "$GIT_NAME" \
             "$GIT_EMAIL" \

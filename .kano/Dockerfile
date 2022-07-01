@@ -1,32 +1,34 @@
 # syntax=docker/dockerfile:1
-FROM ghcr.io/logisparte/helot-22.04:4.2.1 AS base
+FROM ghcr.io/logisparte/helot-22.04:5.0.1 AS base
 
 LABEL org.opencontainers.image.title="kano-dev"
 LABEL org.opencontainers.image.description="kano's development image"
 LABEL org.opencontainers.image.authors="@logisparte"
 LABEL org.opencontainers.image.source="https://github.com/logisparte/kano"
 
-RUN apt-get update
+RUN sudo apt-get update
 
 FROM base AS markdownlint_prettier
 
 RUN <<eof
   curl --silent --show-error --location https://deb.nodesource.com/setup_lts.x \
-    | bash -
-  DEBIAN_FRONTEND=noninteractive apt-get install --yes --quiet --no-install-recommends \
+    | sudo bash -
+  DEBIAN_FRONTEND=noninteractive sudo apt-get install --yes --quiet --no-install-recommends \
     nodejs
-  npm config set update-notifier=false fund=false
-  npm install --location=global --no-optional \
+  sudo npm config set update-notifier=false fund=false
+  sudo npm install --location=global --no-optional \
     markdownlint-cli@0.31.1 \
     prettier@2.7.1
-  npm cache clean --force
+  sudo npm cache clean --force
 eof
 
 FROM markdownlint_prettier AS shfmt
 
 ARG TARGETARCH
 
-ENV PATH="$PATH:/usr/local/go/bin:/root/go/bin"
+ENV GOBIN="/usr/bin"
+ENV GOPATH="/usr/lib/go"
+ENV GOPROXY="direct"
 
 RUN <<eof
   case "$TARGETARCH" in
@@ -46,25 +48,24 @@ RUN <<eof
 
   curl --silent --show-error --location \
     "https://golang.org/dl/go1.18.3.linux-$GO_ARCHITECTURE.tar.gz" \
-      | tar --directory /usr/local --extract --gzip
-  go install mvdan.cc/sh/v3/cmd/shfmt@v3.5.1
-  go clean --cache
+      | sudo tar --directory /opt --extract --gzip
+  sudo ln -s "/opt/go/bin/go" "/usr/bin/go"
+  sudo -E go install mvdan.cc/sh/v3/cmd/shfmt@v3.5.1
+  sudo -E go clean --cache
 eof
 
 FROM shfmt AS shellcheck
 
 RUN <<eof
-  DEBIAN_FRONTEND=noninteractive apt-get install --yes --quiet --no-install-recommends \
+  DEBIAN_FRONTEND=noninteractive sudo apt-get install --yes --quiet --no-install-recommends \
     shellcheck
 eof
 
 FROM shellcheck AS shellspec
 
-ENV PATH="$PATH:/root/.local/bin"
-
 RUN <<eof
   curl --silent --show-error --location https://git.io/shellspec \
-    | sh -s 0.28.1 --yes
+    | sudo sh -s 0.28.1 --dir /opt/shellspec --bin /usr/bin --yes
 eof
 
 FROM base AS kcov_builder
@@ -72,7 +73,8 @@ FROM base AS kcov_builder
 RUN <<eof
   KCOV_VERSION="40"
   KCOV_DIRECTORY="kcov-$KCOV_VERSION"
-  DEBIAN_FRONTEND=noninteractive apt-get install --yes --quiet --no-install-recommends \
+  KCOV_BUILD_DIRECTORY="$KCOV_DIRECTORY/build"
+  DEBIAN_FRONTEND=noninteractive sudo apt-get install --yes --quiet --no-install-recommends \
     binutils-dev \
     build-essential \
     cmake \
@@ -83,18 +85,17 @@ RUN <<eof
     zlib1g-dev
   curl --silent --show-error --location \
     "https://github.com/SimonKagstrom/kcov/archive/refs/tags/v$KCOV_VERSION.tar.gz" \
-      | tar --extract --gzip
-  cmake -B "$KCOV_DIRECTORY/build" -Wno-dev "$KCOV_DIRECTORY"
-  cmake --build "$KCOV_DIRECTORY/build" --target install
+      | sudo tar --extract --gzip
+  sudo cmake -B "$KCOV_BUILD_DIRECTORY" -Wno-dev "$KCOV_DIRECTORY"
+  sudo cmake --build "$KCOV_BUILD_DIRECTORY" --target install
 eof
 
 FROM shellspec AS kcov
 
-COPY --from=kcov_builder /usr/local/bin/kcov* /usr/local/bin/
-COPY --from=kcov_builder /usr/local/share/doc/kcov /usr/local/share/doc/kcov
+COPY --from=kcov_builder /usr/local/bin/kcov* /usr/bin/
 
 RUN <<eof
-  DEBIAN_FRONTEND=noninteractive apt-get install --yes --quiet --no-install-recommends \
+  DEBIAN_FRONTEND=noninteractive sudo apt-get install --yes --quiet --no-install-recommends \
     binutils \
     libcurl4 \
     libdw1 \
@@ -104,6 +105,6 @@ eof
 FROM kcov AS cleanup
 
 RUN <<eof
-  apt-get clean
-  rm -rf /var/lib/apt/lists/*
+  sudo apt-get clean
+  sudo rm -rf /var/lib/apt/lists/*
 eof
