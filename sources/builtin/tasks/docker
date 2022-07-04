@@ -181,47 +181,47 @@ sh -c 'kill -STOP \$\$'"
 
   execute() {
     if ! _does_image_exist; then
-      kano docker image build
+      _kano docker image build
     fi
 
     if ! _does_container_exist; then
-      kano docker container create
+      _kano docker container create
     fi
 
     if ! _is_container_running; then
-      kano docker container start
+      _kano docker container start
     fi
 
-    kano docker container exec_ "$@"
+    _kano docker container exec_ "$@"
   }
 
   shell() {
     if ! _does_image_exist; then
-      kano docker image build
+      _kano docker image build
     fi
 
     if ! _does_container_exist; then
-      kano docker container create
+      _kano docker container create
     fi
 
     if ! _is_container_running; then
-      kano docker container start
+      _kano docker container start
     fi
 
-    kano docker container exec_ --interactive --tty "$SHELL" --login
+    _kano docker container exec_ --interactive --tty "$SHELL" --login
   }
 
   clean() {
     if _is_container_running; then
-      kano docker container stop
+      _kano docker container stop
     fi
 
     if _does_container_exist; then
-      kano docker container rm
+      _kano docker container rm
     fi
 
     if _does_image_exist; then
-      kano docker image rm
+      _kano docker image rm
     fi
   }
 
@@ -315,6 +315,10 @@ _does_container_exist() {
 
 _is_container_running() {
   [ -n "$(_docker container ls --quiet --filter name="$KANO_DOCKER_CONTAINER")" ]
+}
+
+_kano() {
+  command kano "$@"
 }
 
 _docker() {
