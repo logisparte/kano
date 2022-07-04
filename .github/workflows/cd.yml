@@ -26,13 +26,7 @@ jobs:
           sudo ./kano/install
 
       - name: Export environment variable
-        run: |
-          DEVELOPMENT_IMAGE="$DOCKER_REGISTRY/$GITHUB_REPOSITORY-dev"
-          DEVELOPMENT_IMAGE_COMMIT_TAG="$DEVELOPMENT_IMAGE:$GITHUB_SHA"
-          DEVELOPMENT_IMAGE_VERSION_TAG="$DEVELOPMENT_IMAGE:$GITHUB_REF_NAME"
-          echo "DEVELOPMENT_IMAGE_COMMIT_TAG=$DEVELOPMENT_IMAGE_COMMIT_TAG" >> "$GITHUB_ENV"
-          echo "DEVELOPMENT_IMAGE_VERSION_TAG=$DEVELOPMENT_IMAGE_VERSION_TAG" >> "$GITHUB_ENV"
-          echo "KANO_DOCKER_IMAGE=$DEVELOPMENT_IMAGE_COMMIT_TAG" >> "$GITHUB_ENV"
+        run: echo "KANO_DOCKER_IMAGE=$DOCKER_REGISTRY/$GITHUB_REPOSITORY-dev" >> "$GITHUB_ENV"
 
       - name: Clone project
         uses: actions/checkout@v3
@@ -45,7 +39,7 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Pull existing development image
-        run: docker pull "$KANO_DOCKER_IMAGE"
+        run: kano docker pull "$GITHUB_SHA"
 
       - name: Build project
         run: kano dockered build
@@ -60,5 +54,5 @@ jobs:
 
       - name: Tag versioned image
         run: |
-          docker tag "$DEVELOPMENT_IMAGE_COMMIT_TAG" "$DEVELOPMENT_IMAGE_VERSION_TAG"
-          docker push "$DEVELOPMENT_IMAGE_VERSION_TAG"
+          kano docker tag "$GITHUB_REF_NAME"
+          kano docker push "$GITHUB_REF_NAME"

@@ -23,11 +23,7 @@ jobs:
           sudo ./kano/install
 
       - name: Export environment variables
-        run: |
-          DEVELOPMENT_IMAGE="$DOCKER_REGISTRY/$GITHUB_REPOSITORY-dev"
-          echo "DEVELOPMENT_IMAGE_COMMIT_TAG=$DEVELOPMENT_IMAGE:$GITHUB_SHA" >> "$GITHUB_ENV"
-          echo "DEVELOPMENT_IMAGE_LATEST_TAG=$DEVELOPMENT_IMAGE:latest" >> "$GITHUB_ENV"
-          echo "KANO_DOCKER_IMAGE=$DEVELOPMENT_IMAGE" >> "$GITHUB_ENV"
+        run: echo "KANO_DOCKER_IMAGE=$DOCKER_REGISTRY/$GITHUB_REPOSITORY-dev" >> "$GITHUB_ENV"
 
       - name: Clone project
         uses: actions/checkout@v3
@@ -40,13 +36,11 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Build new development image
-        run: |
-          kano docker build \
-            --pull \
-            --tag "$DEVELOPMENT_IMAGE_COMMIT_TAG" \
-            --tag "$DEVELOPMENT_IMAGE_LATEST_TAG"
+        run: kano docker build --pull
 
-      - name: Push new development image
+      - name: Tag new development image
         run: |
-          docker push "$DEVELOPMENT_IMAGE_COMMIT_TAG"
-          docker push "$DEVELOPMENT_IMAGE_LATEST_TAG"
+          kano docker tag latest
+          kano docker tag "$GITHUB_SHA"
+          kano docker push latest
+          kano docker push "$GITHUB_SHA"
