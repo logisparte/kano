@@ -52,7 +52,6 @@ _login_to_github() {
   fi
 
   _info "Configuring git for GitHub"
-  git config --global --add safe.directory "$PWD"
   kano configure_github --global \
     "$GIT_NAME" \
     "$GIT_EMAIL" \

@@ -21,7 +21,7 @@ jobs:
       - name: Install kano
         run: |
           curl --silent --show-error --location \
-            https://github.com/logisparte/kano/releases/download/3.6.0/kano.tar.gz \
+            https://github.com/logisparte/kano/releases/download/beta-docker-v4/kano.tar.gz \
               | tar --extract --gzip
           sudo ./kano/install
 
@@ -32,7 +32,7 @@ jobs:
           DEVELOPMENT_IMAGE_VERSION_TAG="$DEVELOPMENT_IMAGE:$GITHUB_REF_NAME"
           echo "DEVELOPMENT_IMAGE_COMMIT_TAG=$DEVELOPMENT_IMAGE_COMMIT_TAG" >> "$GITHUB_ENV"
           echo "DEVELOPMENT_IMAGE_VERSION_TAG=$DEVELOPMENT_IMAGE_VERSION_TAG" >> "$GITHUB_ENV"
-          echo "KANO_DEVELOPMENT_IMAGE=$DEVELOPMENT_IMAGE_COMMIT_TAG" >> "$GITHUB_ENV"
+          echo "KANO_DOCKER_IMAGE=$DEVELOPMENT_IMAGE_COMMIT_TAG" >> "$GITHUB_ENV"
 
       - name: Clone project
         uses: actions/checkout@v3
@@ -45,14 +45,14 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Pull existing development image
-        run: docker pull "$KANO_DEVELOPMENT_IMAGE"
+        run: docker pull "$KANO_DOCKER_IMAGE"
 
       - name: Build project
-        run: kano docker run sudo kano build
+        run: kano dockered build
 
       - name: Release project
         run: |
-          kano docker run sudo kano release \
+          kano dockered release \
             "$GITHUB_REF_NAME" \
             "$GIT_NAME" \
             "$GIT_EMAIL" \

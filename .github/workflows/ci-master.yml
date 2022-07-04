@@ -18,7 +18,7 @@ jobs:
       - name: Install kano
         run: |
           curl --silent --show-error --location \
-            https://github.com/logisparte/kano/releases/download/3.6.0/kano.tar.gz \
+            https://github.com/logisparte/kano/releases/download/beta-docker-v4/kano.tar.gz \
               | tar --extract --gzip
           sudo ./kano/install
 
@@ -27,7 +27,7 @@ jobs:
           DEVELOPMENT_IMAGE="$DOCKER_REGISTRY/$GITHUB_REPOSITORY-dev"
           echo "DEVELOPMENT_IMAGE_COMMIT_TAG=$DEVELOPMENT_IMAGE:$GITHUB_SHA" >> "$GITHUB_ENV"
           echo "DEVELOPMENT_IMAGE_LATEST_TAG=$DEVELOPMENT_IMAGE:latest" >> "$GITHUB_ENV"
-          echo "KANO_DEVELOPMENT_IMAGE=$DEVELOPMENT_IMAGE" >> "$GITHUB_ENV"
+          echo "KANO_DOCKER_IMAGE=$DEVELOPMENT_IMAGE" >> "$GITHUB_ENV"
 
       - name: Clone project
         uses: actions/checkout@v3
