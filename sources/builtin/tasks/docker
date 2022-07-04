@@ -66,24 +66,24 @@ docker() {
         fail "Development container already exists"
       fi
 
+      USER_ID="$(id -u)"
+      USER_NAME="$(id -un)"
       _docker container create \
         --env KANO_DOCKER=true \
         --env KANO_DOCKER_IMAGE \
         --env KANO_DOCKER_CONTAINER \
-        --interactive \
         --log-driver none \
         --name "$KANO_DOCKER_CONTAINER" \
         --rm \
-        --tty \
         --volume "$PWD:$PWD" \
         --workdir "$PWD" \
         "$@" \
         "$KANO_DOCKER_IMAGE" \
         /bin/sh -c "\
-sudo useradd --uid $(id -u) --gid sudo --home-dir $HOME $(id -un); \
-sudo passwd --delete $(id -un) > /dev/null; \
-echo \"Press ENTER to exit\"; \
-read -r _;"
+sudo useradd --uid $USER_ID --gid sudo --no-create-home --home-dir $HOME --shell $SHELL $USER_NAME; \
+sudo passwd --delete $USER_NAME > /dev/null; \
+sudo chown -R $USER_NAME $HOME; \
+sh -c 'kill -STOP \$\$'"
     }
 
     rm() {
@@ -131,22 +131,23 @@ read -r _;"
         fail "Development container is not running. Run 'kano docker container start'"
       fi
 
-      _docker container exec \
-        --interactive \
-        --tty \
+      # shellcheck disable=SC2046
+      _docker container 'exec' \
         --user "$(id -un)" \
         --workdir "$PWD" \
-        "$KANO_DOCKER_CONTAINER" \
-        "$@"
+        $(_insert_container_in_exec_arguments "$@" | xargs)
     }
 
     if [ "$1" = "exec" ]; then
       shift
       exec_ "$@"
+
     else
       "$@"
     fi
   }
+
+  # Native Docker shortcuts
 
   build() {
     image build "$@"
@@ -176,6 +177,8 @@ read -r _;"
     container exec_ "$@"
   }
 
+  # kano docker shortcuts
+
   execute() {
     if ! _does_image_exist; then
       kano docker image build
@@ -193,7 +196,19 @@ read -r _;"
   }
 
   shell() {
-    execute "$SHELL" --login
+    if ! _does_image_exist; then
+      kano docker image build
+    fi
+
+    if ! _does_container_exist; then
+      kano docker container create
+    fi
+
+    if ! _is_container_running; then
+      kano docker container start
+    fi
+
+    kano docker container exec_ --interactive --tty "$SHELL" --login
   }
 
   clean() {
@@ -213,9 +228,73 @@ read -r _;"
   if [ "$1" = "exec" ]; then
     shift
     exec_ "$@"
+
   else
     "$@"
   fi
+}
+
+_insert_container_in_exec_arguments() {
+  IS_CONTAINER_INSERTED=false
+  IS_EXPECTING_OPTION_VALUE=false
+  for ARGUMENT in "$@"; do
+    if $IS_CONTAINER_INSERTED; then
+      echo "$ARGUMENT"
+      continue
+    fi
+
+    if _is_container_exec_flag "$ARGUMENT"; then
+      echo "$ARGUMENT"
+      continue
+    fi
+
+    if _is_flag_or_option "$ARGUMENT"; then
+      IS_EXPECTING_OPTION_VALUE=true
+      echo "$ARGUMENT"
+      continue
+    fi
+
+    if $IS_EXPECTING_OPTION_VALUE; then
+      IS_EXPECTING_OPTION_VALUE=false
+
+    else
+      echo "$KANO_DOCKER_CONTAINER"
+      IS_CONTAINER_INSERTED=true
+    fi
+
+    echo "$ARGUMENT"
+  done
+}
+
+_is_container_exec_flag() {
+  case "$1" in
+    --detach | \
+      -d* | \
+      --help | \
+      --interactive | \
+      -i* | \
+      --privileged | \
+      --tty | \
+      -t*)
+      true
+      ;;
+
+    *)
+      false
+      ;;
+  esac
+}
+
+ _is_flag_or_option() {
+  case "$1" in
+    -*)
+      true
+      ;;
+
+    *)
+      false
+      ;;
+  esac
 }
 
 _is_docker_installed() {
