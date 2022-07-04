@@ -273,10 +273,10 @@ Describe "docker"
 
         Context "when container does not exist"
           START_COMMAND="/bin/sh -c \
-sudo useradd --uid $(id -u) --gid sudo --home-dir $HOME $(id -un); \
+sudo useradd --uid $(id -u) --gid sudo --no-create-home --home-dir $HOME --shell $SHELL $(id -un); \
 sudo passwd --delete $(id -un) > /dev/null; \
-echo \"Press ENTER to exit\"; \
-read -r _;"
+sudo chown -R $(id -un) $HOME; \
+sh -c 'kill -STOP \$\$'"
 
           It "should create container"
             When run docker container create
@@ -285,11 +285,9 @@ read -r _;"
             The variable docker_called_with should include "--env KANO_DOCKER=true"
             The variable docker_called_with should include "--env KANO_DOCKER_IMAGE"
             The variable docker_called_with should include "--env KANO_DOCKER_CONTAINER"
-            The variable docker_called_with should include "--interactive"
             The variable docker_called_with should include "--log-driver none"
             The variable docker_called_with should include "--name $KANO_DOCKER_CONTAINER"
             The variable docker_called_with should include "--rm"
-            The variable docker_called_with should include "--tty"
             The variable docker_called_with should include "--volume $PWD:$PWD"
             The variable docker_called_with should include "--workdir $PWD"
             The variable docker_called_with should end_with "$DEVELOPMENT_IMAGE $START_COMMAND"
@@ -507,8 +505,6 @@ read -r _;"
             When run docker container 'exec' "$SOME_COMMAND"
             The status should be success
             The variable docker_called_with should start_with "container exec"
-            The variable docker_called_with should include "--interactive"
-            The variable docker_called_with should include "--tty"
             The variable docker_called_with should include "--user $(id -un)"
             The variable docker_called_with should include "--workdir $PWD"
             The variable docker_called_with should end_with \
@@ -587,7 +583,7 @@ docker container exec_ $SOME_COMMAND"
 docker image build \
 docker container create \
 docker container start \
-docker container exec_ $SHELL --login"
+docker container exec_ --interactive --tty $SHELL --login"
       End
     End
 
@@ -600,7 +596,7 @@ docker container exec_ $SHELL --login"
           The variable kano_called_with should equal "\
 docker container create \
 docker container start \
-docker container exec_ $SHELL --login"
+docker container exec_ --interactive --tty $SHELL --login"
         End
       End
 
@@ -612,7 +608,7 @@ docker container exec_ $SHELL --login"
             The status should be success
             The variable kano_called_with should equal "\
 docker container start \
-docker container exec_ $SHELL --login"
+docker container exec_ --interactive --tty $SHELL --login"
           End
         End
 
@@ -621,7 +617,8 @@ docker container exec_ $SHELL --login"
           It "should exec same shell as host's"
             When run docker shell
             The status should be success
-            The variable kano_called_with should equal "docker container exec_ $SHELL --login"
+            The variable kano_called_with should equal "\
+docker container exec_ --interactive --tty $SHELL --login"
           End
         End
       End
