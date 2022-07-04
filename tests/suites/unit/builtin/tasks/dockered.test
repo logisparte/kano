@@ -3,9 +3,15 @@
 Include "$KANO_SOURCE_DIRECTORY/builtin/tasks/dockered"
 
 Describe "dockered"
-  kano() {
+  _kano() {
     # shellcheck disable=SC2034
-    kano_called_with="$*"
+    if [ -z "$kano_called_with" ]; then
+      kano_called_with="$*"
+
+    else
+      kano_called_with="$kano_called_with $*"
+    fi
+
     %preserve kano_called_with
   }
 
