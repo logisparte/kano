@@ -21,13 +21,12 @@ jobs:
       - name: Install kano
         run: |
           curl --silent --show-error --location \
-            https://github.com/logisparte/kano/releases/download/3.6.0/kano.tar.gz \
+            https://github.com/logisparte/kano/releases/download/beta-docker-v4/kano.tar.gz \
               | tar --extract --gzip
           sudo ./kano/install
 
       - name: Export environment variables
-        run: |
-          echo "KANO_DEVELOPMENT_IMAGE=$DOCKER_REGISTRY/$GITHUB_REPOSITORY-dev" >> "$GITHUB_ENV"
+        run: echo "KANO_DOCKER_IMAGE=$DOCKER_REGISTRY/$GITHUB_REPOSITORY-dev" >> "$GITHUB_ENV"
 
       - name: Clone project
         uses: actions/checkout@v3
@@ -43,18 +42,18 @@ jobs:
         run: kano docker build --pull
 
       - name: Build project
-        run: kano docker run sudo kano build
+        run: kano dockered build
 
       - name: Lint project
         run: kano dockered lint
 
       - name: Test project
-        run: kano docker run sudo kano test
+        run: kano dockered test
 
       - name: Release beta version
         if: startsWith(github.head_ref, 'beta-')
         run: |
-          kano docker run sudo kano release \
+          kano dockered release \
             "$GITHUB_HEAD_REF" \
             "$GIT_NAME" \
             "$GIT_EMAIL" \
