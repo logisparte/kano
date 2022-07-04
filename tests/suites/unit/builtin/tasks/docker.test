@@ -273,7 +273,7 @@ Describe "docker"
 
         Context "when container does not exist"
           START_COMMAND="/bin/sh -c \
-sudo useradd --uid $(id -u) --gid sudo --no-create-home --home-dir $HOME --shell $SHELL $(id -un); \
+sudo useradd --uid $(id -u) --gid sudo --no-create-home --home-dir $HOME $(id -un); \
 sudo passwd --delete $(id -un) > /dev/null; \
 sudo chown -R $(id -un) $HOME; \
 sh -c 'kill -STOP \$\$'"
