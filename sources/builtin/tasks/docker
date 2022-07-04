@@ -80,7 +80,7 @@ docker() {
         "$@" \
         "$KANO_DOCKER_IMAGE" \
         /bin/sh -c "\
-sudo useradd --uid $USER_ID --gid sudo --no-create-home --home-dir $HOME --shell $SHELL $USER_NAME; \
+sudo useradd --uid $USER_ID --gid sudo --no-create-home --home-dir $HOME $USER_NAME; \
 sudo passwd --delete $USER_NAME > /dev/null; \
 sudo chown -R $USER_NAME $HOME; \
 sh -c 'kill -STOP \$\$'"
