@@ -6,10 +6,10 @@ on:
       - master
 
 env:
-  DOCKER_BUILDKIT: true
-  DOCKER_REGISTRY: ghcr.io
+  KANO_DOCKER_REGISTRY: ghcr.io/logisparte
   DOCKER_USERNAME: logisparte-helot
   DOCKER_PASSWORD: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
+  DOCKER_BUILDKIT: true
   GIT_NAME: helot
   GIT_EMAIL: logisparte-helot@users.noreply.github.com
   RELEASE_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
@@ -25,21 +25,18 @@ jobs:
               | tar --extract --gzip
           sudo ./kano/install
 
-      - name: Export environment variables
-        run: echo "KANO_DOCKER_IMAGE=$DOCKER_REGISTRY/$GITHUB_REPOSITORY-dev" >> "$GITHUB_ENV"
-
       - name: Clone project
         uses: actions/checkout@v3
 
       - name: Login to registry
         uses: docker/login-action@v2
         with:
-          registry: ${{ env.DOCKER_REGISTRY }}
+          registry: ${{ env.KANO_DOCKER_REGISTRY }}
           username: ${{ env.DOCKER_USERNAME }}
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Build branch development image
-        run: kano docker build --pull
+        run: kano docker image build
 
       - name: Build project
         run: kano dockered build
