@@ -136,7 +136,7 @@ docker() {
           "sudo useradd" \
           "--uid $USER_ID --gid sudo --no-create-home --home-dir $HOME $USER_NAME;" \
           "sudo passwd --delete $USER_NAME > /dev/null;" \
-          "sudo chown -R $USER_NAME $HOME;" \
+          "sudo chown -R $USER_NAME $HOME || true;" \
           "sh -c 'kill -STOP \$\$'"
       )"
       _docker container create \
