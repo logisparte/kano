@@ -115,6 +115,9 @@ pendant les tests. Pour voir le rapport de couverture après une exécution des 
 kano coverage
 ```
 
+> NOTE: Les _strings_ multilignes pourraient s'afficher comme non-couvertes à cause de cette
+> [_issue_](https://github.com/SimonKagstrom/kcov/issues/145)
+
 ### Dev
 
 Pour changer la version de `kano` utilisée à celle en développement :

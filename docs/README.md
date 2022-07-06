@@ -112,6 +112,9 @@ view the coverage report after a test run:
 kano coverage
 ```
 
+> NOTE: Multiline strings may report as uncovered due this
+> [issue](https://github.com/SimonKagstrom/kcov/issues/145)
+
 ### Dev
 
 To change the version of `kano` to the one under development:
