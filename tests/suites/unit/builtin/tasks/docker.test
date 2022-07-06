@@ -579,7 +579,7 @@ Describe "docker"
               "sudo useradd" \
                 "--uid $(id -u) --gid sudo --no-create-home --home-dir $HOME $(id -un);" \
               "sudo passwd --delete $(id -un) > /dev/null;" \
-              "sudo chown -R $(id -un) $HOME;" \
+              "sudo chown -R $(id -un) $HOME || true;" \
               "sh -c 'kill -STOP \$\$'" \
           )"
 
