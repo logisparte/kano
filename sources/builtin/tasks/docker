@@ -130,15 +130,15 @@ docker() {
       USER_ID="$(id -u)"
       USER_NAME="$(id -un)"
       # shellcheck disable=SC2116
-      START_COMMAND="$(
+      INITIALIZATION_SCRIPT="$(
         echo \
-          "/bin/sh -c" \
           "sudo useradd" \
           "--uid $USER_ID --gid sudo --no-create-home --home-dir $HOME $USER_NAME;" \
           "sudo passwd --delete $USER_NAME > /dev/null;" \
-          "sudo chown -R $USER_NAME $HOME || true;" \
+          "sudo chown -R $USER_NAME $HOME;" \
           "sh -c 'kill -STOP \$\$'"
       )"
+
       _docker container create \
         --env KANO_DOCKER=true \
         --env KANO_DOCKER_FILE \
@@ -153,7 +153,7 @@ docker() {
         --workdir "$PWD" \
         "$@" \
         "$WORKING_IMAGE" \
-        "$START_COMMAND"
+        /bin/sh -c "$INITIALIZATION_SCRIPT"
     }
 
     rm() {
