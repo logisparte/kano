@@ -42,7 +42,7 @@ scopes() {
   from_flag() {
     FLAG="$1"
 
-     case "$FLAG" in
+    case "$FLAG" in
       -u | --user)
         echo "$USER_SCOPE"
         ;;

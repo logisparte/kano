@@ -1,6 +1,5 @@
 #!/bin/sh
 
-. "$KANO_SOURCE_DIRECTORY/builtin/helpers/does_directory_exist"
 . "$KANO_SOURCE_DIRECTORY/builtin/helpers/does_file_exist"
 . "$KANO_SOURCE_DIRECTORY/builtin/helpers/fail"
 
@@ -9,7 +8,7 @@ docker_help() {
 }
 
 docker() {
-  if [ -n "$KANO_DOCKER" ] && "$KANO_DOCKER"; then
+  if [ "$KANO_DOCKER" = true ]; then
     fail "Cannot run docker task inside a development container"
   fi
 
@@ -19,6 +18,10 @@ docker() {
 
   _ensure_docker_daemon_is_running
 
+  if [ -z "$KANO_DOCKER_FILE" ]; then
+    export KANO_DOCKER_FILE="$KANO_PROJECT_DIRECTORY/Dockerfile"
+  fi
+
   if [ -z "$KANO_DOCKER_IMAGE" ]; then
     export KANO_DOCKER_IMAGE="$KANO_PROJECT_NAME-dev"
   fi
@@ -27,22 +30,52 @@ docker() {
     export KANO_DOCKER_CONTAINER="$KANO_PROJECT_NAME-dev-container"
   fi
 
+  if [ -z "$KANO_DOCKER_TAG" ]; then
+    export KANO_DOCKER_TAG="latest"
+  fi
+
+  if [ -n "$KANO_DOCKER_REGISTRY" ]; then
+    WORKING_IMAGE="$KANO_DOCKER_REGISTRY/$KANO_DOCKER_IMAGE:$KANO_DOCKER_TAG"
+
+  else
+    WORKING_IMAGE="$KANO_DOCKER_IMAGE:$KANO_DOCKER_TAG"
+  fi
+
   image() {
     build() {
-      if ! does_directory_exist "$KANO_PROJECT_DIRECTORY"; then
-        fail "No kano directory exists in project"
+      if [ "$KANO_DOCKER_TAG" != "latest" ]; then
+        # shellcheck disable=SC2116
+        fail "$(
+          echo \
+            "Cannot rebuild a versioned image. Run 'kano docker pull $KANO_DOCKER_TAG' or" \
+            "unset 'KANO_DOCKER_TAG' environment variable"
+        )"
       fi
 
-      if ! does_file_exist "$KANO_PROJECT_DIRECTORY/Dockerfile"; then
-        fail "No Dockerfile in project kano directory"
+      if ! does_file_exist "$KANO_DOCKER_FILE"; then
+        # shellcheck disable=SC2116
+        fail "$(
+          echo \
+            "No Dockerfile at '$KANO_DOCKER_FILE'. Create one or set 'KANO_DOCKER_FILE'" \
+            "environment variable to configure a different location"
+        )"
       fi
 
-      # shellcheck disable=SC2046
-      _docker image build \
-        --file "$KANO_PROJECT_DIRECTORY/Dockerfile" \
-        --tag "$KANO_DOCKER_IMAGE" \
-        $(_does_image_exist && echo "--cache-from $KANO_DOCKER_IMAGE") \
-        "$@" .
+      if [ -n "$KANO_DOCKER_REGISTRY" ]; then
+        _docker image build \
+          --build-arg BUILDKIT_INLINE_CACHE=1 \
+          --cache-from "$WORKING_IMAGE" \
+          --file "$KANO_DOCKER_FILE" \
+          --pull \
+          --tag "$WORKING_IMAGE" \
+          "$@" .
+
+      else
+        _docker image build \
+          --file "$KANO_DOCKER_FILE" \
+          --tag "$WORKING_IMAGE" \
+          "$@" .
+      fi
     }
 
     rm() {
@@ -50,7 +83,35 @@ docker() {
         fail "Development image does not exist"
       fi
 
-      _docker image rm "$@" "$KANO_DOCKER_IMAGE"
+      _docker image rm "$@" "$WORKING_IMAGE"
+    }
+
+    pull() {
+      if [ -z "$KANO_DOCKER_REGISTRY" ]; then
+        fail "No container registry configured. Set 'KANO_DOCKER_REGISTRY' environment variable"
+      fi
+
+      # shellcheck disable=SC2046
+      _docker image pull $(_insert_image_in_push_or_pull_arguments "$@" | xargs)
+    }
+
+    push() {
+      if [ -z "$KANO_DOCKER_REGISTRY" ]; then
+        fail "No container registry configured. Set 'KANO_DOCKER_REGISTRY' environment variable"
+      fi
+
+      # shellcheck disable=SC2046
+      _docker image push $(_insert_image_in_push_or_pull_arguments "$@" | xargs)
+    }
+
+    tag() {
+      TAG="$1"
+
+      if [ -z "$TAG" ]; then
+        fail "No tag provided"
+      fi
+
+      _docker image tag "$WORKING_IMAGE" "$(echo "$WORKING_IMAGE" | cut -d ":" -f 1):$TAG"
     }
 
     "$@"
@@ -68,9 +129,22 @@ docker() {
 
       USER_ID="$(id -u)"
       USER_NAME="$(id -un)"
+      # shellcheck disable=SC2116
+      START_COMMAND="$(
+        echo \
+          "/bin/sh -c" \
+          "sudo useradd" \
+          "--uid $USER_ID --gid sudo --no-create-home --home-dir $HOME $USER_NAME;" \
+          "sudo passwd --delete $USER_NAME > /dev/null;" \
+          "sudo chown -R $USER_NAME $HOME;" \
+          "sh -c 'kill -STOP \$\$'"
+      )"
       _docker container create \
         --env KANO_DOCKER=true \
+        --env KANO_DOCKER_FILE \
+        --env KANO_DOCKER_REGISTRY \
         --env KANO_DOCKER_IMAGE \
+        --env KANO_DOCKER_TAG \
         --env KANO_DOCKER_CONTAINER \
         --log-driver none \
         --name "$KANO_DOCKER_CONTAINER" \
@@ -78,12 +152,8 @@ docker() {
         --volume "$PWD:$PWD" \
         --workdir "$PWD" \
         "$@" \
-        "$KANO_DOCKER_IMAGE" \
-        /bin/sh -c "\
-sudo useradd --uid $USER_ID --gid sudo --no-create-home --home-dir $HOME $USER_NAME; \
-sudo passwd --delete $USER_NAME > /dev/null; \
-sudo chown -R $USER_NAME $HOME; \
-sh -c 'kill -STOP \$\$'"
+        "$WORKING_IMAGE" \
+        "$START_COMMAND"
     }
 
     rm() {
@@ -157,6 +227,18 @@ sh -c 'kill -STOP \$\$'"
     image rm "$@"
   }
 
+  pull() {
+    image pull "$@"
+  }
+
+  push() {
+    image push "$@"
+  }
+
+  tag() {
+    image tag "$@"
+  }
+
   create() {
     container create "$@"
   }
@@ -208,7 +290,7 @@ sh -c 'kill -STOP \$\$'"
       _kano docker container start
     fi
 
-    _kano docker container exec_ --interactive --tty "$SHELL" --login
+    _kano docker container exec_ --interactive --tty "${SHELL:-/bin/sh}" --login
   }
 
   clean() {
@@ -232,6 +314,30 @@ sh -c 'kill -STOP \$\$'"
   else
     "$@"
   fi
+}
+
+_insert_image_in_push_or_pull_arguments() {
+  IS_EXPECTING_OPTION_VALUE=false
+  for ARGUMENT in "$@"; do
+    if _is_image_push_or_pull_flag "$ARGUMENT"; then
+      echo "$ARGUMENT"
+
+    elif _is_flag_or_option "$ARGUMENT"; then
+      IS_EXPECTING_OPTION_VALUE=true
+      echo "$ARGUMENT"
+
+    elif $IS_EXPECTING_OPTION_VALUE; then
+      IS_EXPECTING_OPTION_VALUE=false
+      echo "$ARGUMENT"
+
+    else
+      TAG="$ARGUMENT"
+      echo "$(echo "$WORKING_IMAGE" | cut -d ":" -f 1):$TAG"
+      return
+    fi
+  done
+
+  echo "$WORKING_IMAGE"
 }
 
 _insert_container_in_exec_arguments() {
@@ -266,6 +372,23 @@ _insert_container_in_exec_arguments() {
   done
 }
 
+_is_image_push_or_pull_flag() {
+  case "$1" in
+    --all-tags | \
+      -a* | \
+      --disable-content-trust | \
+      --help | \
+      --quiet | \
+      -q*)
+      true
+      ;;
+
+    *)
+      false
+      ;;
+  esac
+}
+
 _is_container_exec_flag() {
   case "$1" in
     --detach | \
@@ -285,7 +408,7 @@ _is_container_exec_flag() {
   esac
 }
 
- _is_flag_or_option() {
+_is_flag_or_option() {
   case "$1" in
     -*)
       true
@@ -306,7 +429,7 @@ _ensure_docker_daemon_is_running() {
 }
 
 _does_image_exist() {
-  [ -n "$(_docker image ls --quiet --filter reference="$KANO_DOCKER_IMAGE")" ]
+  [ -n "$(_docker image ls --quiet --filter reference="$WORKING_IMAGE")" ]
 }
 
 _does_container_exist() {
