@@ -1010,6 +1010,7 @@ Describe "docker"
 
   Describe "shell"
     Context "when SHELL environment variable is not defined"
+      export SHELL=
       Context "when image does not exist"
         It "should build image, create container, start container and exec sh"
           When run docker shell
