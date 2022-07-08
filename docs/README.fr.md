@@ -2,27 +2,60 @@
 
 > Read in [English](/docs/README.md)
 
-ILC d'automatisation de flux de travaux d'ingénierie logicielle
+ILC d'automatisation de processus d'ingénierie logicielle
 
 ## À propos
 
 > `κάνω` (phonétique : `káno`) signifie "faire" en grec
 
-Les processus d'ingénierie logicielle sont tous composés d'actions de base que les ingénieurs
-effectuent plusieurs fois par jour, tels qu'exécuter des tests automatisés, formatter le code,
-etc. L'implémentation de ces actions varie en fonction du langage de programmation, des outils
-utilisés par l'équipe et autres contraintes connexes. La plupart du temps, ces actions sont
-gérées par des scripts d'une ligne dans la configuration du gestionnaire de paquet du langage
-utilisé. Quand les choses deviennent plus complexes, ces scripts d'une ligne évoluent vite en
-longs scripts intestables avec des structures de répertoire variables et peu (ou pas) de
-documentation. Cela augmente aussi bien les coûts de maintenance que les coûts en charge
-cognitive lors de changement de contexte entre projets et d'intégration de nouveaux
-contributeurs
+Les processus d'ingénierie logicielle sont composés de plusieurs types d'activités. Certaines de
+ces activités (telles que la conception, la programmation, la documentation, etc.) sont
+créatives et apportent une valeur directe au projet. D'autres (comme la compilation, l'exécution
+de tests, la mise en forme de code, etc.), bien qu'elles soient aussi essentiels, n'en apportent
+pas. Une équipe d'ingénierie efficace devrait s'efforcer d'automatiser autant que possible ce
+genre d'activité sans valeur ajoutée
 
-Ceci est un des problèmes que `kano` résout. Il structure le processus de développement en
-_tâches_ qui peuvent être exécutées de la même manière à travers tous les projets, peu importe
-leur implémentation. Cela donne une interface commune avec laquelle travailler à travers tous
-les projets sans se mettre dans vos pattes
+`kano` est un outil qui aide justement à faire cela
+
+### Tâches (scripts conventionnés)
+
+Les activités sans valeur ajoutée peuvent souvent être complètement ou partiellement
+automatisées avec des scripts. L'implémentation de ces scripts dépend du langage de
+programmation, des outils et des processus utilisés par l'équipe. Pour les projets simples, des
+scripts d'une ligne intégrés dans la configuration du gestionnaire de paquets du langage peuvent
+souvent suffire. Mais à mesure que les projets évoluent, ces lignes ont tendance à devenir des
+fichiers de script entiers orchestrant plusieurs outils et utilitaires
+
+Les fichiers de script sont extrêmement utiles, mais ont la mauvaise habitude de devenir
+illisibles et difficiles à maintenir. D'un projet à l'autre, ils varient souvent en structure,
+format et qualité de documentation (s'il y'en a). Pire encore, certains peuvent se retrouver à être
+copiés-collés entre plusieurs projets, multipliant ainsi les efforts futurs nécessaires pour les
+modifier. Tous ces petits inconvénients s'additionnent et peuvent induire des coûts indésirables
+de charge cognitive, de maintenance et d'intégration qui peuvent en partie annuler les gains en
+efficacité que ces scripts auraient initialement pu faire gagner à l'équipe
+
+Ce sont là quelques-uns des problèmes que `kano` vise à résoudre. Il propose une convention pour
+organiser, formater, documenter et exécuter des scripts à travers les projets. Il structure les
+scripts d'un projet en _tâches_ (scripts conventionnés) et fournit une interface de ligne de
+commande simple pour les exécuter sans se mettre au travers du chemin. Il gère également
+plusieurs niveaux de tâches pour permettre à une équipe de partager et de réutiliser facilement
+un groupe de tâches ou à un ingénieur de personnaliser son flux de travail personnel
+
+### Environnement de développement partagé avec Docker (facultatif)
+
+Les tâches sont une partie importante de l'automatisation du travail sans valeur ajoutée, mais
+pas le tableau complet. Comme les tâches sont exécutées dans un environnement (architecture CPU,
+système d'exploitation, etc.), différents environnements peuvent produire des résultats
+différents. Cet indéterminisme peut également annuler une partie des gains en efficacité que ces
+tâches auraient initialement pu faire gagner à l'équipe
+
+Pour que les tâches produisent des résultats déterministes, elles doivent être exécutées dans un
+environnement déterministe. Cet environnement doit être partagé par tous les acteurs, y compris
+les automates d'intégration continue (IC) et de déploiement continue (DC). La meilleure façon
+d'y parvenir est d'utiliser [Docker](https://www.docker.com). `kano` a une tâche intégrée qui
+simplifie le développement et l'exécution de tâches à l'intérieur d'un conteneur Docker. Il
+accélère considérablement les processus IC/DC, le déboguage de problèmes d'environnement et à
+l'intégration de nouveaux contributeurs
 
 ## Licence
 
@@ -72,7 +105,7 @@ Une image Docker de dévelopment est utilisée afin d'encapsuler les dépendance
 que son environnement d'exécution. Pour bâtir l'image :
 
 ```shell
-kano docker build
+kano docker image build
 ```
 
 > Voir le [guide d'utilisation Docker](/docs/fr/tasks/docker.md) pour plus d'informations
@@ -168,4 +201,4 @@ Pour publier une version du projet sur GitHub et mettre à jour l'index de paque
 kano release VERSION GIT_NAME GIT_EMAIL GITHUB_ACCESS_TOKEN
 ```
 
-> `VERSION` devrait être en format sémantique standard ou un nom de beta
+> `VERSION` devrait être en format sémantique standard ou un nom de beta (`beta-*`)

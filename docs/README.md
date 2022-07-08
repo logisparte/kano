@@ -8,18 +8,48 @@ Software engineering workflow automation CLI
 
 > `κάνω` (phonetic: `káno`) is greek for "do" or "make"
 
-Software engineering workflows are all composed of basic actions that engineers make multiple
-times per day, such as running tests, formatting code, etc. The implementation of these actions
-will vary depending on the language, the tools the team uses and other such concerns. Most of
-the time, this is handled through one-liner scripts in the language's package manager
-configuration. When things get more complex, these one-liners rapidly evolve into big untestable
-scripts with varying folder structures and poor documentation. It drives up the maintenance
-costs as well as the cognitive costs of switching between projects and onboarding new
-contributors
+Software engineering workflows are composed of multiple types of activities. Some of these
+activities (such as designing, coding, documenting, etc.) are creative and contribute direct
+value to the project. Others (such as building, running tests, formatting code, etc.), while
+still essential, do not. An efficient engineering team should strive to automate as much of this
+non-value-added work as possible
 
-This is one of the problems `kano` solves. It structures the development workflow in _tasks_
-that can be run the same way across projects, regardless of their actual implementations. It
-provides a common interface to work with across all projects without getting in the way
+`kano` is a tool that helps to do just that
+
+### Tasks (conventionalized scripts)
+
+Non-value-added activities can often be completely or partially automated with scripts. The
+implementation of these scripts depends on the programming language, the tools and the processes
+the team uses. For simple projects, inlined scripts in the language's package manager
+configuration is often enough. But as projects evolve, one-liners have a tendency to become
+stand-alone script files orchestrating multiple tools and utilities
+
+Script files are extremely useful, but have the bad habit of becoming unreadable and hard to
+maintain. From one project to the other, they will often differ in organization, format and
+quality of documentation (if any). Worse, some might even be copy-pasted between projects,
+multiplying the future efforts needed to modify them. All these little inconveniences add up and
+can induce undesired cognitive load, maintenance and onboarding costs that can partly negate the
+efficiency these script files might initially have gained the team
+
+These are some of the problems `kano` aims to solve. It proposes a convention to organize,
+format, document and run scripts across projects. It structures a project's scripts into _tasks_
+(conventionalized scripts) and provides a simple command-line interface to execute them without
+getting in the way. It also handles multiple _scopes_ of tasks to allow a team to easily share
+and reuse a group of tasks or an engineer to customize his personal workflow
+
+### Shared development environment with Docker (optional)
+
+_Tasks_ are an important part of automating non-value-added work, but not the complete picture.
+As tasks are executed in an _environment_ (CPU architecture, operating system, etc.), different
+environments may produce different outcomes. This indeterminism may also negate some of the
+efficiency that tasks initially have gained the team
+
+For tasks to have deterministic outcomes, they must be executed in a deterministic environment.
+This environment must be shared by all actors, including continuous integration (_CI_) and
+continuous deployment (_CD_) bots. The best way to achieve this is using
+[Docker](https://www.docker.com). `kano` has a builtin task that simplifies developing and
+running tasks inside a Docker container. It greatly accelerates CI/CD workflows, debugging
+environment-related problems and onboarding new contributors
 
 ## License
 
@@ -69,7 +99,7 @@ A development docker image is used to encapsulate project dependencies and runti
 To build the image:
 
 ```shell
-kano docker build
+kano docker image build
 ```
 
 > See the [Docker user guide](/docs/en/tasks/docker.md) for more information
@@ -112,7 +142,7 @@ view the coverage report after a test run:
 kano coverage
 ```
 
-> NOTE: Multiline strings may report as uncovered due this
+> NOTE: Multiline strings may report as non-covered due this
 > [issue](https://github.com/SimonKagstrom/kcov/issues/145)
 
 ### Dev
@@ -165,4 +195,4 @@ To release a version of the project on GitHub and update logisparte's package in
 kano release VERSION GIT_NAME GIT_EMAIL GITHUB_ACCESS_TOKEN
 ```
 
-> `VERSION` should be in standard semantic versioning format or a beta name
+> `VERSION` should be in standard semantic versioning format or a beta name (`beta-*`)
