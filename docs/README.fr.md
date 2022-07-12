@@ -28,17 +28,17 @@ fichiers de script entiers orchestrant plusieurs outils et utilitaires
 
 Les fichiers de script sont extrêmement utiles, mais ont la mauvaise habitude de devenir
 illisibles et difficiles à maintenir. D'un projet à l'autre, ils varient souvent en structure,
-format et qualité de documentation (s'il y'en a). Pire encore, certains peuvent se retrouver à être
-copiés-collés entre plusieurs projets, multipliant ainsi les efforts futurs nécessaires pour les
-modifier. Tous ces petits inconvénients s'additionnent et peuvent induire des coûts indésirables
-de charge cognitive, de maintenance et d'intégration qui peuvent en partie annuler les gains en
-efficacité que ces scripts auraient initialement pu faire gagner à l'équipe
+format et qualité de documentation (s'il y'en a). Pire encore, certains peuvent se retrouver à
+être copiés-collés entre plusieurs projets, multipliant ainsi les efforts futurs nécessaires
+pour les modifier. Tous ces petits inconvénients s'additionnent et peuvent induire des coûts
+indésirables de charge cognitive, de maintenance et d'intégration qui peuvent en partie annuler
+les gains en efficacité que ces scripts auraient initialement pu faire gagner à l'équipe
 
 Ce sont là quelques-uns des problèmes que `kano` vise à résoudre. Il propose une convention pour
 organiser, formater, documenter et exécuter des scripts à travers les projets. Il structure les
 scripts d'un projet en _tâches_ (scripts conventionnés) et fournit une interface de ligne de
 commande simple pour les exécuter sans se mettre au travers du chemin. Il gère également
-plusieurs niveaux de tâches pour permettre à une équipe de partager et de réutiliser facilement
+plusieurs portées de tâches pour permettre à une équipe de partager et de réutiliser facilement
 un groupe de tâches ou à un ingénieur de personnaliser son flux de travail personnel
 
 ### Environnement de développement partagé avec Docker (facultatif)

@@ -946,20 +946,17 @@ Describe "docker"
     End
   End
 
-  Describe "execute"
-    SOME_COMMAND="some_command"
-    SOME_PARAMETER="some_parameter"
+  Describe "boot"
     Context "when image does not exist"
-      It "should build image, create container, start container and exec command"
-        When run docker execute "$SOME_COMMAND" "$SOME_PARAMETER"
+      It "should build image, create container and start container"
+        When run docker boot
         The status should be success
         # shellcheck disable=SC2116
         The variable kano_called_with should equal "$(
           echo \
             "docker image build" \
             "docker container create" \
-            "docker container start" \
-            "docker container exec_ $SOME_COMMAND" "$SOME_PARAMETER" \
+            "docker container start"
         )"
       End
     End
@@ -967,15 +964,14 @@ Describe "docker"
     Context "when image exists"
       DOES_IMAGE_EXIST=true
       Context "when container does not exist"
-        It "should create container, start container and exec command"
-          When run docker execute "$SOME_COMMAND" "$SOME_PARAMETER"
+        It "should create container and start container"
+          When run docker boot
           The status should be success
           # shellcheck disable=SC2116
           The variable kano_called_with should equal "$(
             echo \
               "docker container create" \
-              "docker container start" \
-              "docker container exec_ $SOME_COMMAND $SOME_PARAMETER" \
+              "docker container start"
           )"
         End
       End
@@ -983,152 +979,59 @@ Describe "docker"
       Context "when container exists"
         DOES_CONTAINER_EXIST=true
         Context "when container is not running"
-          It "should start container and exec command"
-            When run docker execute "$SOME_COMMAND" "$SOME_PARAMETER"
+          It "should start container"
+            When run docker boot
             The status should be success
-            # shellcheck disable=SC2116
-            The variable kano_called_with should equal "$(
-              echo \
-                "docker container start" \
-                "docker container exec_ $SOME_COMMAND $SOME_PARAMETER" \
-            )"
+            The variable kano_called_with should equal "docker container start"
           End
         End
 
         Context "when container is running"
           IS_CONTAINER_RUNNING=true
-          It "should exec command"
-            When run docker execute "$SOME_COMMAND" "$SOME_PARAMETER"
+          It "should do nothing"
+            When run docker boot
             The status should be success
-            The variable kano_called_with should equal \
-              "docker container exec_ $SOME_COMMAND $SOME_PARAMETER"
+            The variable kano_called_with should be undefined
           End
         End
       End
     End
   End
 
+  Describe "execute"
+    SOME_COMMAND="some_command"
+    SOME_PARAMETER="some_parameter"
+    It "should boot and exec command"
+      When run docker execute "$SOME_COMMAND" "$SOME_PARAMETER"
+      The status should be success
+      # shellcheck disable=SC2116
+      The variable kano_called_with should equal "$(
+        echo \
+          "docker boot" \
+          "docker container exec_ $SOME_COMMAND" "$SOME_PARAMETER" \
+      )"
+    End
+  End
+
   Describe "shell"
     Context "when SHELL environment variable is not defined"
       export SHELL=
-      Context "when image does not exist"
-        It "should build image, create container, start container and exec sh"
-          When run docker shell
-          The status should be success
-          # shellcheck disable=SC2116
-          The variable kano_called_with should equal "$(
-            echo \
-              "docker image build" \
-              "docker container create" \
-              "docker container start" \
-              "docker container exec_ --interactive --tty /bin/sh --login" \
-          )"
-        End
-      End
-
-      Context "when image exists"
-        DOES_IMAGE_EXIST=true
-        Context "when container does not exist"
-          It "should create container, start container and exec sh"
-            When run docker shell
-            The status should be success
-            # shellcheck disable=SC2116
-            The variable kano_called_with should equal "$(
-              echo \
-                "docker container create" \
-                "docker container start" \
-                "docker container exec_ --interactive --tty /bin/sh --login" \
-            )"
-          End
-        End
-
-        Context "when container exists"
-          DOES_CONTAINER_EXIST=true
-          Context "when container is not running"
-            It "should start container and exec sh"
-              When run docker shell
-              The status should be success
-              # shellcheck disable=SC2116
-              The variable kano_called_with should equal "$(
-                echo \
-                  "docker container start" \
-                  "docker container exec_ --interactive --tty /bin/sh --login" \
-              )"
-            End
-          End
-
-          Context "when container is running"
-            IS_CONTAINER_RUNNING=true
-            It "should exec same shell as host's"
-              When run docker shell
-              The status should be success
-              The variable kano_called_with should equal \
-                "docker container exec_ --interactive --tty /bin/sh --login"
-            End
-          End
-        End
+      It "exececute sh"
+        When run docker shell
+        The status should be success
+        The variable kano_called_with should equal \
+          "docker execute --interactive --tty /bin/sh --login"
       End
     End
 
     Context "when SHELL environment variable is defined"
       SOME_SHELL="some_shell"
       export SHELL="$SOME_SHELL"
-      Context "when image does not exist"
-        It "should build image, create container, start container and exec same shell as host's"
-          When run docker shell
-          The status should be success
-          # shellcheck disable=SC2116
-          The variable kano_called_with should equal "$(
-            echo \
-              "docker image build" \
-              "docker container create" \
-              "docker container start" \
-              "docker container exec_ --interactive --tty $SOME_SHELL --login" \
-          )"
-        End
-      End
-
-      Context "when image exists"
-        DOES_IMAGE_EXIST=true
-        Context "when container does not exist"
-          It "should create container, start container and exec same shell as host's"
-            When run docker shell
-            The status should be success
-            # shellcheck disable=SC2116
-            The variable kano_called_with should equal "$(
-              echo \
-                "docker container create" \
-                "docker container start" \
-                "docker container exec_ --interactive --tty $SOME_SHELL --login" \
-            )"
-          End
-        End
-
-        Context "when container exists"
-          DOES_CONTAINER_EXIST=true
-          Context "when container is not running"
-            It "should start container and exec same shell as host's"
-              When run docker shell
-              The status should be success
-              # shellcheck disable=SC2116
-              The variable kano_called_with should equal "$(
-                echo \
-                  "docker container start" \
-                  "docker container exec_ --interactive --tty $SOME_SHELL --login" \
-              )"
-            End
-          End
-
-          Context "when container is running"
-            IS_CONTAINER_RUNNING=true
-            It "should exec same shell as host's"
-              When run docker shell
-              The status should be success
-              The variable kano_called_with should equal \
-                "docker container exec_ --interactive --tty $SOME_SHELL --login"
-            End
-          End
-        End
+      It "exececute same shell as host's"
+        When run docker shell
+        The status should be success
+        The variable kano_called_with should equal \
+          "docker execute --interactive --tty $SOME_SHELL --login"
       End
     End
   End

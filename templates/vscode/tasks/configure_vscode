@@ -1,0 +1,38 @@
+#!/bin/sh
+
+# VS Code users should copy this task in their `.kano_user/tasks` directory if they intend to
+# attach VS Code to a kano docker development container
+
+# shellcheck disable=SC1090,SC1091
+. "$KANO_HELPERS/fail"
+. "$KANO_HELPERS/report"
+
+configure_vscode_help() {
+  echo "Configure VS Code for $KANO_PROJECT_NAME's development container"
+}
+
+configure_vscode() {
+  report info "Configuring VS Code for $KANO_PROJECT_NAME's development container"
+
+  OS_TYPE="$(uname)"
+  case "$OS_TYPE" in
+    Darwin)
+      CONFIGURATION_ROOT="$HOME/Library/Application Support"
+      ;;
+
+    Linux)
+      CONFIGURATION_ROOT="$HOME/.config"
+      ;;
+
+    *)
+      fail "Unhandled OS: $OS_TYPE"
+      ;;
+  esac
+
+  CONFIGURATION_DIRECTORY="$CONFIGURATION_ROOT/Code/User/globalStorage/ms-vscode-remote.remote-containers/nameConfigs"
+  CONTAINER_NAME="$(kano docker execute env | grep KANO_DOCKER_CONTAINER | cut -d "=" -f 2)"
+  CONFIGURATION="{ \"remoteUser\": \"$(id -un)\", \"workspaceFolder\": \"$PWD\" }"
+  mkdir -p "$CONFIGURATION_DIRECTORY"
+  echo "$CONFIGURATION" > "$CONFIGURATION_DIRECTORY/$CONTAINER_NAME.json"
+  report success "Successfully configured VS Code"
+}

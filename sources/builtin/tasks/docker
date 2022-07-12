@@ -261,7 +261,7 @@ docker() {
 
   # kano docker shortcuts
 
-  execute() {
+  boot() {
     if ! _does_image_exist; then
       _kano docker image build
     fi
@@ -273,24 +273,15 @@ docker() {
     if ! _is_container_running; then
       _kano docker container start
     fi
+  }
 
+  execute() {
+    _kano docker boot
     _kano docker container exec_ "$@"
   }
 
   shell() {
-    if ! _does_image_exist; then
-      _kano docker image build
-    fi
-
-    if ! _does_container_exist; then
-      _kano docker container create
-    fi
-
-    if ! _is_container_running; then
-      _kano docker container start
-    fi
-
-    _kano docker container exec_ --interactive --tty "${SHELL:-/bin/sh}" --login
+    _kano docker execute --interactive --tty "${SHELL:-/bin/sh}" --login
   }
 
   clean() {
