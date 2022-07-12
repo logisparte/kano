@@ -9,9 +9,9 @@ Utiliser la tâche `init` pour créer des tâches et des répertoires kano
 ## Usage
 
 ```text
-kano init NIVEAU GABARIT [DETAILS_GABARIT]
+kano init PORTÉE GABARIT [DETAILS_GABARIT]
 
-NIVEAU: project | user | team | system
+PORTÉE: project | user | team | system
 GABARIT: directory | task
 DETAILS_GABARIT: nom de tâche pour le gabarit task
 ```
