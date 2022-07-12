@@ -869,6 +869,67 @@ Describe "docker"
       End
     End
 
+    Describe "kill"
+      Context "when container does not exist"
+        It "should fail with the expected error message"
+          When run docker container 'kill'
+          The status should be failure
+          The variable fail_called_with should equal "Development container does not exist"
+        End
+      End
+
+      Context "when container exists"
+        DOES_CONTAINER_EXIST=true
+        Context "when container is not running"
+          It "should fail with the expected error message"
+            When run docker container 'kill'
+            The status should be failure
+            The variable fail_called_with should equal "Development container is not running"
+          End
+        End
+
+        Context "when container is running"
+          IS_CONTAINER_RUNNING=true
+          It "should kill container"
+            When run docker container 'kill'
+            The status should be success
+            The variable docker_called_with should equal "container kill $DEFAULT_CONTAINER"
+          End
+
+          Context "when passing extra docker flags and options"
+            It "should kill container with extra docker options and flags"
+              When run docker container 'kill' \
+                --some-docker-option some_value \
+                --some-docker-flag
+              The status should be success
+              The variable docker_called_with should start_with "container kill"
+              The variable docker_called_with should include "--some-docker-option some_value"
+              The variable docker_called_with should include "--some-docker-flag"
+              The variable docker_called_with should end_with "$DEFAULT_CONTAINER"
+            End
+          End
+
+          Context "when using custom container name"
+            SOME_CUSTOM_CONTAINER_NAME="some-custom-container-name"
+            export KANO_DOCKER_CONTAINER="$SOME_CUSTOM_CONTAINER_NAME"
+            It "should kill container with custom name"
+              When run docker container 'kill'
+              The status should be success
+              The variable docker_called_with should end_with "$SOME_CUSTOM_CONTAINER_NAME"
+            End
+          End
+
+          Context "when using shortcut form"
+            It "should delegate to container subcommand"
+              When run docker 'kill'
+              The status should be success
+              The variable docker_called_with should start_with "container kill"
+            End
+          End
+        End
+      End
+    End
+
     Describe "exec"
       SOME_COMMAND="some_command"
       SOME_PARAMETER="some_parameter"
@@ -1072,13 +1133,13 @@ Describe "docker"
 
         Context "when container is running"
           IS_CONTAINER_RUNNING=true
-          It "should stop container, delete container and delete image"
+          It "should kill container, delete container and delete image"
             When run docker clean
             The status should be success
             # shellcheck disable=SC2116
             The variable kano_called_with should equal "$(
               echo \
-                "docker container stop" \
+                "docker container kill" \
                 "docker container rm" \
                 "docker image rm" \
             )"

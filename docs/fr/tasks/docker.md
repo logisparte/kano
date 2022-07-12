@@ -224,7 +224,19 @@ kano docker container stop [OPTIONS]
 kano docker stop [OPTIONS]
 ```
 
-> Les options usuelles de `docker container stop` peuvent être utilisées
+#### container kill
+
+Pour terminer et supprimer le conteneur en marche :
+
+```shell
+kano docker container kill [OPTIONS]
+
+# ou
+
+kano docker kill [OPTIONS]
+```
+
+> Les options usuelles de `docker container kill` peuvent être utilisées
 
 ### Raccourcis
 

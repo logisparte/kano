@@ -192,6 +192,18 @@ docker() {
       _docker container stop "$@" "$KANO_DOCKER_CONTAINER"
     }
 
+    kill_() {
+      if ! _does_container_exist; then
+        fail "Development container does not exist"
+      fi
+
+      if ! _is_container_running; then
+        fail "Development container is not running"
+      fi
+
+      _docker container 'kill' "$@" "$KANO_DOCKER_CONTAINER"
+    }
+
     exec_() {
       if ! _does_container_exist; then
         fail "Development container does not exist. Run 'kano docker container create'"
@@ -208,13 +220,17 @@ docker() {
         $(_insert_container_in_exec_arguments "$@" | xargs)
     }
 
-    if [ "$1" = "exec" ]; then
-      shift
-      exec_ "$@"
+    case "$1" in
+      exec | kill)
+        SUBCOMMAND="${1}_"
+        shift
+        "$SUBCOMMAND" "$@"
+        ;;
 
-    else
-      "$@"
-    fi
+      *)
+        "$@"
+        ;;
+    esac
   }
 
   # Native Docker shortcuts
@@ -255,6 +271,10 @@ docker() {
     container stop "$@"
   }
 
+  kill_() {
+    container kill_ "$@"
+  }
+
   exec_() {
     container exec_ "$@"
   }
@@ -286,7 +306,7 @@ docker() {
 
   clean() {
     if _is_container_running; then
-      _kano docker container stop
+      _kano docker container 'kill'
     fi
 
     if _does_container_exist; then
@@ -298,13 +318,17 @@ docker() {
     fi
   }
 
-  if [ "$1" = "exec" ]; then
-    shift
-    exec_ "$@"
+  case "$1" in
+    exec | kill)
+      SUBCOMMAND="${1}_"
+      shift
+      "$SUBCOMMAND" "$@"
+      ;;
 
-  else
-    "$@"
-  fi
+    *)
+      "$@"
+      ;;
+  esac
 }
 
 _insert_image_in_push_or_pull_arguments() {

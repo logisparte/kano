@@ -217,6 +217,20 @@ kano docker stop [OPTIONS]
 
 > Usual `docker container stop` options and flags may also be provided
 
+#### container kill
+
+To kill and discard the running container:
+
+```shell
+kano docker container kill [OPTIONS]
+
+# or
+
+kano docker kill [OPTIONS]
+```
+
+> Usual `docker container kill` options and flags may also be provided
+
 ### Shortcuts
 
 `kano docker` provides additional subcommands, that do not have native `docker` counterparts,
@@ -268,7 +282,7 @@ To remove all traces of kano development image and container for the current pro
 kano docker clean
 ```
 
-- If the development container is running, it will stop and discard it
+- If the development container is running, it will kill and discard it
 - If the development container exists but is not running, it will discard it
 - If the development image exists, it will delete it
 
