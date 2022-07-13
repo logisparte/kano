@@ -6,10 +6,11 @@ on:
       - "[0-9]+.[0-9]+.[0-9]+"
 
 env:
-  DOCKER_BUILDKIT: true
-  DOCKER_REGISTRY: ghcr.io
+  KANO_DOCKER_TAG: ${{ github.sha }}
+  KANO_DOCKER_REGISTRY: ghcr.io
   DOCKER_USERNAME: logisparte-helot
   DOCKER_PASSWORD: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
+  DOCKER_BUILDKIT: true
   GIT_NAME: helot
   GIT_EMAIL: logisparte-helot@users.noreply.github.com
   RELEASE_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
@@ -21,18 +22,9 @@ jobs:
       - name: Install kano
         run: |
           curl --silent --show-error --location \
-            https://github.com/logisparte/kano/releases/download/3.6.0/kano.tar.gz \
+            https://github.com/logisparte/kano/releases/download/4.0.0/kano.tar.gz \
               | tar --extract --gzip
           sudo ./kano/install
-
-      - name: Export environment variable
-        run: |
-          DEVELOPMENT_IMAGE="$DOCKER_REGISTRY/$GITHUB_REPOSITORY-dev"
-          DEVELOPMENT_IMAGE_COMMIT_TAG="$DEVELOPMENT_IMAGE:$GITHUB_SHA"
-          DEVELOPMENT_IMAGE_VERSION_TAG="$DEVELOPMENT_IMAGE:$GITHUB_REF_NAME"
-          echo "DEVELOPMENT_IMAGE_COMMIT_TAG=$DEVELOPMENT_IMAGE_COMMIT_TAG" >> "$GITHUB_ENV"
-          echo "DEVELOPMENT_IMAGE_VERSION_TAG=$DEVELOPMENT_IMAGE_VERSION_TAG" >> "$GITHUB_ENV"
-          echo "KANO_DEVELOPMENT_IMAGE=$DEVELOPMENT_IMAGE_COMMIT_TAG" >> "$GITHUB_ENV"
 
       - name: Clone project
         uses: actions/checkout@v3
@@ -40,19 +32,19 @@ jobs:
       - name: Login to registry
         uses: docker/login-action@v2
         with:
-          registry: ${{ env.DOCKER_REGISTRY }}
+          registry: ${{ env.KANO_DOCKER_REGISTRY }}
           username: ${{ env.DOCKER_USERNAME }}
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Pull existing development image
-        run: docker pull "$KANO_DEVELOPMENT_IMAGE"
+        run: kano docker image pull
 
       - name: Build project
-        run: kano docker run sudo kano build
+        run: kano dockered build
 
       - name: Release project
         run: |
-          kano docker run sudo kano release \
+          kano dockered release \
             "$GITHUB_REF_NAME" \
             "$GIT_NAME" \
             "$GIT_EMAIL" \
@@ -60,5 +52,5 @@ jobs:
 
       - name: Tag versioned image
         run: |
-          docker tag "$DEVELOPMENT_IMAGE_COMMIT_TAG" "$DEVELOPMENT_IMAGE_VERSION_TAG"
-          docker push "$DEVELOPMENT_IMAGE_VERSION_TAG"
+          kano docker image tag "$GITHUB_REF_NAME"
+          kano docker image push "$GITHUB_REF_NAME"
