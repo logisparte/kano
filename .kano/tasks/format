@@ -13,7 +13,7 @@ format() {
 
 _format_shell() {
   _info "Formatting shell files"
-  shfmt -p -w -bn -ci -sr -kp -i 2 .kano sources tests
+  shfmt -p -w -bn -ci -sr -i 2 .kano sources tests templates
 }
 
 _format_markdown_and_yaml() {

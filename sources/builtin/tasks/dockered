@@ -1,9 +1,13 @@
 #!/bin/sh
 
 dockered_help() {
-  echo "Run a task inside an ephemeral development container"
+  echo "Run a kano task in a docker container"
 }
 
 dockered() {
-  exec kano docker run kano "$@"
+  _kano docker execute kano "$@"
+}
+
+_kano() {
+  command kano "$@"
 }

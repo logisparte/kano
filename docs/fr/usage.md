@@ -10,7 +10,7 @@ Initialiser le répertoire `.kano` à la racine d'un projet:
 kano init
 ```
 
-> Tout ce qui est relié à kano sera dans ce répertoire
+> Tout ce qui concerne `kano` sera dans ce répertoire
 
 ## Tâches
 
@@ -23,7 +23,7 @@ kano NOM_DE_LA_TACHE
 
 ### Définir une tâche
 
-Un fichier de tâche est un fichier shell sourceable. Il doit avoit le format suivant :
+Un fichier de tâche est un fichier de script shell. Il doit avoit le format suivant :
 
 ```shell
 #!/bin/sh
@@ -34,39 +34,38 @@ un_nom_de_tache() {
 
 ```
 
-Son nom doit être le même que celui de sa fonction (ici `un_nom_de_tache`) et n'avoir aucune
-extension
+Son nom doit être le même que celui de sa fonction principale (ici `un_nom_de_tache`) et n'avoir
+aucune extension
 
-## Niveaux
+> `kano init task TASK_NAME` peut être utilisé afin de rapidement créer une tâche vide
 
-Kano cherche des tâches dans jusqu'à 5 différents niveaux, chacun représenté par un répertoire
-spécifique :
+## Portées
 
-<!-- markdownlint-disable line-length -->
+`kano` cherche des tâches jusque dans 5 différentes portées, chacune représentée par un
+répertoire spécifique. De la plus interne à la plus externe, ces portées sont :
 
-|   Niveau    |           Répertoire           |   Disponibilité des tâches    |
-| :---------: | :----------------------------: | :---------------------------: |
-|   Projet    |          `$PWD/.kano`          |   Dans le projet seulement    |
-| Utilisateur |       `$HOME/.kano_user`       |  Toujours pour l'utilisateur  |
-|   Équipe    | `$HOME/.kano_teams/$KANO_TEAM` | Toujours pour l'utilisateur\* |
-|   Système   |          `/etc/kano`           |           Toujours            |
-|  _Builtin_  |        Inclus dans kano        |           Toujours            |
+| Portée      | Répertoire                     | Disponibilité des tâches             |
+| :---------- | :----------------------------- | :----------------------------------- |
+| Projet      | `$PWD/.kano`                   | Dans le projet seulement             |
+| Utilisateur | `$HOME/.kano_user`             | Toujours pour l'utilisateur          |
+| Équipe      | `$HOME/.kano_teams/$KANO_TEAM` | Toujours pour l'utilisateur\*        |
+| Système     | `/etc/kano`                    | Toujours, pour tous les utilisateurs |
+| Intégrée    | Inclus dans kano               | Toujours, pour tous les utilisateurs |
 
 > \* Si `$KANO_TEAM` est définie
 
-<!-- markdownlint-enable line-length -->
-
-Quand l'exécution d'une tâche est demandée, kano cherche son fichier tout d'abord en projet
-(s'il existe), puis en utilisateur (s'il existe), puis en équipe (si `$KANO_TEAM` est définie
-avec le nom de l'équipe et qu'elle existe), puis en système (s'il existe) et finalement en
-_builtin_ jusqu'à ce qu'il le trouve. Si une tâche est définie dans 2 niveaux différents, le
-fichier dans le premier niveau examiné sera utilisé. Pour outrepasser cette résolution, un
-_flag_ peut être fourni
+Quand l'exécution d'une tâche est demandée, `kano` cherchera son fichier en partant de la portée
+la plus interne disponible à la plus externe jusqu'à ce qu'il le trouve. Si une tâche est
+définie dans plusieurs portées différentes, le premier fichier trouvé sera utilisé. Pour
+outrepasser cette résolution, une option peut être passée
 
 Pour forcer une résolution **utilisateur** :
 
 ```shell
 kano -u une_tache
+
+# ou
+
 kano --user une_tache
 ```
 
@@ -74,6 +73,9 @@ Pour forcer une résolution **équipe** :
 
 ```shell
 kano -t une_tache
+
+# ou
+
 kano --team une_tache
 ```
 
@@ -83,6 +85,9 @@ Pour forcer une résolution **système** :
 
 ```shell
 kano -s une_tache
+
+# ou
+
 kano --system une_tache
 ```
 
@@ -90,57 +95,54 @@ Pour forcer une résolution **_builtin_** :
 
 ```shell
 kano -b une_tache
+
+# ou
+
 kano --builtin une_tache
 ```
 
-> Les tâches projet ont priorité par défaut
-
-Le _flag_ spécial `-x` ou `--next` peut aussi être utilisé à l'intérieur d'une tâche pour
-déléguer à un niveau plus haut. Ceci est utile lors d'une redéfinition d'une tâche d'un niveau
-plus haut. Voir le [guide Docker](/docs/fr/tasks/docker.md) pour un exemple concret
+L'option spéciale `-x` ou `--next` peut aussi être utilisée à l'intérieur d'une tâche pour
+déléguer à la prochaine portée disponible. Ceci est utile lors d'une définition de tâche
+procuratoire. Voir la
+[documentation de la tâche docker](/docs/fr/tasks/docker.md#configurer-les-personnalisations)
+pour un exemple concret
 
 ## Environnement
 
 Un fichier d'environnement est un simple fichier shell qui exporte des variables qui seront
-disponibles dans les tâches. Il peut y avoir un fichier d'environnement par niveau. Chaque
-fichier environnement doit contenir des variables propres aux tâches de son niveau, ou encore
-des redéfinitions de variables de niveaux supérieurs (voir ci-bas)
+disponibles dans ses tâches connexes. Il peut y avoir un fichier d'environnement par portée.
+Chaque fichier d'environnement doit contenir les variables propres aux tâches de sa portée, ou
+encore des redéfinitions de variables de portées externes (voir ci-bas)
 
-Quand kano exécute une tâche, il source tous les fichiers `environment` disponibles, du niveau
-le plus haut jusqu'au niveau de la tâche, s'ils existent
+Quand `kano` exécute une tâche, il source d'abord tous les fichiers d'environnement disponibles
+en ordre, de la portée la plus externe jusqu'à la portée de la tâche. Ainsi, si une variable
+existe dans plusieurs portées, la valeur la plus interne sera utilisée
 
 <!-- markdownlint-disable line-length -->
 
-|   Niveau    |                   Fichier                   | Environnements disponibles dans les tâches |
-| :---------: | :-----------------------------------------: | :----------------------------------------: |
-|   Projet    |          `$PWD/.kano/environment`           |  Projet, utilisateur, équipe\* et système  |
-| Utilisateur |        `$HOME/.kano_user/environment`       |      Utilisateur, équipe\* et système      |
-|   Équipe    |  `$HOME/.kano_teams/$KANO_TEAM/environment` |            Équipe\* et système             |
-|   Système   |           `/etc/kano/environment`           |             Système seulement              |
+| Portée      | Fichier d'environnement                    | Environnements disponibles dans les tâches |
+| :---------- | :----------------------------------------- | :----------------------------------------- |
+| Projet      | `$PWD/.kano/environment`                   | Projet, utilisateur, équipe\* et système   |
+| Utilisateur | `$HOME/.kano_user/environment`             | Utilisateur, équipe\* et système           |
+| Équipe      | `$HOME/.kano_teams/$KANO_TEAM/environment` | Équipe\* et système                        |
+| Système     | `/etc/kano/environment`                    | Système seulement                          |
 
 > \* Si `$KANO_TEAM` est définie
 
 <!-- markdownlint-enable line-length -->
 
-Par exemple, quand l'exécution d'une tâche projet est demandée, kano source d'abord le fichier
-d'environnement système (s'il existe), puis le fichier d'environnement équipe (si `$KANO_TEAM`
-est définie avec le nom de l'équipe et que'elle existe), puis le fichier d'environnement
-utilisateur (s'il existe) puis finalement le fichier d'environnement projet (s'il existe).
-Ainsi, si une variable est exportée à la fois dans le fichier projet et dans le fichier
-utilisateur, la valeur définie dans le fichier projet aura préséance
+## Tâches intégrées
 
-## Tâches _builtin_
-
-Quelques tâches sont incluses avec kano. Elles sont reliées à kano en soi et son utilisation
+Quelques tâches sont incluses avec `kano`. Elles sont reliées à `kano` en soi et son utilisation
 générale
 
-> Les tâches _builtin_ sont documentées [ici](/docs/fr/tasks)
+> Les tâches intégrées sont documentées [ici](/docs/fr/tasks)
 
 ## Helpers
 
-Kano inclut une collection de fonctions compatibles avec POSIX qui simplifient l'écriture de
-tâches. Pour les utiliser, les fichiers de tâches doivent simplement sourcer ceux qu'ils
-requièrent :
+`kano` inclut une collection de fonctions compatibles avec POSIX (_helpers_) qui simplifient
+l'écriture de tâches. Leur utilisation est entièrement optionnelle. Pour les utiliser,
+simplement sourcer les fichiers correspondant dans le haut du fichier de la tâche :
 
 ```shell
 #!/bin/sh
@@ -149,6 +151,7 @@ requièrent :
 . "$KANO_HELPERS/report"
 . "$KANO_HELPERS/fail"
 # ...
+
 ```
 
 > Les _helpers_ sont documentés [ici](/docs/fr/helpers)

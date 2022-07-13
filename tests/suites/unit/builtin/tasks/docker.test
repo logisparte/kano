@@ -2,21 +2,10 @@
 
 Include "$KANO_SOURCE_DIRECTORY/builtin/tasks/docker"
 
-DEVELOPMENT_IMAGE="$KANO_PROJECT_NAME-dev"
-DEVELOPMENT_CONTAINER="$KANO_PROJECT_NAME-dev-container"
-
 Describe "docker"
-  sh() {
-    shift
-    # shellcheck disable=SC2068
-    $@
-  }
-
-  kano() {
-    # shellcheck disable=SC2034
-    kano_called_with="$*"
-    %preserve kano_called_with
-  }
+  DEFAULT_FILE="$KANO_PROJECT_DIRECTORY/Dockerfile"
+  DEFAULT_IMAGE="$KANO_PROJECT_NAME-dev"
+  DEFAULT_CONTAINER="$KANO_PROJECT_NAME-dev-container"
 
   fail() {
     # shellcheck disable=SC2034
@@ -25,17 +14,8 @@ Describe "docker"
     exit 1
   }
 
-  does_directory_exist() {
-    if [ "$1" = "$KANO_PROJECT_DIRECTORY" ]; then
-      "$DOES_PROJECT_DIRECTORY_EXIST"
-
-    else
-      false
-    fi
-  }
-
   does_file_exist() {
-    if [ "$1" = "$KANO_PROJECT_DIRECTORY/Dockerfile" ]; then
+    if [ "$1" = "$KANO_DOCKER_FILE" ]; then
       "$DOES_DOCKERFILE_EXIST"
 
     else
@@ -51,40 +31,71 @@ Describe "docker"
     "$IS_DOCKER_DAEMON_RUNNING" || exit 1
   }
 
-  _does_development_image_exist() {
-    "$DOES_DEVELOPMENT_IMAGE_EXIST"
+  _does_image_exist() {
+    "$DOES_IMAGE_EXIST"
   }
 
-  _does_development_container_exist() {
-    "$DOES_DEVELOPMENT_CONTAINER_EXIST"
+  _does_container_exist() {
+    "$DOES_CONTAINER_EXIST"
+  }
+
+  _is_container_running() {
+    "$IS_CONTAINER_RUNNING"
   }
 
   _docker() {
     # shellcheck disable=SC2034
-    docker_called_with="$*"
+    if [ -z "$docker_called_with" ]; then
+      docker_called_with="$*"
+
+    else
+      docker_called_with="$docker_called_with $*"
+    fi
+
     %preserve docker_called_with
+  }
+
+  _kano() {
+    # shellcheck disable=SC2034
+    if [ -z "$kano_called_with" ]; then
+      kano_called_with="$*"
+
+    else
+      kano_called_with="$kano_called_with $*"
+    fi
+
+    %preserve kano_called_with
   }
 
   IS_DOCKER_INSTALLED=true
   IS_DOCKER_DAEMON_RUNNING=true
-  DOES_PROJECT_DIRECTORY_EXIST=true
   DOES_DOCKERFILE_EXIST=true
-  DOES_DEVELOPMENT_IMAGE_EXIST=false
-  DOES_DEVELOPMENT_CONTAINER_EXIST=false
+  DOES_IMAGE_EXIST=false
+  DOES_CONTAINER_EXIST=false
+  IS_CONTAINER_RUNNING=false
 
   before_all() {
-    export INITIAL_KANO_DEVELOPMENT_IMAGE="$KANO_DEVELOPMENT_IMAGE"
-    export INITIAL_KANO_DEVELOPMENT_CONTAINER="$KANO_DEVELOPMENT_CONTAINER"
-    export INITIAL_KANO_IS_IN_DOCKER="$KANO_IS_IN_DOCKER"
-    export KANO_DEVELOPMENT_IMAGE=""
-    export KANO_DEVELOPMENT_CONTAINER=""
-    export KANO_IS_IN_DOCKER=false
+    export INITIAL_KANO_DOCKER_FILE="$KANO_DOCKER_FILE"
+    export INITIAL_KANO_DOCKER_REGISTRY="$KANO_DOCKER_REGISTRY"
+    export INITIAL_KANO_DOCKER_IMAGE="$KANO_DOCKER_IMAGE"
+    export INITIAL_KANO_DOCKER_TAG="$KANO_DOCKER_TAG"
+    export INITIAL_KANO_DOCKER_CONTAINER="$KANO_DOCKER_CONTAINER"
+    export INITIAL_KANO_DOCKER="$KANO_DOCKER"
+    export KANO_DOCKER_FILE=
+    export KANO_DOCKER_REGISTRY=
+    export KANO_DOCKER_IMAGE=
+    export KANO_DOCKER_TAG=
+    export KANO_DOCKER_CONTAINER=
+    export KANO_DOCKER=
   }
 
   after_all() {
-    export KANO_DEVELOPMENT_IMAGE="$INITIAL_KANO_DEVELOPMENT_IMAGE"
-    export KANO_DEVELOPMENT_CONTAINER="$INITIAL_KANO_DEVELOPMENT_CONTAINER"
-    export KANO_IS_IN_DOCKER="$INITIAL_KANO_IS_IN_DOCKER"
+    export KANO_DOCKER_FILE="$INITIAL_KANO_DOCKER_FILE"
+    export KANO_DOCKER_REGISTRY="$INITIAL_KANO_DOCKER_REGISTRY"
+    export KANO_DOCKER_IMAGE="$INITIAL_KANO_DOCKER_IMAGE"
+    export KANO_DOCKER_TAG="$INITIAL_KANO_DOCKER_TAG"
+    export KANO_DOCKER_CONTAINER="$INITIAL_KANO_DOCKER_CONTAINER"
+    export KANO_DOCKER="$INITIAL_KANO_DOCKER"
   }
 
   BeforeAll "before_all"
@@ -93,29 +104,11 @@ Describe "docker"
   It "has a help message"
     When run docker_help
     The status should be success
-    The output should equal "Work in an isolated development docker container"
+    The output should equal "Develop in a docker container"
   End
 
-  Context "when project kano directory does not exist"
-    DOES_PROJECT_DIRECTORY_EXIST=false
-    It "should fail with the expected error message"
-      When run docker
-      The status should be failure
-      The variable fail_called_with should equal "No kano directory exists in project"
-    End
-  End
-
-  Context "when no Dockerfile in project kano directory"
-    DOES_DOCKERFILE_EXIST=false
-    It "should fail with the expected error message"
-      When run docker
-      The status should be failure
-      The variable fail_called_with should equal "No Dockerfile in project kano directory"
-    End
-  End
-
-  Context "when inside a development container"
-    KANO_IS_IN_DOCKER=true
+  Context "when inside a container"
+    KANO_DOCKER=true
     It "should fail with the expected error message"
       When run docker
       The status should be failure
@@ -141,306 +134,1050 @@ Describe "docker"
     End
   End
 
-  Describe "build"
-    It "should build the development image"
-      When run docker build
-      The status should be success
-      The variable docker_called_with should start_with "build"
-      The variable docker_called_with should include \
-        "--file $KANO_PROJECT_DIRECTORY/Dockerfile"
-      The variable docker_called_with should include "--tag $DEVELOPMENT_IMAGE"
-      The variable docker_called_with should end_with "."
-    End
-
-    Context "when using a custom image name"
-      SOME_CUSTOM_NAME="some-custom-name"
-      before_each() {
-        export KANO_DEVELOPMENT_IMAGE="$SOME_CUSTOM_NAME"
-      }
-
-      after_each() {
-        export KANO_DEVELOPMENT_IMAGE=""
-      }
-
-      BeforeEach "before_each"
-      AfterEach "after_each"
-      It "should build it with custom name"
-        When run docker build
-        The status should be success
-        The variable docker_called_with should include "--tag $SOME_CUSTOM_NAME"
-      End
-    End
-
-    Context "when development image already exist"
-      DOES_DEVELOPMENT_IMAGE_EXIST=true
-      It "should build it from cache"
-        When run docker build
-        The status should be success
-        The variable docker_called_with should include "--cache-from $DEVELOPMENT_IMAGE"
-      End
-    End
-
-    Context "when passing extra docker build arguments"
-      It "should build the development image with extra arguments"
-        When run docker build --build-arg some_argument=some_argument
-        The status should be success
-        The variable docker_called_with should start_with "build"
-        The variable docker_called_with should include \
-          "--file $KANO_PROJECT_DIRECTORY/Dockerfile"
-        The variable docker_called_with should include "--tag $DEVELOPMENT_IMAGE"
-        The variable docker_called_with should include \
-          "--build-arg some_argument=some_argument"
-        The variable docker_called_with should end_with "."
-      End
-    End
-  End
-
-  Describe "delete"
-    Context "when development image does not exist"
-      It "should not invoke docker"
-        When run docker delete
-        The status should be success
-        The variable docker_called_with should be undefined
-      End
-    End
-
-    Context "when development image exists"
-      DOES_DEVELOPMENT_IMAGE_EXIST=true
-      It "should delete it"
-        When run docker delete
-        The status should be success
-        The variable docker_called_with should include "image rm $DEVELOPMENT_IMAGE"
-      End
-    End
-  End
-
-  Describe "run"
-    Context "when development image does not exist"
-      It "should fail with the expected error message"
-        When run docker run some_command
-        The status should be failure
-        The variable fail_called_with should equal \
-          "Development image does not exist. Run 'kano docker build'"
-      End
-    End
-
-    Context "when development image exists"
-      DOES_DEVELOPMENT_IMAGE_EXIST=true
-      It "should run command in container"
-        When run docker run some_command
-        The status should be success
-        The variable docker_called_with should start_with "run"
-        The variable docker_called_with should include "--log-driver none"
-        The variable docker_called_with should include "--rm"
-        The variable docker_called_with should include "--volume $PWD:$PWD"
-        The variable docker_called_with should include "--workdir $PWD"
-        The variable docker_called_with should end_with "$DEVELOPMENT_IMAGE some_command"
-      End
-
-      Context "when passing extra docker run options"
-        It "should run command in container with extra arguments"
-          When run docker run \
-            --some-docker-run-option some_value \
-            some_command --some-command-option
-          The status should be success
-          The variable docker_called_with should start_with "run"
-          The variable docker_called_with should include "--some-docker-run-option some_value"
-          The variable docker_called_with should end_with \
-            "$DEVELOPMENT_IMAGE some_command --some-command-option"
+  Describe "image"
+    Describe "build"
+      Context "when configured tag is not 'latest'"
+        export KANO_DOCKER_TAG="some-tag"
+        It "should fail with the expected error message"
+          When run docker image build
+          The status should be failure
+          The variable fail_called_with should equal "$(
+            echo \
+              "Cannot rebuild a versioned image. Run 'kano docker pull $KANO_DOCKER_TAG' or" \
+              "unset 'KANO_DOCKER_TAG' environment variable" \
+          )"
         End
       End
 
-      Context "when passing extra docker run flags"
-        It "should run command in container with extra flags"
-          When run docker run \
-            --disable-content-trust \
-            some_command --some-command-option
-          The status should be success
-          The variable docker_called_with should start_with "run"
-          The variable docker_called_with should include "--disable-content-trust"
-          The variable docker_called_with should end_with \
-            "$DEVELOPMENT_IMAGE some_command --some-command-option"
+      Context "when Dockerfile not found"
+        DOES_DOCKERFILE_EXIST=false
+        It "should fail with the expected error message"
+          When run docker image build
+          The status should be failure
+          The variable fail_called_with should equal "$(
+            echo \
+              "No Dockerfile at '$DEFAULT_FILE'. Create one or set 'KANO_DOCKER_FILE'" \
+              "environment variable to configure a different location" \
+          )"
         End
       End
 
-      Context "when passing extra docker run flags and options"
-        It "should run command in container with extra flags"
-          When run docker run \
-            --disable-content-trust \
-            --some-docker-run-option some_value \
-            --some-docker-other-run-option some_value \
-            --detach \
-            some_command --some-command-option
+      Context "when no registry configured"
+        It "should build the image"
+          When run docker image build
           The status should be success
-          The variable docker_called_with should start_with "run"
-          The variable docker_called_with should include "--disable-content-trust"
-          The variable docker_called_with should include "--some-docker-run-option some_value"
+          The variable docker_called_with should start_with "image build"
+          The variable docker_called_with should include "--file $DEFAULT_FILE"
+          The variable docker_called_with should include "--tag $DEFAULT_IMAGE:latest"
+          The variable docker_called_with should end_with "."
+        End
+      End
+
+      Context "when a registry is configured"
+        export KANO_DOCKER_REGISTRY="some-registry.com"
+        It "should build the image from cache"
+          When run docker image build
+          The status should be success
+          The variable docker_called_with should start_with "image build"
+          The variable docker_called_with should include "--build-arg BUILDKIT_INLINE_CACHE=1"
           The variable docker_called_with should include \
-            "--some-docker-other-run-option some_value"
-          The variable docker_called_with should include "--detach"
-          The variable docker_called_with should end_with \
-            "$DEVELOPMENT_IMAGE some_command --some-command-option"
-        End
-      End
-    End
-  End
-
-  Describe "start"
-    Context "when development image does not exist"
-      It "should fail with the expected error message"
-        When run docker start
-        The status should be failure
-        The variable fail_called_with should equal \
-          "Development image does not exist. Run 'kano docker build'"
-      End
-    End
-
-    Context "when development image exists"
-      DOES_DEVELOPMENT_IMAGE_EXIST=true
-      It "should start container"
-        When run docker start
-        The status should be success
-        The variable docker_called_with should start_with "run"
-        The variable docker_called_with should include "--env KANO_IS_IN_DOCKER=true"
-        The variable docker_called_with should include "--env KANO_DEVELOPMENT_IMAGE"
-        The variable docker_called_with should include "--env KANO_DEVELOPMENT_CONTAINER"
-        The variable docker_called_with should include "--detach"
-        The variable docker_called_with should include "--interactive"
-        The variable docker_called_with should include "--log-driver none"
-        The variable docker_called_with should include "--name $DEVELOPMENT_CONTAINER"
-        The variable docker_called_with should include "--rm"
-        The variable docker_called_with should include "--tty"
-        The variable docker_called_with should include "--volume $PWD:$PWD"
-        The variable docker_called_with should include "--workdir $PWD"
-        The variable docker_called_with should end_with "$DEVELOPMENT_IMAGE"
-      End
-
-      Context "when using a custom container name"
-        SOME_CUSTOM_NAME="some-custom-container-name"
-        before_each() {
-          export KANO_DEVELOPMENT_CONTAINER="$SOME_CUSTOM_NAME"
-        }
-
-        after_each() {
-          export KANO_DEVELOPMENT_CONTAINER=""
-        }
-
-        BeforeEach "before_each"
-        AfterEach "after_each"
-        It "should start it with custom name"
-          When run docker start
-          The status should be success
-          The variable docker_called_with should include "--name $SOME_CUSTOM_NAME"
-        End
-      End
-
-      Context "when passing extra docker run options"
-        It "should run command in container with extra arguments"
-          When run docker start --some-docker-run-option some_value
-          The status should be success
-          The variable docker_called_with should start_with "run"
-          The variable docker_called_with should include "--some-docker-run-option some_value"
-          The variable docker_called_with should end_with "$DEVELOPMENT_IMAGE"
-        End
-      End
-
-      Context "when passing extra docker run flags"
-        It "should run command in container with extra flags"
-          When run docker start --disable-content-trust
-          The status should be success
-          The variable docker_called_with should start_with "run"
-          The variable docker_called_with should include "--disable-content-trust"
-          The variable docker_called_with should end_with "$DEVELOPMENT_IMAGE"
-        End
-      End
-
-      Context "when passing extra docker run flags and options"
-        It "should run command in container with extra flags"
-          When run docker start \
-            --disable-content-trust \
-            --some-docker-run-option some_value \
-            --some-docker-other-run-option some_value \
-          The status should be success
-          The variable docker_called_with should start_with "run"
-          The variable docker_called_with should include "--disable-content-trust"
-          The variable docker_called_with should include "--some-docker-run-option some_value"
+            "--cache-from $KANO_DOCKER_REGISTRY/$DEFAULT_IMAGE:latest"
+          The variable docker_called_with should include "--file $DEFAULT_FILE"
+          The variable docker_called_with should include "--pull"
           The variable docker_called_with should include \
-            "--some-docker-other-run-option some_value"
-          The variable docker_called_with should end_with "$DEVELOPMENT_IMAGE"
+            "--tag $KANO_DOCKER_REGISTRY/$DEFAULT_IMAGE:latest"
+          The variable docker_called_with should end_with "."
         End
       End
-    End
-  End
 
-  Describe "stop"
-    Context "when development container does not exist"
-      It "should fail with the expected error message"
-        When run docker stop
-        The status should be failure
-        The variable fail_called_with should equal "Development container does not exist. Run 'kano docker start'"
-      End
-    End
-
-    Context "when development container exists"
-      DOES_DEVELOPMENT_CONTAINER_EXIST=true
-      It "should stop container"
-        When run docker stop
-        The status should be success
-        The variable docker_called_with should equal "stop $DEVELOPMENT_CONTAINER"
-      End
-    End
-  End
-
-  Describe "attach"
-    Context "when development container does not exist"
-      It "should fail with the expected error message"
-        When run docker attach
-        The status should be failure
-        The variable fail_called_with should equal "Development container does not exist. Run 'kano docker start'"
-      End
-    End
-
-    Context "when development container exists"
-      DOES_DEVELOPMENT_CONTAINER_EXIST=true
-      It "should attach to container"
-        When run docker attach
-        The status should be success
-        The variable docker_called_with should equal "attach $DEVELOPMENT_CONTAINER"
-      End
-
-      Context "when passing extra docker attach flags"
-        It "should attach to container with extra flags"
-          When run docker attach --no-stdin
+      Context "when passing extra docker options and flags"
+        It "should build the image with extra docker options and flags"
+          When run docker image build \
+            --some-docker-option some_value \
+            --some-docker-flag
           The status should be success
-          The variable docker_called_with should start_with "attach"
-          The variable docker_called_with should include "--no-stdin"
-          The variable docker_called_with should end_with "$DEVELOPMENT_CONTAINER"
+          The variable docker_called_with should start_with "image build"
+          The variable docker_called_with should include "--some-docker-option some_value"
+          The variable docker_called_with should include "--some-docker-flag"
+          The variable docker_called_with should end_with "."
         End
       End
 
-      Context "when passing extra docker attach options"
-        It "should attach to container with extra options"
-          When run docker attach --detach-keys ctrl-y
+      Context "when using custom docker file"
+        SOME_CUSTOM_DOCKERFILE="/some_directory/Dockerfile"
+        export KANO_DOCKER_FILE="$SOME_CUSTOM_DOCKERFILE"
+        It "should build the image from custom file"
+          When run docker image build
           The status should be success
-          The variable docker_called_with should start_with "attach"
-          The variable docker_called_with should include "--detach-keys ctrl-y"
-          The variable docker_called_with should end_with "$DEVELOPMENT_CONTAINER"
+          The variable docker_called_with should include "--file $SOME_CUSTOM_DOCKERFILE"
+        End
+      End
+
+      Context "when using custom image name"
+        SOME_CUSTOM_IMAGE_NAME="some-custom-image-name"
+        export KANO_DOCKER_IMAGE="$SOME_CUSTOM_IMAGE_NAME"
+        It "should build the image with custom name"
+          When run docker image build
+          The status should be success
+          The variable docker_called_with should include "--tag $SOME_CUSTOM_IMAGE_NAME:latest"
+        End
+      End
+
+      Context "when registry is configured and using custom image name"
+        SOME_REGISTRY="some-registry"
+        export KANO_DOCKER_REGISTRY="$SOME_REGISTRY"
+        SOME_CUSTOM_IMAGE_NAME="some-custom-image-name"
+        export KANO_DOCKER_IMAGE="$SOME_CUSTOM_IMAGE_NAME"
+        It "should build the image with custom name and registry"
+          When run docker image build
+          The status should be success
+          The variable docker_called_with should include \
+            "--tag $SOME_REGISTRY/$SOME_CUSTOM_IMAGE_NAME:latest"
+        End
+      End
+
+      Context "when using shortcut form"
+        It "should delegate to image subcommand"
+          When run docker build
+          The status should be success
+          The variable docker_called_with should start_with "image build"
+        End
+      End
+    End
+
+    Describe "rm"
+      Context "when image does not exist"
+        It "should fail with the expected error message"
+          When run docker image rm
+          The status should be failure
+          The variable fail_called_with should equal "Development image does not exist"
+        End
+      End
+
+      Context "when image exists"
+        DOES_IMAGE_EXIST=true
+        It "should delete image"
+          When run docker image rm
+          The status should be success
+          The variable docker_called_with should equal "image rm $DEFAULT_IMAGE:latest"
+        End
+
+        Context "when passing extra docker options and flags"
+          It "should delete the image with extra docker options and flags"
+            When run docker image rm \
+              --some-docker-option some_value \
+              --some-docker-flag
+            The status should be success
+            The variable docker_called_with should start_with "image rm"
+            The variable docker_called_with should include "--some-docker-option some_value"
+            The variable docker_called_with should include "--some-docker-flag"
+            The variable docker_called_with should end_with "$DEFAULT_IMAGE:latest"
+          End
+        End
+
+        Context "when registry is configured"
+          SOME_REGISTRY="some-registry"
+          export KANO_DOCKER_REGISTRY="$SOME_REGISTRY"
+          It "should delete the image with registry prefix"
+            When run docker image rm
+            The status should be success
+            The variable docker_called_with should end_with \
+              "$SOME_REGISTRY/$DEFAULT_IMAGE:latest"
+          End
+        End
+
+        Context "when using custom image name"
+          SOME_CUSTOM_IMAGE_NAME="some-custom-image-name"
+          export KANO_DOCKER_IMAGE="$SOME_CUSTOM_IMAGE_NAME"
+          It "should delete the image with custom name"
+            When run docker image rm
+            The status should be success
+            The variable docker_called_with should end_with "$SOME_CUSTOM_IMAGE_NAME:latest"
+          End
+        End
+
+        Context "when using specific tag"
+          SOME_TAG="some-tag"
+          export KANO_DOCKER_TAG="$SOME_TAG"
+          It "should delete the image with specific tag"
+            When run docker image rm
+            The status should be success
+            The variable docker_called_with should end_with "$DEFAULT_IMAGE:$SOME_TAG"
+          End
+        End
+
+        Context "when registry is configred, using custom image name and a specific tag"
+          SOME_REGISTRY="some-registry"
+          export KANO_DOCKER_REGISTRY="$SOME_REGISTRY"
+          SOME_CUSTOM_IMAGE_NAME="some-custom-image-name"
+          export KANO_DOCKER_IMAGE="$SOME_CUSTOM_IMAGE_NAME"
+          SOME_TAG="some-tag"
+          export KANO_DOCKER_TAG="$SOME_TAG"
+          It "should delete the image with registry prefix, custom name and specific tag"
+            When run docker image rm
+            The status should be success
+            The variable docker_called_with should end_with \
+              "$SOME_REGISTRY/$SOME_CUSTOM_IMAGE_NAME:$SOME_TAG"
+          End
+        End
+
+        Context "when using shortcut form"
+          It "should delegate to image subcommand"
+            When run docker rmi
+            The status should be success
+            The variable docker_called_with should start_with "image rm"
+          End
+        End
+      End
+    End
+
+    Describe "pull"
+      Context "when no registry configured"
+        It "should fail with the expected error message"
+          When run docker image pull
+          The status should be failure
+          The variable fail_called_with should equal \
+            "No container registry configured. Set 'KANO_DOCKER_REGISTRY' environment variable"
+        End
+      End
+
+      Context "when a registry is configured"
+        export KANO_DOCKER_REGISTRY="some-registry.com"
+        It "should pull the image"
+          When run docker image pull
+          The status should be success
+          The variable docker_called_with should equal \
+            "image pull $KANO_DOCKER_REGISTRY/$DEFAULT_IMAGE:latest"
+        End
+
+        Context "when specifying a tag"
+          SOME_TAG="some-tag"
+          It "should pull the image with specified tag"
+            When run docker image pull "$SOME_TAG"
+            The status should be success
+            The variable docker_called_with should equal \
+              "image pull $KANO_DOCKER_REGISTRY/$DEFAULT_IMAGE:$SOME_TAG"
+          End
+        End
+
+        Context "when passing extra docker options and flags"
+          SOME_PULL_FLAG="--quiet"
+          SOME_PULL_OPTION_KEY="--platform"
+          SOME_PULL_OPTION_VALUE="amd64"
+          It "should pull the image with extra docker options and flags"
+            When run docker image pull \
+              "$SOME_PULL_FLAG" \
+              "$SOME_PULL_OPTION_KEY" "$SOME_PULL_OPTION_VALUE"
+            The status should be success
+            The variable docker_called_with should start_with "image pull"
+            The variable docker_called_with should include "$SOME_PULL_FLAG"
+            The variable docker_called_with should include \
+              "$SOME_PULL_OPTION_KEY $SOME_PULL_OPTION_VALUE"
+            The variable docker_called_with should end_with \
+              "$KANO_DOCKER_REGISTRY/$DEFAULT_IMAGE:latest"
+          End
+        End
+
+        Context "when passing extra docker options and flags and specifying a tag"
+          SOME_TAG="some-tag"
+          SOME_PULL_FLAG="--quiet"
+          SOME_PULL_OPTION_KEY="--platform"
+          SOME_PULL_OPTION_VALUE="amd64"
+          It "should pull the image with extra docker options and flags"
+            When run docker image pull \
+              "$SOME_PULL_FLAG" \
+              "$SOME_PULL_OPTION_KEY" "$SOME_PULL_OPTION_VALUE" \
+              "$SOME_TAG"
+            The status should be success
+            The variable docker_called_with should start_with "image pull"
+            The variable docker_called_with should include "$SOME_PULL_FLAG"
+            The variable docker_called_with should include \
+              "$SOME_PULL_OPTION_KEY $SOME_PULL_OPTION_VALUE"
+            The variable docker_called_with should end_with \
+              "$KANO_DOCKER_REGISTRY/$DEFAULT_IMAGE:$SOME_TAG"
+          End
+        End
+
+        Context "when using custom image name"
+          SOME_CUSTOM_IMAGE_NAME="some-custom-image-name"
+          export KANO_DOCKER_IMAGE="$SOME_CUSTOM_IMAGE_NAME"
+          It "should pull the image with custom name"
+            When run docker image pull
+            The status should be success
+            The variable docker_called_with should end_with \
+              "$KANO_DOCKER_REGISTRY/$SOME_CUSTOM_IMAGE_NAME:latest"
+          End
+        End
+
+        Context "when using custom image name and specific tag"
+          SOME_CUSTOM_IMAGE_NAME="some-custom-image-name"
+          export KANO_DOCKER_IMAGE="$SOME_CUSTOM_IMAGE_NAME"
+          SOME_TAG="some-tag"
+          It "should pull the image with custom name and specific tag"
+            When run docker image pull "$SOME_TAG"
+            The status should be success
+            The variable docker_called_with should end_with \
+              "$KANO_DOCKER_REGISTRY/$SOME_CUSTOM_IMAGE_NAME:$SOME_TAG"
+          End
+        End
+
+        Context "when using shortcut form"
+          It "should delegate to image subcommand"
+            When run docker pull
+            The status should be success
+            The variable docker_called_with should start_with "image pull"
+          End
+        End
+      End
+    End
+
+    Describe "push"
+      Context "when no registry configured"
+        It "should fail with the expected error message"
+          When run docker image push
+          The status should be failure
+          The variable fail_called_with should equal \
+            "No container registry configured. Set 'KANO_DOCKER_REGISTRY' environment variable"
+        End
+      End
+
+      Context "when a registry is configured"
+        export KANO_DOCKER_REGISTRY="some-registry.com"
+        It "should push the image"
+          When run docker image push
+          The status should be success
+          The variable docker_called_with should equal \
+            "image push $KANO_DOCKER_REGISTRY/$DEFAULT_IMAGE:latest"
+        End
+
+        Context "when specifying a tag"
+          SOME_TAG="some-tag"
+          It "should push the image with specified tag"
+            When run docker image push "$SOME_TAG"
+            The status should be success
+            The variable docker_called_with should equal \
+              "image push $KANO_DOCKER_REGISTRY/$DEFAULT_IMAGE:$SOME_TAG"
+          End
+        End
+
+        Context "when passing extra docker flags"
+          SOME_PUSH_FLAG="--quiet"
+          It "should push the image with extra docker flags"
+            When run docker image push "$SOME_PUSH_FLAG"
+            The status should be success
+            The variable docker_called_with should start_with "image push"
+            The variable docker_called_with should include "$SOME_PUSH_FLAG"
+            The variable docker_called_with should end_with \
+              "$KANO_DOCKER_REGISTRY/$DEFAULT_IMAGE:latest"
+          End
+        End
+
+        Context "when passing extra docker flags and specifying a tag"
+          SOME_TAG="some-tag"
+          SOME_PUSH_FLAG="--quiet"
+          It "should push the image with extra docker options and flags"
+            When run docker image push "$SOME_PUSH_FLAG" "$SOME_TAG"
+            The status should be success
+            The variable docker_called_with should start_with "image push"
+            The variable docker_called_with should include "$SOME_PUSH_FLAG"
+            The variable docker_called_with should end_with \
+              "$KANO_DOCKER_REGISTRY/$DEFAULT_IMAGE:$SOME_TAG"
+          End
+        End
+
+        Context "when using custom image name"
+          SOME_CUSTOM_IMAGE_NAME="some-custom-image-name"
+          export KANO_DOCKER_IMAGE="$SOME_CUSTOM_IMAGE_NAME"
+          It "should push the image with custom name"
+            When run docker image push
+            The status should be success
+            The variable docker_called_with should end_with \
+              "$KANO_DOCKER_REGISTRY/$SOME_CUSTOM_IMAGE_NAME:latest"
+          End
+        End
+
+        Context "when using custom image name and specific tag"
+          SOME_CUSTOM_IMAGE_NAME="some-custom-image-name"
+          export KANO_DOCKER_IMAGE="$SOME_CUSTOM_IMAGE_NAME"
+          SOME_TAG="some-tag"
+          It "should push the image with custom name and specific tag"
+            When run docker image push "$SOME_TAG"
+            The status should be success
+            The variable docker_called_with should end_with \
+              "$KANO_DOCKER_REGISTRY/$SOME_CUSTOM_IMAGE_NAME:$SOME_TAG"
+          End
+        End
+
+        Context "when using shortcut form"
+          It "should delegate to image subcommand"
+            When run docker push
+            The status should be success
+            The variable docker_called_with should start_with "image push"
+          End
+        End
+      End
+    End
+
+    Describe "tag"
+      Context "when no tag provided"
+        It "should fail with the expected error message"
+          When run docker image tag
+          The status should be failure
+          The variable fail_called_with should equal "No tag provided"
+        End
+      End
+
+      Context "when a tag is provided"
+        SOME_TAG="some-tag"
+        It "should tag the image"
+          When run docker image tag "$SOME_TAG"
+          The status should be success
+          The variable docker_called_with should equal \
+            "image tag $DEFAULT_IMAGE:latest $DEFAULT_IMAGE:$SOME_TAG"
+        End
+
+        Context "when using shortcut form"
+          It "should delegate to image subcommand"
+            When run docker tag "$SOME_TAG"
+            The status should be success
+            The variable docker_called_with should start_with "image tag"
+          End
         End
       End
     End
   End
 
-  Describe "enter"
-    It "should invoke docker start task"
-      When run docker enter
-      The status should be success
-      The variable kano_called_with should start_with "docker start"
+  Describe "container"
+    Describe "create"
+      Context "when image does not exist"
+        It "should fail with the expected error message"
+          When run docker container create
+          The status should be failure
+          The variable fail_called_with should equal \
+            "Development image does not exist. Run 'kano docker image build'"
+        End
+      End
+
+      Context "when image exists"
+        DOES_IMAGE_EXIST=true
+        Context "when container already exists"
+          DOES_CONTAINER_EXIST=true
+          It "should fail with the expected error message"
+            When run docker container create
+            The status should be failure
+            The variable fail_called_with should equal "Development container already exists"
+          End
+        End
+
+        Context "when container does not exist"
+          START_COMMAND="$(
+            echo \
+              "/bin/sh -c" \
+              "sudo useradd" \
+                "--uid $(id -u) --gid sudo --no-create-home --home-dir $HOME $(id -un);" \
+              "sudo passwd --delete $(id -un) > /dev/null;" \
+              "sudo chown -R $(id -un) $HOME;" \
+              "sh -c 'kill -STOP \$\$'" \
+          )"
+
+          It "should create container"
+            When run docker container create
+            The status should be success
+            The variable docker_called_with should start_with "container create"
+            The variable docker_called_with should include "--env KANO_DOCKER=true"
+            The variable docker_called_with should include "--env KANO_DOCKER_IMAGE"
+            The variable docker_called_with should include "--env KANO_DOCKER_CONTAINER"
+            The variable docker_called_with should include "--log-driver none"
+            The variable docker_called_with should include "--name $DEFAULT_CONTAINER"
+            The variable docker_called_with should include "--rm"
+            The variable docker_called_with should include "--volume $PWD:$PWD"
+            The variable docker_called_with should include "--workdir $PWD"
+            The variable docker_called_with should end_with \
+              "$DEFAULT_IMAGE:latest $START_COMMAND"
+          End
+
+          Context "when passing extra docker flags and options"
+            It "should create container with extra docker options and flags"
+              When run docker container create \
+                --some-docker-option some_value \
+                --some-docker-flag
+              The status should be success
+              The variable docker_called_with should start_with "container create"
+              The variable docker_called_with should include "--some-docker-option some_value"
+              The variable docker_called_with should include "--some-docker-flag"
+              The variable docker_called_with should end_with \
+                "$DEFAULT_IMAGE:latest $START_COMMAND"
+            End
+          End
+
+          Context "when registry is configured"
+            SOME_REGISTRY="some-registry"
+            export KANO_DOCKER_REGISTRY="$SOME_REGISTRY"
+            It "should create container from image with registry prefix"
+              When run docker container create
+              The status should be success
+              The variable docker_called_with should end_with \
+                "$SOME_REGISTRY/$DEFAULT_IMAGE:latest $START_COMMAND"
+            End
+          End
+
+          Context "when using custom image name"
+            SOME_CUSTOM_IMAGE_NAME="some-custom-image-name"
+            export KANO_DOCKER_IMAGE="$SOME_CUSTOM_IMAGE_NAME"
+            It "should create container from image with custom name"
+              When run docker container create
+              The status should be success
+              The variable docker_called_with should end_with \
+                "$SOME_CUSTOM_IMAGE_NAME:latest $START_COMMAND"
+            End
+          End
+
+          Context "when specifying a tag"
+            SOME_TAG="some-tag"
+            export KANO_DOCKER_TAG="$SOME_TAG"
+            It "should create container from image with specific tag"
+              When run docker container create
+              The status should be success
+              The variable docker_called_with should end_with \
+                "$DEFAULT_IMAGE:$SOME_TAG $START_COMMAND"
+            End
+          End
+
+          Context "when registry is configured, using a custom image name and specifying a tag"
+            SOME_REGISTRY="some-registry"
+            export KANO_DOCKER_REGISTRY="$SOME_REGISTRY"
+            SOME_CUSTOM_IMAGE_NAME="some-custom-image-name"
+            export KANO_DOCKER_IMAGE="$SOME_CUSTOM_IMAGE_NAME"
+            SOME_TAG="some-tag"
+            export KANO_DOCKER_TAG="$SOME_TAG"
+            It "should create container from image with registry, custom name and tag"
+              When run docker container create
+              The status should be success
+              The variable docker_called_with should end_with \
+                "$SOME_REGISTRY/$SOME_CUSTOM_IMAGE_NAME:$SOME_TAG $START_COMMAND"
+            End
+          End
+
+          Context "when using custom container name"
+            SOME_CUSTOM_CONTAINER_NAME="some-custom-container-name"
+            export KANO_DOCKER_CONTAINER="$SOME_CUSTOM_CONTAINER_NAME"
+            It "should create container with custom name"
+              When run docker container create
+              The status should be success
+              The variable docker_called_with should include \
+                "--name $SOME_CUSTOM_CONTAINER_NAME"
+            End
+          End
+
+          Context "when using shortcut form"
+            It "should delegate to container subcommand"
+              When run docker create
+              The status should be success
+              The variable docker_called_with should start_with "container create"
+            End
+          End
+        End
+      End
     End
 
-    It "should invoke docker start task"
-      When run docker enter
+    Describe "rm"
+      Context "when container does not exist"
+        It "should fail with the expected error message"
+          When run docker container rm
+          The status should be failure
+          The variable fail_called_with should equal "Development container does not exist"
+        End
+      End
+
+      Context "when container exists"
+        DOES_CONTAINER_EXIST=true
+        Context "when container is running"
+          IS_CONTAINER_RUNNING=true
+          It "should fail with the expected error message"
+            When run docker container rm
+            The status should be failure
+            The variable fail_called_with should equal \
+              "Development container is running. Run 'kano docker container stop'"
+          End
+        End
+
+        Context "when container is not running"
+          It "should delete container"
+            When run docker container rm
+            The status should be success
+            The variable docker_called_with should include "container rm $DEFAULT_CONTAINER"
+          End
+
+          Context "when passing extra docker flags and options"
+            It "should delete container with extra docker options and flags"
+              When run docker container rm \
+                --some-docker-option some_value \
+                --some-docker-flag
+              The status should be success
+              The variable docker_called_with should start_with "container rm"
+              The variable docker_called_with should include "--some-docker-option some_value"
+              The variable docker_called_with should include "--some-docker-flag"
+              The variable docker_called_with should end_with "$DEFAULT_CONTAINER"
+            End
+          End
+
+          Context "when using custom container name"
+            SOME_CUSTOM_CONTAINER_NAME="some-custom-container-name"
+            export KANO_DOCKER_CONTAINER="$SOME_CUSTOM_CONTAINER_NAME"
+            It "should delete container with custom name"
+              When run docker container rm
+              The status should be success
+              The variable docker_called_with should end_with "$SOME_CUSTOM_CONTAINER_NAME"
+            End
+          End
+
+          Context "when using shortcut form"
+            It "should delegate to container subcommand"
+              When run docker rm
+              The status should be success
+              The variable docker_called_with should start_with "container rm"
+            End
+          End
+        End
+      End
+    End
+
+    Describe "start"
+      Context "when container does not exist"
+        It "should fail with the expected error message"
+          When run docker container start
+          The status should be failure
+          The variable fail_called_with should equal \
+            "Development container does not exist. Run 'kano docker container create'"
+        End
+      End
+
+      Context "when container exists"
+        DOES_CONTAINER_EXIST=true
+        Context "when container is running"
+          IS_CONTAINER_RUNNING=true
+          It "should fail with the expected error message"
+            When run docker container start
+            The status should be failure
+            The variable fail_called_with should equal \
+              "Development container is already running"
+          End
+        End
+
+        Context "when container is not running"
+          It "should start container"
+            When run docker container start
+            The status should be success
+            The variable docker_called_with should equal "container start $DEFAULT_CONTAINER"
+          End
+
+          Context "when passing extra docker flags and options"
+            It "should start container with extra docker options and flags"
+              When run docker container start \
+                --some-docker-option some_value \
+                --some-docker-flag
+              The status should be success
+              The variable docker_called_with should start_with "container start"
+              The variable docker_called_with should include "--some-docker-option some_value"
+              The variable docker_called_with should include "--some-docker-flag"
+              The variable docker_called_with should end_with "$DEFAULT_CONTAINER"
+            End
+          End
+
+          Context "when using custom container name"
+            SOME_CUSTOM_CONTAINER_NAME="some-custom-container-name"
+            export KANO_DOCKER_CONTAINER="$SOME_CUSTOM_CONTAINER_NAME"
+            It "should start container with custom name"
+              When run docker container start
+              The status should be success
+              The variable docker_called_with should end_with "$SOME_CUSTOM_CONTAINER_NAME"
+            End
+          End
+
+          Context "when using shortcut form"
+            It "should delegate to container subcommand"
+              When run docker start
+              The status should be success
+              The variable docker_called_with should start_with "container start"
+            End
+          End
+        End
+      End
+    End
+
+    Describe "stop"
+      Context "when container does not exist"
+        It "should fail with the expected error message"
+          When run docker container stop
+          The status should be failure
+          The variable fail_called_with should equal "Development container does not exist"
+        End
+      End
+
+      Context "when container exists"
+        DOES_CONTAINER_EXIST=true
+        Context "when container is not running"
+          It "should fail with the expected error message"
+            When run docker container stop
+            The status should be failure
+            The variable fail_called_with should equal "Development container is not running"
+          End
+        End
+
+        Context "when container is running"
+          IS_CONTAINER_RUNNING=true
+          It "should stop container"
+            When run docker container stop
+            The status should be success
+            The variable docker_called_with should equal "$(
+              echo \
+                "container stop $DEFAULT_CONTAINER" \
+                "container wait $DEFAULT_CONTAINER"
+            )"
+          End
+
+          Context "when passing extra docker flags and options"
+            It "should stop container with extra docker options and flags"
+              When run docker container stop \
+                --some-docker-option some_value \
+                --some-docker-flag
+              The status should be success
+              The variable docker_called_with should equal "$(
+                echo \
+                  "container stop" \
+                    "--some-docker-option some_value" \
+                    "--some-docker-flag" \
+                    "$DEFAULT_CONTAINER" \
+                  "container wait $DEFAULT_CONTAINER"
+              )"
+            End
+          End
+
+          Context "when using custom container name"
+            SOME_CUSTOM_CONTAINER_NAME="some-custom-container-name"
+            export KANO_DOCKER_CONTAINER="$SOME_CUSTOM_CONTAINER_NAME"
+            It "should stop container with custom name"
+              When run docker container stop
+              The status should be success
+              The variable docker_called_with should equal "$(
+                echo \
+                  "container stop $SOME_CUSTOM_CONTAINER_NAME" \
+                  "container wait $SOME_CUSTOM_CONTAINER_NAME"
+              )"
+            End
+          End
+
+          Context "when using shortcut form"
+            It "should delegate to container subcommand"
+              When run docker stop
+              The status should be success
+              The variable docker_called_with should start_with "container stop"
+            End
+          End
+        End
+      End
+    End
+
+    Describe "kill"
+      Context "when container does not exist"
+        It "should fail with the expected error message"
+          When run docker container 'kill'
+          The status should be failure
+          The variable fail_called_with should equal "Development container does not exist"
+        End
+      End
+
+      Context "when container exists"
+        DOES_CONTAINER_EXIST=true
+        Context "when container is not running"
+          It "should fail with the expected error message"
+            When run docker container 'kill'
+            The status should be failure
+            The variable fail_called_with should equal "Development container is not running"
+          End
+        End
+
+        Context "when container is running"
+          IS_CONTAINER_RUNNING=true
+          It "should kill container"
+            When run docker container 'kill'
+            The status should be success
+            The variable docker_called_with should equal "$(
+              echo \
+                "container kill $DEFAULT_CONTAINER" \
+                "container wait $DEFAULT_CONTAINER"
+            )"
+          End
+
+          Context "when passing extra docker flags and options"
+            It "should kill container with extra docker options and flags"
+              When run docker container 'kill' \
+                --some-docker-option some_value \
+                --some-docker-flag
+              The status should be success
+              The variable docker_called_with should equal "$(
+                echo \
+                  "container kill" \
+                    "--some-docker-option some_value" \
+                    "--some-docker-flag" \
+                    "$DEFAULT_CONTAINER" \
+                  "container wait $DEFAULT_CONTAINER"
+              )"
+            End
+          End
+
+          Context "when using custom container name"
+            SOME_CUSTOM_CONTAINER_NAME="some-custom-container-name"
+            export KANO_DOCKER_CONTAINER="$SOME_CUSTOM_CONTAINER_NAME"
+            It "should kill container with custom name"
+              When run docker container 'kill'
+              The status should be success
+              The variable docker_called_with should equal "$(
+                echo \
+                  "container kill $SOME_CUSTOM_CONTAINER_NAME" \
+                  "container wait $SOME_CUSTOM_CONTAINER_NAME"
+              )"
+            End
+          End
+
+          Context "when using shortcut form"
+            It "should delegate to container subcommand"
+              When run docker 'kill'
+              The status should be success
+              The variable docker_called_with should start_with "container kill"
+            End
+          End
+        End
+      End
+    End
+
+    Describe "exec"
+      SOME_COMMAND="some_command"
+      SOME_PARAMETER="some_parameter"
+      Context "when container does not exist"
+        It "should fail with the expected error message"
+          When run docker container 'exec' "$SOME_COMMAND" "$SOME_PARAMETER"
+          The status should be failure
+          The variable fail_called_with should equal \
+            "Development container does not exist. Run 'kano docker container create'"
+        End
+      End
+
+      Context "when container exists"
+        DOES_CONTAINER_EXIST=true
+        Context "when container is not running"
+          It "should fail with the expected error message"
+            When run docker container 'exec' "$SOME_COMMAND" "$SOME_PARAMETER"
+            The status should be failure
+            The variable fail_called_with should equal \
+              "Development container is not running. Run 'kano docker container start'"
+          End
+        End
+
+        Context "when container is running"
+          IS_CONTAINER_RUNNING=true
+          It "should exec command"
+            When run docker container 'exec' "$SOME_COMMAND" "$SOME_PARAMETER"
+            The status should be success
+            The variable docker_called_with should start_with "container exec"
+            The variable docker_called_with should include "--user $(id -un)"
+            The variable docker_called_with should include "--workdir $PWD"
+            The variable docker_called_with should end_with \
+              "$DEFAULT_CONTAINER $SOME_COMMAND $SOME_PARAMETER"
+          End
+
+           Context "when passing extra docker flags and options"
+            SOME_EXEC_FLAG="--tty"
+            SOME_EXEC_OPTION_KEY="--env"
+            SOME_EXEC_OPTION_VALUE="SOME_ENV"
+            It "should exec command with extra docker options and flags"
+              When run docker container 'exec' \
+                "$SOME_EXEC_FLAG" \
+                "$SOME_EXEC_OPTION_KEY" "$SOME_EXEC_OPTION_VALUE" \
+                "$SOME_COMMAND" "$SOME_PARAMETER"
+              The status should be success
+              The variable docker_called_with should start_with "container exec"
+              The variable docker_called_with should include "$SOME_EXEC_FLAG"
+              The variable docker_called_with should include \
+                "$SOME_EXEC_OPTION_KEY $SOME_EXEC_OPTION_VALUE"
+              The variable docker_called_with should end_with \
+                "$DEFAULT_CONTAINER $SOME_COMMAND $SOME_PARAMETER"
+            End
+          End
+
+          Context "when using custom container name"
+            SOME_CUSTOM_CONTAINER_NAME="some-custom-container-name"
+            export KANO_DOCKER_CONTAINER="$SOME_CUSTOM_CONTAINER_NAME"
+            It "should exec command in container with custom name"
+              When run docker container 'exec' "$SOME_COMMAND" "$SOME_PARAMETER"
+              The status should be success
+              The variable docker_called_with should end_with \
+                "$SOME_CUSTOM_CONTAINER_NAME $SOME_COMMAND $SOME_PARAMETER"
+            End
+          End
+
+          Context "when using shortcut form"
+            It "should delegate to container subcommand"
+              When run docker 'exec'
+              The status should be success
+              The variable docker_called_with should start_with "container exec"
+            End
+          End
+        End
+      End
+    End
+  End
+
+  Describe "boot"
+    Context "when image does not exist"
+      Context "when KANO_DOCKER_TAG is latest"
+        It "should build image, create container and start container"
+          When run docker boot
+          The status should be success
+          The variable kano_called_with should equal "$(
+            echo \
+              "docker image build" \
+              "docker container create" \
+              "docker container start"
+          )"
+        End
+      End
+
+      Context "when KANO_DOCKER_TAG is not latest"
+        export KANO_DOCKER_TAG="some-tag"
+        It "should pull image, create container and start container"
+          When run docker boot
+          The status should be success
+          The variable kano_called_with should equal "$(
+            echo \
+              "docker image pull" \
+              "docker container create" \
+              "docker container start"
+          )"
+        End
+      End
+    End
+
+    Context "when image exists"
+      DOES_IMAGE_EXIST=true
+      Context "when container does not exist"
+        It "should create container and start container"
+          When run docker boot
+          The status should be success
+          The variable kano_called_with should equal "$(
+            echo \
+              "docker container create" \
+              "docker container start"
+          )"
+        End
+      End
+
+      Context "when container exists"
+        DOES_CONTAINER_EXIST=true
+        Context "when container is not running"
+          It "should start container"
+            When run docker boot
+            The status should be success
+            The variable kano_called_with should equal "docker container start"
+          End
+        End
+
+        Context "when container is running"
+          IS_CONTAINER_RUNNING=true
+          It "should do nothing"
+            When run docker boot
+            The status should be success
+            The variable kano_called_with should be undefined
+          End
+        End
+      End
+    End
+  End
+
+  Describe "execute"
+    SOME_COMMAND="some_command"
+    SOME_PARAMETER="some_parameter"
+    It "should boot and exec command"
+      When run docker execute "$SOME_COMMAND" "$SOME_PARAMETER"
       The status should be success
-      The variable kano_called_with should end_with "docker attach"
+      The variable kano_called_with should equal "$(
+        echo \
+          "docker boot" \
+          "docker container exec_ $SOME_COMMAND" "$SOME_PARAMETER" \
+      )"
+    End
+  End
+
+  Describe "shell"
+    Context "when SHELL environment variable is not defined"
+      export SHELL=
+      It "exececute sh"
+        When run docker shell
+        The status should be success
+        The variable kano_called_with should equal \
+          "docker execute --interactive --tty /bin/sh --login"
+      End
+    End
+
+    Context "when SHELL environment variable is defined"
+      SOME_SHELL="some_shell"
+      export SHELL="$SOME_SHELL"
+      It "exececute same shell as host's"
+        When run docker shell
+        The status should be success
+        The variable kano_called_with should equal \
+          "docker execute --interactive --tty $SOME_SHELL --login"
+      End
+    End
+  End
+
+  Describe "clean"
+    Context "when image does not exist"
+      It "should do nothing"
+        When run docker clean
+        The status should be success
+        The variable kano_called_with should be undefined
+      End
+    End
+
+    Context "when image exists"
+      DOES_IMAGE_EXIST=true
+      Context "when container does not exist"
+        It "should delete image"
+          When run docker clean
+          The status should be success
+          The variable kano_called_with should equal "docker image rm"
+        End
+      End
+
+      Context "when container exists"
+        DOES_CONTAINER_EXIST=true
+        Context "when container is not running"
+          It "should delete container and delete image"
+            When run docker clean
+            The status should be success
+            The variable kano_called_with should equal "$(
+              echo \
+                "docker container rm" \
+                "docker image rm" \
+            )"
+          End
+        End
+
+        Context "when container is running"
+          IS_CONTAINER_RUNNING=true
+          It "should kill container, delete container and delete image"
+            When run docker clean
+            The status should be success
+            The variable kano_called_with should equal "$(
+              echo \
+                "docker container kill" \
+                "docker container rm" \
+                "docker image rm" \
+            )"
+          End
+        End
+      End
     End
   End
 End

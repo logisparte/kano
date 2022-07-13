@@ -3,25 +3,27 @@
 Include "$KANO_SOURCE_DIRECTORY/builtin/tasks/dockered"
 
 Describe "dockered"
-  exec() {
-    "$@"
-  }
-
-  kano() {
+  _kano() {
     # shellcheck disable=SC2034
-    kano_called_with="$*"
+    if [ -z "$kano_called_with" ]; then
+      kano_called_with="$*"
+
+    else
+      kano_called_with="$kano_called_with $*"
+    fi
+
     %preserve kano_called_with
   }
 
   It "has a help message"
     When run dockered_help
     The status should be success
-    The output should equal "Run a task inside an ephemeral development container"
+    The output should equal "Run a kano task in a docker container"
   End
 
   It "should delegate to docker task"
     When run dockered some_command
     The status should be success
-    The variable kano_called_with should equal "docker run kano some_command"
+    The variable kano_called_with should equal "docker execute kano some_command"
   End
 End
