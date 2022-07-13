@@ -42,18 +42,6 @@ jobs:
         run: |
           USER_ID="$(id -u)"
           USER_NAME="$(id -un)"
-          echo "USER_ID=$USER_ID"
-          echo "USER_NAME=$USER_NAME"
-          echo "HOME=$HOME"
-          INITIALIZATION_SCRIPT="$(
-            echo \
-              "sudo useradd" \
-              "--uid $USER_ID --gid sudo --no-create-home --home-dir $HOME $USER_NAME;" \
-              "sudo passwd --delete $USER_NAME > /dev/null;" \
-              "sudo chown -R $USER_NAME $HOME;" \
-              "sh -c 'kill -STOP \$\$'"
-          )"
-          echo "$INITIALIZATION_SCRIPT"
           kano dockered build
 
       - name: Lint project
