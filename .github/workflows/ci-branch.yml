@@ -42,6 +42,9 @@ jobs:
         run: |
           USER_ID="$(id -u)"
           USER_NAME="$(id -un)"
+          echo "USER_ID=$USER_ID"
+          echo "USER_NAME=$USER_NAME"
+          echo "HOME=$HOME"
           kano dockered build
 
       - name: Lint project
