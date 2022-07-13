@@ -45,7 +45,7 @@ Describe "docker"
 
   _docker() {
     # shellcheck disable=SC2034
-    if [ -z "$kano_called_with" ]; then
+    if [ -z "$docker_called_with" ]; then
       docker_called_with="$*"
 
     else
@@ -141,7 +141,6 @@ Describe "docker"
         It "should fail with the expected error message"
           When run docker image build
           The status should be failure
-          # shellcheck disable=SC2116
           The variable fail_called_with should equal "$(
             echo \
               "Cannot rebuild a versioned image. Run 'kano docker pull $KANO_DOCKER_TAG' or" \
@@ -155,7 +154,6 @@ Describe "docker"
         It "should fail with the expected error message"
           When run docker image build
           The status should be failure
-          # shellcheck disable=SC2116
           The variable fail_called_with should equal "$(
             echo \
               "No Dockerfile at '$DEFAULT_FILE'. Create one or set 'KANO_DOCKER_FILE'" \
@@ -572,7 +570,6 @@ Describe "docker"
         End
 
         Context "when container does not exist"
-          # shellcheck disable=SC2116
           START_COMMAND="$(
             echo \
               "/bin/sh -c" \
@@ -832,7 +829,11 @@ Describe "docker"
           It "should stop container"
             When run docker container stop
             The status should be success
-            The variable docker_called_with should equal "container stop $DEFAULT_CONTAINER"
+            The variable docker_called_with should equal "$(
+              echo \
+                "container stop $DEFAULT_CONTAINER" \
+                "container wait $DEFAULT_CONTAINER"
+            )"
           End
 
           Context "when passing extra docker flags and options"
@@ -841,10 +842,14 @@ Describe "docker"
                 --some-docker-option some_value \
                 --some-docker-flag
               The status should be success
-              The variable docker_called_with should start_with "container stop"
-              The variable docker_called_with should include "--some-docker-option some_value"
-              The variable docker_called_with should include "--some-docker-flag"
-              The variable docker_called_with should end_with "$DEFAULT_CONTAINER"
+              The variable docker_called_with should equal "$(
+                echo \
+                  "container stop" \
+                    "--some-docker-option some_value" \
+                    "--some-docker-flag" \
+                    "$DEFAULT_CONTAINER" \
+                  "container wait $DEFAULT_CONTAINER"
+              )"
             End
           End
 
@@ -854,7 +859,11 @@ Describe "docker"
             It "should stop container with custom name"
               When run docker container stop
               The status should be success
-              The variable docker_called_with should end_with "$SOME_CUSTOM_CONTAINER_NAME"
+              The variable docker_called_with should equal "$(
+                echo \
+                  "container stop $SOME_CUSTOM_CONTAINER_NAME" \
+                  "container wait $SOME_CUSTOM_CONTAINER_NAME"
+              )"
             End
           End
 
@@ -893,7 +902,11 @@ Describe "docker"
           It "should kill container"
             When run docker container 'kill'
             The status should be success
-            The variable docker_called_with should equal "container kill $DEFAULT_CONTAINER"
+            The variable docker_called_with should equal "$(
+              echo \
+                "container kill $DEFAULT_CONTAINER" \
+                "container wait $DEFAULT_CONTAINER"
+            )"
           End
 
           Context "when passing extra docker flags and options"
@@ -902,10 +915,14 @@ Describe "docker"
                 --some-docker-option some_value \
                 --some-docker-flag
               The status should be success
-              The variable docker_called_with should start_with "container kill"
-              The variable docker_called_with should include "--some-docker-option some_value"
-              The variable docker_called_with should include "--some-docker-flag"
-              The variable docker_called_with should end_with "$DEFAULT_CONTAINER"
+              The variable docker_called_with should equal "$(
+                echo \
+                  "container kill" \
+                    "--some-docker-option some_value" \
+                    "--some-docker-flag" \
+                    "$DEFAULT_CONTAINER" \
+                  "container wait $DEFAULT_CONTAINER"
+              )"
             End
           End
 
@@ -915,7 +932,11 @@ Describe "docker"
             It "should kill container with custom name"
               When run docker container 'kill'
               The status should be success
-              The variable docker_called_with should end_with "$SOME_CUSTOM_CONTAINER_NAME"
+              The variable docker_called_with should equal "$(
+                echo \
+                  "container kill $SOME_CUSTOM_CONTAINER_NAME" \
+                  "container wait $SOME_CUSTOM_CONTAINER_NAME"
+              )"
             End
           End
 
@@ -1009,16 +1030,31 @@ Describe "docker"
 
   Describe "boot"
     Context "when image does not exist"
-      It "should build image, create container and start container"
-        When run docker boot
-        The status should be success
-        # shellcheck disable=SC2116
-        The variable kano_called_with should equal "$(
-          echo \
-            "docker image build" \
-            "docker container create" \
-            "docker container start"
-        )"
+      Context "when KANO_DOCKER_TAG is latest"
+        It "should build image, create container and start container"
+          When run docker boot
+          The status should be success
+          The variable kano_called_with should equal "$(
+            echo \
+              "docker image build" \
+              "docker container create" \
+              "docker container start"
+          )"
+        End
+      End
+
+      Context "when KANO_DOCKER_TAG is not latest"
+        export KANO_DOCKER_TAG="some-tag"
+        It "should pull image, create container and start container"
+          When run docker boot
+          The status should be success
+          The variable kano_called_with should equal "$(
+            echo \
+              "docker image pull" \
+              "docker container create" \
+              "docker container start"
+          )"
+        End
       End
     End
 
@@ -1028,7 +1064,6 @@ Describe "docker"
         It "should create container and start container"
           When run docker boot
           The status should be success
-          # shellcheck disable=SC2116
           The variable kano_called_with should equal "$(
             echo \
               "docker container create" \
@@ -1065,7 +1100,6 @@ Describe "docker"
     It "should boot and exec command"
       When run docker execute "$SOME_COMMAND" "$SOME_PARAMETER"
       The status should be success
-      # shellcheck disable=SC2116
       The variable kano_called_with should equal "$(
         echo \
           "docker boot" \
@@ -1122,7 +1156,6 @@ Describe "docker"
           It "should delete container and delete image"
             When run docker clean
             The status should be success
-            # shellcheck disable=SC2116
             The variable kano_called_with should equal "$(
               echo \
                 "docker container rm" \
@@ -1136,7 +1169,6 @@ Describe "docker"
           It "should kill container, delete container and delete image"
             When run docker clean
             The status should be success
-            # shellcheck disable=SC2116
             The variable kano_called_with should equal "$(
               echo \
                 "docker container kill" \
