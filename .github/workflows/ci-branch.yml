@@ -40,8 +40,10 @@ jobs:
 
       - name: Build project
         run: |
-          echo "USER_ID=$(id -u)"
-          echo "USER_NAME=$(id -un)"
+          USER_ID="$(id -u)"
+          USER_NAME="$(id -un)"
+          echo "USER_ID=$USER_ID"
+          echo "USER_NAME=$USER_NAME"
           echo "HOME=$HOME"
           INITIALIZATION_SCRIPT="$(
             echo \
