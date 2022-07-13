@@ -88,7 +88,7 @@ sudo ./kano/install
 ```
 
 ### Usage
-
+dude
 See the [documentation](/docs/en/usage.md)
 
 ## Contributors
