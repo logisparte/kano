@@ -39,7 +39,20 @@ jobs:
         run: kano docker image build
 
       - name: Build project
-        run: kano dockered build
+        run: |
+          echo "USER_ID=$(id -u)"
+          echo "USER_NAME=$(id -un)"
+          echo "HOME=$HOME"
+          INITIALIZATION_SCRIPT="$(
+            echo \
+              "sudo useradd" \
+              "--uid $USER_ID --gid sudo --no-create-home --home-dir $HOME $USER_NAME;" \
+              "sudo passwd --delete $USER_NAME > /dev/null;" \
+              "sudo chown -R $USER_NAME $HOME;" \
+              "sh -c 'kill -STOP \$\$'"
+          )"
+          echo "$INITIALIZATION_SCRIPT"
+          kano dockered build
 
       - name: Lint project
         run: kano dockered lint
