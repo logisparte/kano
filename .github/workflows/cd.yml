@@ -7,7 +7,7 @@ on:
 
 env:
   KANO_DOCKER_TAG: ${{ github.sha }}
-  KANO_DOCKER_REGISTRY: ghcr.io
+  KANO_DOCKER_REGISTRY: ghcr.io/logisparte
   DOCKER_USERNAME: logisparte-helot
   DOCKER_PASSWORD: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
   DOCKER_BUILDKIT: true
