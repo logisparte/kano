@@ -41,7 +41,7 @@ jobs:
       - name: Patch user in container
         run: |
           kano docker container create \
-            --env KANO_DOCKER_USER_ID="$(id -u)"
+            --env KANO_DOCKER_USER_ID="$(id -u)" \
             --env KANO_DOCKER_USER_NAME="$(id -un)" \
             --env KANO_DOCKER_USER_HOME="$HOME" \
             --volume /usr/local/opt/kano/libexec:/opt/kano/lib
