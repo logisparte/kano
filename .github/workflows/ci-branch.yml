@@ -38,6 +38,16 @@ jobs:
       - name: Build branch development image
         run: kano docker image build
 
+      - name: Patch user in container
+        run: |
+          kano docker container create \
+            --env KANO_DOCKER_USER_ID="$(id -u)"
+            --env KANO_DOCKER_USER_NAME="$(id -un)" \
+            --env KANO_DOCKER_USER_HOME="$HOME" \
+            --volume /usr/local/opt/kano/libexec:/opt/kano/lib
+          kano docker container start
+          kano docker exec /opt/kano/lib/kano docker _init_container
+
       - name: Build project
         run: kano dockered build
 
