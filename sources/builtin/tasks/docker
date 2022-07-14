@@ -9,7 +9,13 @@ docker_help() {
 
 docker() {
   if [ "$KANO_DOCKER" = true ]; then
-    fail "Cannot run docker task inside a development container"
+    if [ "$1" = "_init_container" ]; then
+      _init_container
+      return
+
+    else
+      fail "Cannot run docker task inside a development container"
+    fi
   fi
 
   if ! _is_docker_installed; then
@@ -18,27 +24,30 @@ docker() {
 
   _ensure_docker_daemon_is_running
 
-  if [ -z "$KANO_DOCKER_FILE" ]; then
-    export KANO_DOCKER_FILE="$KANO_PROJECT_DIRECTORY/Dockerfile"
-  fi
-
-  if [ -z "$KANO_DOCKER_IMAGE" ]; then
-    export KANO_DOCKER_IMAGE="$KANO_PROJECT_NAME-dev"
-  fi
-
-  if [ -z "$KANO_DOCKER_CONTAINER" ]; then
-    export KANO_DOCKER_CONTAINER="$KANO_PROJECT_NAME-dev-container"
-  fi
-
-  if [ -z "$KANO_DOCKER_TAG" ]; then
-    export KANO_DOCKER_TAG="latest"
-  fi
-
+  export KANO_DOCKER_FILE="${KANO_DOCKER_FILE:-"$KANO_PROJECT_DIRECTORY/Dockerfile"}"
+  export KANO_DOCKER_IMAGE="${KANO_DOCKER_IMAGE:-"$KANO_PROJECT_NAME-dev"}"
+  export KANO_DOCKER_CONTAINER="${KANO_DOCKER_CONTAINER:-"$KANO_PROJECT_NAME-dev-container"}"
+  export KANO_DOCKER_TAG="${KANO_DOCKER_TAG:-latest}"
   if [ -n "$KANO_DOCKER_REGISTRY" ]; then
     WORKING_IMAGE="$KANO_DOCKER_REGISTRY/$KANO_DOCKER_IMAGE:$KANO_DOCKER_TAG"
 
   else
     WORKING_IMAGE="$KANO_DOCKER_IMAGE:$KANO_DOCKER_TAG"
+  fi
+
+  export KANO_DOCKER_USER_ID="${KANO_DOCKER_USER_ID:-"$(id -u | xargs)"}"
+  if [ -z "$KANO_DOCKER_USER_ID" ]; then
+    fail "Host user ID not found. Set \$KANO_DOCKER_USER_ID to fix"
+  fi
+
+  export KANO_DOCKER_USER_NAME="${KANO_DOCKER_USER_NAME:-"$(id -un | xargs)"}"
+  if [ -z "$KANO_DOCKER_USER_NAME" ]; then
+    fail "Host user name not found. Set \$KANO_DOCKER_USER_NAME to fix"
+  fi
+
+  export KANO_DOCKER_USER_HOME="${KANO_DOCKER_USER_HOME:-"$HOME"}"
+  if [ -z "$KANO_DOCKER_USER_HOME" ]; then
+    fail "Host user home directory not found. Set \$KANO_DOCKER_USER_HOME to fix"
   fi
 
   image() {
@@ -47,8 +56,8 @@ docker() {
         # shellcheck disable=SC2116
         fail "$(
           echo \
-            "Cannot rebuild a versioned image. Run 'kano docker pull $KANO_DOCKER_TAG' or" \
-            "unset 'KANO_DOCKER_TAG' environment variable"
+            "Cannot rebuild a versioned image." \
+            "Run 'kano docker pull' or unset '\$KANO_DOCKER_TAG'"
         )"
       fi
 
@@ -56,8 +65,8 @@ docker() {
         # shellcheck disable=SC2116
         fail "$(
           echo \
-            "No Dockerfile at '$KANO_DOCKER_FILE'. Create one or set 'KANO_DOCKER_FILE'" \
-            "environment variable to configure a different location"
+            "No Dockerfile at '$KANO_DOCKER_FILE'." \
+            "Create one or set '\$KANO_DOCKER_FILE' to configure a different location"
         )"
       fi
 
@@ -88,7 +97,7 @@ docker() {
 
     pull() {
       if [ -z "$KANO_DOCKER_REGISTRY" ]; then
-        fail "No container registry configured. Set 'KANO_DOCKER_REGISTRY' environment variable"
+        fail "No container registry configured. Set '\$KANO_DOCKER_REGISTRY'"
       fi
 
       # shellcheck disable=SC2046
@@ -97,7 +106,7 @@ docker() {
 
     push() {
       if [ -z "$KANO_DOCKER_REGISTRY" ]; then
-        fail "No container registry configured. Set 'KANO_DOCKER_REGISTRY' environment variable"
+        fail "No container registry configured. Set '\$KANO_DOCKER_REGISTRY'"
       fi
 
       # shellcheck disable=SC2046
@@ -120,22 +129,23 @@ docker() {
   container() {
     create() {
       if ! _does_image_exist; then
-        fail "Development image does not exist. Run 'kano docker image build'"
+        # shellcheck disable=SC2116
+        fail "$(
+          echo \
+            "Development image does not exist." \
+            "Run 'kano docker image build' or 'kano docker image pull'"
+        )"
       fi
 
       if _does_container_exist; then
         fail "Development container already exists"
       fi
 
-      USER_ID="$(id -u)"
-      USER_NAME="$(id -un)"
       # shellcheck disable=SC2116
-      INITIALIZATION_SCRIPT="$(
+      START_COMMAND="$(
         echo \
-          "sudo useradd" \
-          "--uid $USER_ID --gid sudo --no-create-home --home-dir $HOME $USER_NAME;" \
-          "sudo passwd --delete $USER_NAME > /dev/null;" \
-          "sudo chown -R $USER_NAME $HOME;" \
+          "sudo ln -s /opt/kano/lib/kano /usr/bin/kano;" \
+          "kano docker _init_container;" \
           "sh -c 'kill -STOP \$\$'"
       )"
 
@@ -146,14 +156,18 @@ docker() {
         --env KANO_DOCKER_IMAGE \
         --env KANO_DOCKER_TAG \
         --env KANO_DOCKER_CONTAINER \
+        --env KANO_DOCKER_USER_ID \
+        --env KANO_DOCKER_USER_NAME \
+        --env KANO_DOCKER_USER_HOME \
         --log-driver none \
         --name "$KANO_DOCKER_CONTAINER" \
         --rm \
+        --volume "$KANO_SOURCE_DIRECTORY:/opt/kano/lib" \
         --volume "$PWD:$PWD" \
         --workdir "$PWD" \
         "$@" \
         "$WORKING_IMAGE" \
-        /bin/sh -c "$INITIALIZATION_SCRIPT"
+        /bin/sh -c "$START_COMMAND"
     }
 
     rm() {
@@ -190,7 +204,7 @@ docker() {
       fi
 
       _docker container stop "$@" "$KANO_DOCKER_CONTAINER"
-      _docker container 'wait' "$KANO_DOCKER_CONTAINER" > /dev/null
+      _docker container 'wait' "$KANO_DOCKER_CONTAINER" > /dev/null 2>&1 || true
     }
 
     kill_() {
@@ -203,7 +217,7 @@ docker() {
       fi
 
       _docker container 'kill' "$@" "$KANO_DOCKER_CONTAINER"
-      _docker container 'wait' "$KANO_DOCKER_CONTAINER" > /dev/null
+      _docker container 'wait' "$KANO_DOCKER_CONTAINER" > /dev/null 2>&1 || true
     }
 
     exec_() {
@@ -336,6 +350,17 @@ docker() {
       "$@"
       ;;
   esac
+}
+
+_init_container() {
+  sudo useradd \
+    --uid "$KANO_DOCKER_USER_ID" \
+    --gid "sudo" \
+    --no-create-home \
+    --home-dir "$KANO_DOCKER_USER_HOME" \
+    "$KANO_DOCKER_USER_NAME"
+  sudo passwd --delete "$KANO_DOCKER_USER_NAME" > /dev/null
+  sudo chown -R "$KANO_DOCKER_USER_NAME" "$KANO_DOCKER_USER_HOME"
 }
 
 _insert_image_in_push_or_pull_arguments() {
