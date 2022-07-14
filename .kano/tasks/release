@@ -4,8 +4,8 @@
 . "$KANO_HELPERS/report"
 
 PACKAGE="kano"
-PACKAGE_ARCHIVE="$PACKAGE.tar.gz"
 PACKAGE_DIRECTORY="$RELEASE_DIRECTORY/$PACKAGE"
+PACKAGE_ARCHIVE="$PACKAGE.tar.gz"
 
 release_help() {
   echo "Package the build and release it to GitHub"
@@ -13,14 +13,18 @@ release_help() {
 
 release() {
   VERSION="$1"
-  GIT_NAME="$2"
-  GIT_EMAIL="$3"
-  GITHUB_ACCESS_TOKEN="$4"
 
   case "$VERSION" in
-    *.*.* | beta-*)
-      _login_to_github "$GIT_NAME" "$GIT_EMAIL" "$GITHUB_ACCESS_TOKEN"
-      _release "$VERSION"
+    local)
+      _release_local
+      ;;
+
+    beta-*)
+      _release_beta "$@"
+      ;;
+
+    *.*.*)
+      _release_public "$@"
       ;;
 
     "")
@@ -28,10 +32,121 @@ release() {
       ;;
 
     *)
-      _fail \
-        "Unknown version pattern. Must be a semantic version (x.x.x) or a beta name (beta-x)"
+      # shellcheck disable=SC2116
+      _fail "$(
+        echo \
+          "Unknown version pattern." \
+          "Must either be 'local', a beta name (beta-*) a semantic version (*.*.*)"
+      )"
       ;;
   esac
+}
+
+_release_local() {
+  _info "Creating local release"
+  _assemble_package_directory
+  CHECKSUM="$(_archive_package_directory)"
+  _success "Successfully released $PACKAGE_ARCHIVE locally. Checksum is: $CHECKSUM"
+}
+
+_release_public() {
+  VERSION="$1"
+  GIT_NAME="$2"
+  GIT_EMAIL="$3"
+  GITHUB_ACCESS_TOKEN="$4"
+
+  _info "Creating public release"
+  _assemble_package_directory
+  CHECKSUM="$(_archive_package_directory)"
+  _info "Packaged $PACKAGE_ARCHIVE. Checksum is: $CHECKSUM"
+  _login_to_github "$GIT_NAME" "$GIT_EMAIL" "$GITHUB_ACCESS_TOKEN"
+
+  DESCRIPTION="$(git tag -n100 "$VERSION" | awk '{$1=$1; print}' | cut -d ' ' -f 2-)"
+  gh release create \
+    --title "$VERSION" \
+    --notes "$DESCRIPTION" \
+    "$VERSION" "$PACKAGE_ARCHIVE"
+
+  _info "Updating package definition"
+  PROJECT_DIRECTORY="$PWD"
+  PACKAGE_INDEX_BRANCH="$PACKAGE-$VERSION"
+  gh repo clone "logisparte/homebrew-packages" "../homebrew-packages"
+  cd "../homebrew-packages" || fail
+  git checkout -b "$PACKAGE_INDEX_BRANCH"
+  LANG=C sed \
+    -e "s/\${PASCAL_CASED_PACKAGE}/$(_case_dashed_to_pascal "$PACKAGE")/g" \
+    -e "s/\${RELEASE}/$VERSION/g" \
+    -e "/version \"\${VERSION}\"/d" \
+    -e "s/\${CHECKSUM}/$CHECKSUM/g" \
+    "$PROJECT_DIRECTORY/distribution/formula.rb" > "$PACKAGE.rb"
+  git add --all
+  git commit --message "x($PACKAGE): released $VERSION"
+  git push --set-upstream origin "$PACKAGE_INDEX_BRANCH"
+  gh pr create --fill --base master
+  _success "Pull request for $PACKAGE $VERSION opened in package index"
+}
+
+_release_beta() {
+  VERSION="$1"
+  GIT_NAME="$2"
+  GIT_EMAIL="$3"
+  GITHUB_ACCESS_TOKEN="$4"
+
+  _info "Creating beta release"
+  _assemble_package_directory
+  CHECKSUM="$(_archive_package_directory)"
+  _info "Packaged $PACKAGE_ARCHIVE. Checksum is: $CHECKSUM"
+  _login_to_github "$GIT_NAME" "$GIT_EMAIL" "$GITHUB_ACCESS_TOKEN"
+
+  if gh release list | grep -q "$VERSION"; then
+    gh release delete --yes "$VERSION"
+  fi
+
+  git tag --force "$VERSION"
+  git push --tags --force
+  COMMIT="$(git rev-parse HEAD | cut -c 1-7)"
+  gh release create \
+    --prerelease \
+    --title "$VERSION" \
+    --notes "$COMMIT" \
+    "$VERSION" "$PACKAGE_ARCHIVE"
+
+  _info "Updating package definition"
+  PROJECT_DIRECTORY="$PWD"
+  BETA_PACKAGE="$PACKAGE-$VERSION"
+  PACKAGE_INDEX_BRANCH="$BETA_PACKAGE-$COMMIT"
+  gh repo clone "logisparte/homebrew-beta-packages" "../homebrew-beta-packages"
+  cd "../homebrew-beta-packages" || fail
+  git checkout -b "$PACKAGE_INDEX_BRANCH"
+  LANG=C sed \
+    -e "s/\${PASCAL_CASED_PACKAGE}/$(_case_dashed_to_pascal "$BETA_PACKAGE")/g" \
+    -e "s/\${RELEASE}/$VERSION/g" \
+    -e "s/\${VERSION}/0.0.0-$COMMIT/g" \
+    -e "s/\${CHECKSUM}/$CHECKSUM/g" \
+    "$PROJECT_DIRECTORY/distribution/formula.rb" > "$BETA_PACKAGE.rb"
+  git add --all
+  git commit --message "x($BETA_PACKAGE): released $COMMIT"
+  git push --set-upstream origin "$PACKAGE_INDEX_BRANCH"
+  gh pr create --fill --base master
+  _success "Pull request for $BETA_PACKAGE (commit $COMMIT) opened in package index"
+}
+
+_assemble_package_directory() {
+  rm -rf "$PACKAGE_DIRECTORY"
+  mkdir -p "$PACKAGE_DIRECTORY"
+
+  cp distribution/install "$PACKAGE_DIRECTORY"
+  cp distribution/uninstall "$PACKAGE_DIRECTORY"
+  cp LICENSE "$PACKAGE_DIRECTORY"
+  mkdir -p "$PACKAGE_DIRECTORY/share/doc"
+  cp -R docs/* "$PACKAGE_DIRECTORY/share/doc"
+  mkdir -p "$PACKAGE_DIRECTORY/lib"
+  cp -R "$BUILD_DIRECTORY"/* "$PACKAGE_DIRECTORY/lib"
+}
+
+_archive_package_directory() {
+  tar --create --gzip --file "$PACKAGE_ARCHIVE" --directory "$RELEASE_DIRECTORY" . > /dev/null
+  LANG=C shasum --algorithm 256 "$PACKAGE_ARCHIVE" | cut -d " " -f 1
 }
 
 _login_to_github() {
@@ -59,115 +174,6 @@ _login_to_github() {
 
   _info "Logging in to GitHub"
   echo "$GITHUB_ACCESS_TOKEN" | gh auth login --with-token
-}
-
-_release() {
-  VERSION="$1"
-
-  _info "Releasing: $VERSION"
-
-  _info "Packaging..."
-  _make_package_directory
-  tar --create --gzip --file "$PACKAGE_ARCHIVE" --directory "$RELEASE_DIRECTORY" .
-  CHECKSUM="$(shasum --algorithm 256 "$PACKAGE_ARCHIVE" | cut -d " " -f 1)"
-  _info "Packaged $PACKAGE_ARCHIVE, checksum is: $CHECKSUM"
-
-  case "$VERSION" in
-    *.*.*)
-      _release_public "$VERSION"
-      ;;
-
-    beta-*)
-      _release_beta "$VERSION"
-      ;;
-
-    *)
-      _fail "Unexpected version: $VERSION"
-      ;;
-  esac
-}
-
-_make_package_directory() {
-  rm -rf "$PACKAGE_DIRECTORY"
-  mkdir -p "$PACKAGE_DIRECTORY"
-  cp LICENSE "$PACKAGE_DIRECTORY"
-  cp distribution/install "$PACKAGE_DIRECTORY"
-  cp distribution/uninstall "$PACKAGE_DIRECTORY"
-
-  mkdir -p "$PACKAGE_DIRECTORY/share/doc"
-  cp -R docs/* "$PACKAGE_DIRECTORY/share/doc"
-
-  mkdir -p "$PACKAGE_DIRECTORY/libexec"
-  cp -R "$BUILD_DIRECTORY"/* "$PACKAGE_DIRECTORY/libexec"
-}
-
-_release_public() {
-  TAG="$1"
-
-  _info "Creating public release"
-  DESCRIPTION="$(git tag -n100 "$TAG" | awk '{$1=$1; print}' | cut -d ' ' -f 2-)"
-  gh release create \
-    --title "$TAG" \
-    --notes "$DESCRIPTION" \
-    "$TAG" "$PACKAGE_ARCHIVE"
-
-  _info "Updating package definition"
-  PROJECT_DIRECTORY="$PWD"
-  PACKAGE_INDEX_BRANCH="$PACKAGE-$TAG"
-  gh repo clone "logisparte/homebrew-packages" "../homebrew-packages"
-  cd "../homebrew-packages" || fail
-  git checkout -b "$PACKAGE_INDEX_BRANCH"
-  LANG=C sed \
-    -e "s/\${PASCAL_CASED_PACKAGE}/$(_case_dashed_to_pascal "$PACKAGE")/g" \
-    -e "s/\${RELEASE}/$TAG/g" \
-    -e "/version \"\${VERSION}\"/d" \
-    -e "s/\${CHECKSUM}/$CHECKSUM/g" \
-    "$PROJECT_DIRECTORY/distribution/formula.rb" > "$PACKAGE.rb"
-  git add --all
-  git commit --message "x($PACKAGE): released $TAG"
-  git push --set-upstream origin "$PACKAGE_INDEX_BRANCH"
-  gh pr create --fill --base master
-  _success "Pull request for $PACKAGE $TAG opened in package index"
-}
-
-_release_beta() {
-  BETA_TAG="$1"
-
-  if gh release list | grep -q "$BETA_TAG"; then
-    _info "Updating beta release"
-    gh release delete --yes "$BETA_TAG"
-
-  else
-    _info "Creating beta release"
-  fi
-
-  git tag --force "$BETA_TAG"
-  git push --tags --force
-  COMMIT="$(git rev-parse HEAD | cut -c 1-7)"
-  gh release create \
-    --prerelease \
-    --title "$BETA_TAG" \
-    --notes "$COMMIT" \
-    "$BETA_TAG" "$PACKAGE_ARCHIVE"
-
-  _info "Updating package definition"
-  PROJECT_DIRECTORY="$PWD"
-  BETA_PACKAGE="$PACKAGE-$BETA_TAG"
-  PACKAGE_INDEX_BRANCH="$BETA_PACKAGE-$COMMIT"
-  gh repo clone "logisparte/homebrew-beta-packages" "../homebrew-beta-packages"
-  cd "../homebrew-beta-packages" || fail
-  git checkout -b "$PACKAGE_INDEX_BRANCH"
-  LANG=C sed \
-    -e "s/\${PASCAL_CASED_PACKAGE}/$(_case_dashed_to_pascal "$BETA_PACKAGE")/g" \
-    -e "s/\${RELEASE}/$BETA_TAG/g" \
-    -e "s/\${VERSION}/0.0.0-$COMMIT/g" \
-    -e "s/\${CHECKSUM}/$CHECKSUM/g" \
-    "$PROJECT_DIRECTORY/distribution/formula.rb" > "$BETA_PACKAGE.rb"
-  git add --all
-  git commit --message "x($BETA_PACKAGE): released $COMMIT"
-  git push --set-upstream origin "$PACKAGE_INDEX_BRANCH"
-  gh pr create --fill --base master
-  _success "Pull request for $BETA_PACKAGE (commit $COMMIT) opened in package index"
 }
 
 _case_dashed_to_pascal() {
