@@ -10,10 +10,10 @@ class ${PASCAL_CASED_PACKAGE} < Formula
   depends_on "git" => :optional
 
   def install
-    libexec.install Dir["libexec/*"]
+    lib.install Dir["lib/*"]
     doc.install Dir["share/doc/*"]
     prefix.install "LICENSE"
-    bin.write_exec_script (libexec/"kano")
+    bin.write_exec_script (lib/"kano")
   end
 
   def caveats
