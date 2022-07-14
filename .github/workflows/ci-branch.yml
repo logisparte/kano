@@ -38,12 +38,6 @@ jobs:
       - name: Build branch development image
         run: kano docker image build
 
-      - name: Patch user in container
-        run: |
-          kano docker container create
-          kano docker container start
-          docker container exec kano-dev-container sudo cat /etc/passwd
-
       - name: Build project
         run: kano dockered build
 
