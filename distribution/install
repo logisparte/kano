@@ -1,7 +1,8 @@
 #!/bin/sh -e
 
-INSTALLATION_DIRECTORY="/usr/local/opt/kano"
-EXECUTABLE_DIRECTORY="/usr/local/bin"
+LEGACY_INSTALLATION_DIRECTORY="/usr/local/opt/kano"
+INSTALLATION_DIRECTORY="/opt/kano"
+EXECUTABLE_DIRECTORY="/usr/bin"
 THIS_DIRECTORY="$(dirname "$0")"
 
 install() {
@@ -11,6 +12,10 @@ install() {
 }
 
 _uninstall_previous_installation_if_any() {
+  if [ -f "$LEGACY_INSTALLATION_DIRECTORY/uninstall" ]; then
+    "$LEGACY_INSTALLATION_DIRECTORY/uninstall"
+  fi
+
   if [ -f "$INSTALLATION_DIRECTORY/uninstall" ]; then
     "$INSTALLATION_DIRECTORY/uninstall"
   fi
@@ -18,11 +23,8 @@ _uninstall_previous_installation_if_any() {
 
 _install_current_package() {
   mkdir -p "$INSTALLATION_DIRECTORY"
-  cp -R "$THIS_DIRECTORY/libexec" "$INSTALLATION_DIRECTORY"
-  cp -R "$THIS_DIRECTORY/share" "$INSTALLATION_DIRECTORY"
-  cp "$THIS_DIRECTORY/LICENSE" "$INSTALLATION_DIRECTORY"
-  cp "$THIS_DIRECTORY/uninstall" "$INSTALLATION_DIRECTORY"
-  ln -s "$INSTALLATION_DIRECTORY/libexec/kano" "$EXECUTABLE_DIRECTORY/kano"
+  cp -R "$THIS_DIRECTORY"/* "$INSTALLATION_DIRECTORY"
+  ln -s "$INSTALLATION_DIRECTORY/lib/kano" "$EXECUTABLE_DIRECTORY/kano"
 }
 
 _test_installation() {
