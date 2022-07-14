@@ -15,12 +15,11 @@ Utiliser la tâche `docker` pour travailler dans un conteneur de développement 
 - Le projet doit contenir un `Dockerfile` à part duquel l'image de développement sera bâtie
 - L'image doit contenir toutes les dépendances du projet
 - Le conteneur de développement sera créé à partir de l'image
+- Par défaut, `kano` s'auto-montera dans le conteneur
 - Par défaut, le conteneur montera le répertoire du projet
 - Le conteneur peut aussi monter plusieurs répertoires, fichiers et variables d'environnement de
   l'hôte, personnalisables par l'utilisateur, optionnellement via une tâche kano de portée
   externe au projet
-- Pour utiliser `kano` à l'intérieur du conteneur, il doit aussi y être installé (jusqu'à ce que
-  la fonctionnalité d'auto-montage soit implémentée)
 
 <!-- markdownlint-disable line-length -->
 
@@ -49,8 +48,7 @@ créer le conteneur de développement
 
 L'image de développement devrait contenir toutes les dépendances **systèmes** du projet.
 Idéalement, un nouveau contributeur n'aurait qu'à avoir `git`, `docker` et `kano` d'installé sur
-sa machine hôte. Toutes les autres dépendances système devraient être installé dans l'image,
-incluant `kano` (jusqu'à ce que la fonctionnalité d'auto-montage soit implémentée)
+sa machine hôte. Toutes les autres dépendances système devraient être installé dans l'image
 
 #### image build
 

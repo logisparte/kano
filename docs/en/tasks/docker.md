@@ -15,11 +15,10 @@ Use the `docker` task to work in an isolated development docker container
 - The project must contain a `Dockerfile` from which the developement image will be built
 - The image must contain all of the project's dependencies
 - The container will be created from the image
+- By default, `kano` will mount itself in the container
 - By default, the container will mount the project directory
 - The container can also mount various host directories, files and environment variables,
-  customizable by the user, optionally through higher `kano` scopes
-- To use kano inside the container, `kano` must be installed in it too (until the self-mount
-  feature is implemented)
+  customizable by the user, optionally through other `kano` scopes
 
 | Variable                | Description                 | Default                         |
 | :---------------------- | :-------------------------- | :------------------------------ |
@@ -28,6 +27,9 @@ Use the `docker` task to work in an isolated development docker container
 | `KANO_DOCKER_IMAGE`     | Development image name      | `${PROJECT_NAME}-dev`           |
 | `KANO_DOCKER_CONTAINER` | Development container name  | `${PROJECT_NAME}-dev-container` |
 | `KANO_DOCKER_TAG`       | Image tag to work with      | `latest`                        |
+| `KANO_DOCKER_USER_ID`   | Host user ID                | `$(id -u)`                      |
+| `KANO_DOCKER_USER_NAME` | Host user name              | `$(id -un)`                     |
+| `KANO_DOCKER_USER_HOME` | Host user home directory    | `$HOME`                         |
 
 > The variable `KANO_DOCKER` will be set to `true` inside the container
 
@@ -43,8 +45,7 @@ development container
 
 The development image should contain all of the project's system dependencies. Ideally, a new
 contributor should only be required to have `git`, `docker` and `kano` installed on the host
-machine. Everything else should be installed inside the image, including `kano` (until the
-self-mount feature is implemented)
+machine. Everything else should be installed inside the image
 
 #### image build
 
@@ -156,6 +157,7 @@ project's `.kano/environment` file). This container will also:
 - Be ephemeral
 - Be non-interactive
 - Not create log files
+- Mount `kano` itself
 - Mount the project directory as a volume
 - Set the project directory as its working directory
 - Have a password-less sudo user with the same name and home directory as the host user
