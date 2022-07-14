@@ -15,15 +15,38 @@ Describe "dockered"
     %preserve kano_called_with
   }
 
+  before_all() {
+    export INITIAL_KANO_DOCKER="$KANO_DOCKER"
+    export KANO_DOCKER=
+  }
+
+  after_all() {
+    export KANO_DOCKER="$INITIAL_KANO_DOCKER"
+  }
+
+  BeforeAll "before_all"
+  AfterAll "after_all"
+
   It "has a help message"
     When run dockered_help
     The status should be success
     The output should equal "Run a kano task in a docker container"
   End
 
-  It "should delegate to docker task"
-    When run dockered some_command
-    The status should be success
-    The variable kano_called_with should equal "docker execute kano some_command"
+  Context "when not in a docker container"
+    It "should delegate to 'docker execute'"
+      When run dockered some_command
+      The status should be success
+      The variable kano_called_with should equal "docker execute kano some_command"
+    End
+  End
+
+  Context "when already in a docker container"
+    export KANO_DOCKER=true
+    It "should run task"
+      When run dockered some_command
+      The status should be success
+      The variable kano_called_with should equal "some_command"
+    End
   End
 End

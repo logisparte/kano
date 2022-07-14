@@ -5,7 +5,12 @@ dockered_help() {
 }
 
 dockered() {
-  _kano docker execute kano "$@"
+  if [ "$KANO_DOCKER" = true ]; then
+    _kano "$@"
+
+  else
+    _kano docker execute kano "$@"
+  fi
 }
 
 _kano() {
