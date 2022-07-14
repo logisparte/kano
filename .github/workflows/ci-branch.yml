@@ -40,12 +40,9 @@ jobs:
 
       - name: Patch user in container
         run: |
-          kano docker container create \
-            --env KANO_DOCKER_USER_ID="$(id -u)" \
-            --env KANO_DOCKER_USER_NAME="$(id -un)" \
-            --env KANO_DOCKER_USER_HOME="$HOME"
+          kano docker container create
           kano docker container start
-          kano docker exec "$PWD/sources/kano" docker _init_container
+          docker container exec sudo cat /etc/passwd
 
       - name: Build project
         run: kano dockered build
