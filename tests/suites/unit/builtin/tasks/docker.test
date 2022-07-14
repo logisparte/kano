@@ -75,27 +75,36 @@ Describe "docker"
   IS_CONTAINER_RUNNING=false
 
   before_all() {
+    export INITIAL_KANO_DOCKER="$KANO_DOCKER"
     export INITIAL_KANO_DOCKER_FILE="$KANO_DOCKER_FILE"
     export INITIAL_KANO_DOCKER_REGISTRY="$KANO_DOCKER_REGISTRY"
     export INITIAL_KANO_DOCKER_IMAGE="$KANO_DOCKER_IMAGE"
     export INITIAL_KANO_DOCKER_TAG="$KANO_DOCKER_TAG"
     export INITIAL_KANO_DOCKER_CONTAINER="$KANO_DOCKER_CONTAINER"
-    export INITIAL_KANO_DOCKER="$KANO_DOCKER"
+    export INITIAL_KANO_DOCKER_USER_ID="$KANO_DOCKER_USER_ID"
+    export INITIAL_KANO_DOCKER_USER_NAME="$KANO_DOCKER_USER_NAME"
+    export INITIAL_KANO_DOCKER_USER_HOME="$KANO_DOCKER_USER_HOME"
+    export KANO_DOCKER=
     export KANO_DOCKER_FILE=
     export KANO_DOCKER_REGISTRY=
     export KANO_DOCKER_IMAGE=
     export KANO_DOCKER_TAG=
     export KANO_DOCKER_CONTAINER=
-    export KANO_DOCKER=
+    export KANO_DOCKER_USER_ID=
+    export KANO_DOCKER_USER_NAME=
+    export KANO_DOCKER_USER_HOME=
   }
 
   after_all() {
+    export KANO_DOCKER="$INITIAL_KANO_DOCKER"
     export KANO_DOCKER_FILE="$INITIAL_KANO_DOCKER_FILE"
     export KANO_DOCKER_REGISTRY="$INITIAL_KANO_DOCKER_REGISTRY"
     export KANO_DOCKER_IMAGE="$INITIAL_KANO_DOCKER_IMAGE"
     export KANO_DOCKER_TAG="$INITIAL_KANO_DOCKER_TAG"
     export KANO_DOCKER_CONTAINER="$INITIAL_KANO_DOCKER_CONTAINER"
-    export KANO_DOCKER="$INITIAL_KANO_DOCKER"
+    export KANO_DOCKER_USER_ID="$INITIAL_KANO_DOCKER_USER_ID"
+    export KANO_DOCKER_USER_NAME="$INITIAL_KANO_DOCKER_USER_NAME"
+    export KANO_DOCKER_USER_HOME="$INITIAL_KANO_DOCKER_USER_HOME"
   }
 
   BeforeAll "before_all"
@@ -109,11 +118,59 @@ Describe "docker"
 
   Context "when inside a container"
     KANO_DOCKER=true
-    It "should fail with the expected error message"
-      When run docker
-      The status should be failure
-      The variable fail_called_with should equal \
-        "Cannot run docker task inside a development container"
+    Context "when subcommand is not '_init_container'"
+      It "should fail with the expected error message"
+        When run docker some_command
+        The status should be failure
+        The variable fail_called_with should equal \
+          "Cannot run docker task inside a development container"
+      End
+    End
+
+    Context "when subcommand is '_init_container'"
+      sudo() {
+        "$@"
+      }
+
+      useradd() {
+        # shellcheck disable=SC2034
+        useradd_called_with="$*"
+        %preserve useradd_called_with
+      }
+
+      passwd() {
+        # shellcheck disable=SC2034
+        passwd_called_with="$*"
+        %preserve passwd_called_with
+      }
+
+      chown() {
+        # shellcheck disable=SC2034
+        chown_called_with="$*"
+        %preserve chown_called_with
+      }
+
+      export KANO_DOCKER_USER_ID="1001"
+      export KANO_DOCKER_USER_NAME="some-user"
+      export KANO_DOCKER_USER_HOME="/home/some-user"
+      It "should create host user as passwordless sudo"
+        When run docker _init_container
+        The status should be success
+        The variable useradd_called_with should equal "$(
+          echo \
+            "--uid $KANO_DOCKER_USER_ID" \
+            "--gid sudo" \
+            "--no-create-home" \
+            "--home-dir $KANO_DOCKER_USER_HOME" \
+            "$KANO_DOCKER_USER_NAME"
+        )"
+        The variable passwd_called_with should equal "--delete $KANO_DOCKER_USER_NAME"
+        The variable chown_called_with should equal \
+          "-R $KANO_DOCKER_USER_NAME $KANO_DOCKER_USER_HOME"
+      End
+      export KANO_DOCKER_USER_ID=
+      export KANO_DOCKER_USER_NAME=
+      export KANO_DOCKER_USER_HOME=
     End
   End
 
@@ -134,6 +191,70 @@ Describe "docker"
     End
   End
 
+  Context "when \$KANO_DOCKER_USER_ID is not defined"
+    export KANO_DOCKER_USER_ID=
+    Context "when user ID cannot be determined"
+      id() {
+        case "$1" in
+          -u)
+            false
+            ;;
+
+          *)
+            command id "$@"
+            ;;
+        esac
+      }
+
+      It "should fail with the expected error message"
+        When run docker container create
+        The status should be failure
+        The variable fail_called_with should equal \
+          "Host user ID not found. Set \$KANO_DOCKER_USER_ID to fix"
+      End
+    End
+  End
+
+  Context "when \$KANO_DOCKER_USER_NAME is not defined"
+    export KANO_DOCKER_USER_NAME=
+    Context "when user name cannot be determined"
+      id() {
+        case "$1" in
+          -un)
+            false
+            ;;
+
+          *)
+            command id "$@"
+            ;;
+        esac
+      }
+
+      It "should fail with the expected error message"
+        When run docker container create
+        The status should be failure
+        The variable fail_called_with should equal \
+          "Host user name not found. Set \$KANO_DOCKER_USER_NAME to fix"
+      End
+    End
+  End
+
+  Context "when \$KANO_DOCKER_USER_HOME is not defined"
+    export KANO_DOCKER_USER_HOME=
+    Context "when user home directory cannot be determined"
+      INITIAL_HOME="$HOME"
+      export HOME=
+      It "should fail with the expected error message"
+        When run docker container create
+        The status should be failure
+        The variable fail_called_with should equal \
+          "Host user home directory not found. Set \$KANO_DOCKER_USER_HOME to fix"
+      End
+
+      export HOME="$INITIAL_HOME"
+    End
+  End
+
   Describe "image"
     Describe "build"
       Context "when configured tag is not 'latest'"
@@ -141,10 +262,11 @@ Describe "docker"
         It "should fail with the expected error message"
           When run docker image build
           The status should be failure
+          # shellcheck disable=SC2116
           The variable fail_called_with should equal "$(
             echo \
-              "Cannot rebuild a versioned image. Run 'kano docker pull $KANO_DOCKER_TAG' or" \
-              "unset 'KANO_DOCKER_TAG' environment variable" \
+              "Cannot rebuild a versioned image." \
+              "Run 'kano docker pull' or unset '\$KANO_DOCKER_TAG'"
           )"
         End
       End
@@ -154,10 +276,11 @@ Describe "docker"
         It "should fail with the expected error message"
           When run docker image build
           The status should be failure
+          # shellcheck disable=SC2116
           The variable fail_called_with should equal "$(
             echo \
-              "No Dockerfile at '$DEFAULT_FILE'. Create one or set 'KANO_DOCKER_FILE'" \
-              "environment variable to configure a different location" \
+              "No Dockerfile at '$DEFAULT_FILE'." \
+              "Create one or set '\$KANO_DOCKER_FILE' to configure a different location"
           )"
         End
       End
@@ -337,7 +460,7 @@ Describe "docker"
           When run docker image pull
           The status should be failure
           The variable fail_called_with should equal \
-            "No container registry configured. Set 'KANO_DOCKER_REGISTRY' environment variable"
+            "No container registry configured. Set '\$KANO_DOCKER_REGISTRY'"
         End
       End
 
@@ -437,7 +560,7 @@ Describe "docker"
           When run docker image push
           The status should be failure
           The variable fail_called_with should equal \
-            "No container registry configured. Set 'KANO_DOCKER_REGISTRY' environment variable"
+            "No container registry configured. Set '\$KANO_DOCKER_REGISTRY'"
         End
       End
 
@@ -553,8 +676,12 @@ Describe "docker"
         It "should fail with the expected error message"
           When run docker container create
           The status should be failure
-          The variable fail_called_with should equal \
-            "Development image does not exist. Run 'kano docker image build'"
+          # shellcheck disable=SC2116
+          The variable fail_called_with should equal "$(
+            echo \
+              "Development image does not exist." \
+              "Run 'kano docker image build' or 'kano docker image pull'"
+          )"
         End
       End
 
@@ -570,14 +697,12 @@ Describe "docker"
         End
 
         Context "when container does not exist"
+          # shellcheck disable=SC2116
           START_COMMAND="$(
             echo \
-              "/bin/sh -c" \
-              "sudo useradd" \
-                "--uid $(id -u) --gid sudo --no-create-home --home-dir $HOME $(id -un);" \
-              "sudo passwd --delete $(id -un) > /dev/null;" \
-              "sudo chown -R $(id -un) $HOME;" \
-              "sh -c 'kill -STOP \$\$'" \
+              "sudo ln -s /opt/kano/lib/kano /usr/bin/kano;" \
+              "kano docker _init_container;" \
+              "sh -c 'kill -STOP \$\$'"
           )"
 
           It "should create container"
@@ -585,15 +710,23 @@ Describe "docker"
             The status should be success
             The variable docker_called_with should start_with "container create"
             The variable docker_called_with should include "--env KANO_DOCKER=true"
+            The variable docker_called_with should include "--env KANO_DOCKER_FILE"
+            The variable docker_called_with should include "--env KANO_DOCKER_REGISTRY"
             The variable docker_called_with should include "--env KANO_DOCKER_IMAGE"
+            The variable docker_called_with should include "--env KANO_DOCKER_TAG"
             The variable docker_called_with should include "--env KANO_DOCKER_CONTAINER"
+            The variable docker_called_with should include "--env KANO_DOCKER_USER_ID"
+            The variable docker_called_with should include "--env KANO_DOCKER_USER_NAME"
+            The variable docker_called_with should include "--env KANO_DOCKER_USER_HOME"
             The variable docker_called_with should include "--log-driver none"
             The variable docker_called_with should include "--name $DEFAULT_CONTAINER"
             The variable docker_called_with should include "--rm"
+            The variable docker_called_with should include \
+              "--volume $KANO_SOURCE_DIRECTORY:/opt/kano/lib"
             The variable docker_called_with should include "--volume $PWD:$PWD"
             The variable docker_called_with should include "--workdir $PWD"
             The variable docker_called_with should end_with \
-              "$DEFAULT_IMAGE:latest $START_COMMAND"
+              "$DEFAULT_IMAGE:latest /bin/sh -c $START_COMMAND"
           End
 
           Context "when passing extra docker flags and options"
@@ -606,7 +739,7 @@ Describe "docker"
               The variable docker_called_with should include "--some-docker-option some_value"
               The variable docker_called_with should include "--some-docker-flag"
               The variable docker_called_with should end_with \
-                "$DEFAULT_IMAGE:latest $START_COMMAND"
+                "$DEFAULT_IMAGE:latest /bin/sh -c $START_COMMAND"
             End
           End
 
@@ -617,7 +750,7 @@ Describe "docker"
               When run docker container create
               The status should be success
               The variable docker_called_with should end_with \
-                "$SOME_REGISTRY/$DEFAULT_IMAGE:latest $START_COMMAND"
+                "$SOME_REGISTRY/$DEFAULT_IMAGE:latest /bin/sh -c $START_COMMAND"
             End
           End
 
@@ -628,7 +761,7 @@ Describe "docker"
               When run docker container create
               The status should be success
               The variable docker_called_with should end_with \
-                "$SOME_CUSTOM_IMAGE_NAME:latest $START_COMMAND"
+                "$SOME_CUSTOM_IMAGE_NAME:latest /bin/sh -c $START_COMMAND"
             End
           End
 
@@ -639,7 +772,7 @@ Describe "docker"
               When run docker container create
               The status should be success
               The variable docker_called_with should end_with \
-                "$DEFAULT_IMAGE:$SOME_TAG $START_COMMAND"
+                "$DEFAULT_IMAGE:$SOME_TAG /bin/sh -c $START_COMMAND"
             End
           End
 
@@ -654,7 +787,7 @@ Describe "docker"
               When run docker container create
               The status should be success
               The variable docker_called_with should end_with \
-                "$SOME_REGISTRY/$SOME_CUSTOM_IMAGE_NAME:$SOME_TAG $START_COMMAND"
+                "$SOME_REGISTRY/$SOME_CUSTOM_IMAGE_NAME:$SOME_TAG /bin/sh -c $START_COMMAND"
             End
           End
 
@@ -829,6 +962,7 @@ Describe "docker"
           It "should stop container"
             When run docker container stop
             The status should be success
+            # shellcheck disable=SC2116
             The variable docker_called_with should equal "$(
               echo \
                 "container stop $DEFAULT_CONTAINER" \
@@ -842,6 +976,7 @@ Describe "docker"
                 --some-docker-option some_value \
                 --some-docker-flag
               The status should be success
+              # shellcheck disable=SC2116
               The variable docker_called_with should equal "$(
                 echo \
                   "container stop" \
@@ -859,6 +994,7 @@ Describe "docker"
             It "should stop container with custom name"
               When run docker container stop
               The status should be success
+              # shellcheck disable=SC2116
               The variable docker_called_with should equal "$(
                 echo \
                   "container stop $SOME_CUSTOM_CONTAINER_NAME" \
@@ -902,6 +1038,7 @@ Describe "docker"
           It "should kill container"
             When run docker container 'kill'
             The status should be success
+            # shellcheck disable=SC2116
             The variable docker_called_with should equal "$(
               echo \
                 "container kill $DEFAULT_CONTAINER" \
@@ -915,6 +1052,7 @@ Describe "docker"
                 --some-docker-option some_value \
                 --some-docker-flag
               The status should be success
+              # shellcheck disable=SC2116
               The variable docker_called_with should equal "$(
                 echo \
                   "container kill" \
@@ -932,6 +1070,7 @@ Describe "docker"
             It "should kill container with custom name"
               When run docker container 'kill'
               The status should be success
+              # shellcheck disable=SC2116
               The variable docker_called_with should equal "$(
                 echo \
                   "container kill $SOME_CUSTOM_CONTAINER_NAME" \
@@ -1034,6 +1173,7 @@ Describe "docker"
         It "should build image, create container and start container"
           When run docker boot
           The status should be success
+          # shellcheck disable=SC2116
           The variable kano_called_with should equal "$(
             echo \
               "docker image build" \
@@ -1048,6 +1188,7 @@ Describe "docker"
         It "should pull image, create container and start container"
           When run docker boot
           The status should be success
+          # shellcheck disable=SC2116
           The variable kano_called_with should equal "$(
             echo \
               "docker image pull" \
@@ -1064,6 +1205,7 @@ Describe "docker"
         It "should create container and start container"
           When run docker boot
           The status should be success
+          # shellcheck disable=SC2116
           The variable kano_called_with should equal "$(
             echo \
               "docker container create" \
@@ -1100,6 +1242,7 @@ Describe "docker"
     It "should boot and exec command"
       When run docker execute "$SOME_COMMAND" "$SOME_PARAMETER"
       The status should be success
+      # shellcheck disable=SC2116
       The variable kano_called_with should equal "$(
         echo \
           "docker boot" \
@@ -1109,7 +1252,7 @@ Describe "docker"
   End
 
   Describe "shell"
-    Context "when SHELL environment variable is not defined"
+    Context "when \$SHELL is not defined"
       export SHELL=
       It "exececute sh"
         When run docker shell
@@ -1119,7 +1262,7 @@ Describe "docker"
       End
     End
 
-    Context "when SHELL environment variable is defined"
+    Context "when \$SHELL is defined"
       SOME_SHELL="some_shell"
       export SHELL="$SOME_SHELL"
       It "exececute same shell as host's"
@@ -1156,6 +1299,7 @@ Describe "docker"
           It "should delete container and delete image"
             When run docker clean
             The status should be success
+            # shellcheck disable=SC2116
             The variable kano_called_with should equal "$(
               echo \
                 "docker container rm" \
@@ -1169,6 +1313,7 @@ Describe "docker"
           It "should kill container, delete container and delete image"
             When run docker clean
             The status should be success
+            # shellcheck disable=SC2116
             The variable kano_called_with should equal "$(
               echo \
                 "docker container kill" \
