@@ -1,0 +1,54 @@
+#!/bin/sh
+
+. "$KANO_HELPERS/colorize"
+. "$KANO_HELPERS/report"
+
+pre_commit_help() {
+  echo "Format and lint code about to be commited"
+}
+
+pre_commit() {
+  _stash_unstaged_files
+  _format
+  _lint
+  _unstash_unstaged_files
+}
+
+_stash_unstaged_files() {
+  _info "Stashing unstaged changes"
+  git stash push \
+    --include-untracked \
+    --keep-index \
+    --message "pre_commit: unstaged changes" \
+    --quiet
+}
+
+_format() {
+  _emphasis_info ">>"
+  kano format
+  git add .
+  _emphasis_info "<<"
+}
+
+_lint() {
+  _emphasis_info ">>"
+  kano lint
+  _emphasis_info "<<"
+}
+
+_unstash_unstaged_files() {
+  _info "Unstashing unstaged changes"
+  git stash pop --quiet
+}
+
+_info() {
+  MESSAGE="$1"
+
+  report info "[pre_commit] $MESSAGE"
+}
+
+_emphasis_info() {
+  MESSAGE="$1"
+
+  report message "$(colorize "[pre_commit]" cyan) $(colorize "$MESSAGE" bold_white)"
+}

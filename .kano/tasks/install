@@ -1,0 +1,17 @@
+#!/bin/sh
+
+. "$KANO_HELPERS/report"
+
+install_help() {
+  echo "Install git hooks"
+}
+
+install() {
+  _install_git_hooks
+}
+
+_install_git_hooks() {
+  report info "[install] Installing git hooks"
+  git config --local core.hooksPath "$KANO_PROJECT_DIRECTORY/hooks"
+  report success "[install] Successfully installed git hooks"
+}
