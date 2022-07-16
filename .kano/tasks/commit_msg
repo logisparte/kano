@@ -1,0 +1,9 @@
+#!/bin/sh
+
+commit_msg_help() {
+  echo "Lint submitted commit message"
+}
+
+commit_msg() {
+  commitlint --edit "$1"
+}

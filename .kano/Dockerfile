@@ -6,23 +6,24 @@ LABEL org.opencontainers.image.description="kano's development image"
 LABEL org.opencontainers.image.authors="@logisparte"
 LABEL org.opencontainers.image.source="https://github.com/logisparte/kano"
 
-RUN sudo apt-get update
+FROM base AS markdownlint_prettier_commitlint
 
-FROM base AS markdownlint_prettier
-
-RUN <<eof
+RUN <<EOF
   curl --silent --show-error --location https://deb.nodesource.com/setup_lts.x \
     | sudo bash -
-  DEBIAN_FRONTEND=noninteractive sudo apt-get install --yes --quiet --no-install-recommends \
+  DEBIAN_FRONTEND=noninteractive \
+  sudo apt-get update \
+  && sudo apt-get install --yes --quiet --no-install-recommends \
     nodejs
   sudo npm config set update-notifier=false fund=false
-  sudo npm install --location=global --no-optional \
+  sudo npm install --location=global --omit=dev --omit=optional \
     markdownlint-cli@0.31.1 \
-    prettier@2.7.1
+    prettier@2.7.1 \
+    @commitlint/cli@17.0.3
   sudo npm cache clean --force
-eof
+EOF
 
-FROM markdownlint_prettier AS shfmt
+FROM markdownlint_prettier_commitlint AS shfmt
 
 ARG TARGETARCH
 
@@ -30,7 +31,7 @@ ENV GOBIN="/usr/bin"
 ENV GOPATH="/usr/lib/go"
 ENV GOPROXY="direct"
 
-RUN <<eof
+RUN <<EOF
   case "$TARGETARCH" in
     amd64)
       GO_ARCHITECTURE="amd64"
@@ -52,29 +53,33 @@ RUN <<eof
   sudo ln -s "/opt/go/bin/go" "/usr/bin/go"
   sudo -E go install mvdan.cc/sh/v3/cmd/shfmt@v3.5.1
   sudo -E go clean --cache
-eof
+EOF
 
 FROM shfmt AS shellcheck
 
-RUN <<eof
-  DEBIAN_FRONTEND=noninteractive sudo apt-get install --yes --quiet --no-install-recommends \
+RUN <<EOF
+  DEBIAN_FRONTEND=noninteractive \
+  sudo apt-get update \
+  && sudo apt-get install --yes --quiet --no-install-recommends \
     shellcheck
-eof
+EOF
 
 FROM shellcheck AS shellspec
 
-RUN <<eof
+RUN <<EOF
   curl --silent --show-error --location https://git.io/shellspec \
     | sudo sh -s 0.28.1 --dir /opt/shellspec --bin /usr/bin --yes
-eof
+EOF
 
 FROM base AS kcov_builder
 
-RUN <<eof
+RUN <<EOF
   KCOV_VERSION="40"
   KCOV_DIRECTORY="kcov-$KCOV_VERSION"
   KCOV_BUILD_DIRECTORY="$KCOV_DIRECTORY/build"
-  DEBIAN_FRONTEND=noninteractive sudo apt-get install --yes --quiet --no-install-recommends \
+  DEBIAN_FRONTEND=noninteractive \
+  sudo apt-get update \
+  && sudo apt-get install --yes --quiet --no-install-recommends \
     binutils-dev \
     build-essential \
     cmake \
@@ -88,23 +93,25 @@ RUN <<eof
       | sudo tar --extract --gzip
   sudo cmake -B "$KCOV_BUILD_DIRECTORY" -Wno-dev "$KCOV_DIRECTORY"
   sudo cmake --build "$KCOV_BUILD_DIRECTORY" --target install
-eof
+EOF
 
 FROM shellspec AS kcov
 
 COPY --from=kcov_builder /usr/local/bin/kcov* /usr/bin/
 
-RUN <<eof
-  DEBIAN_FRONTEND=noninteractive sudo apt-get install --yes --quiet --no-install-recommends \
+RUN <<EOF
+  DEBIAN_FRONTEND=noninteractive \
+  sudo apt-get update \
+  && sudo apt-get install --yes --quiet --no-install-recommends \
     binutils \
     libcurl4 \
     libdw1 \
     zlib1g
-eof
+EOF
 
 FROM kcov AS cleanup
 
-RUN <<eof
+RUN <<EOF
   sudo apt-get clean
   sudo rm -rf /var/lib/apt/lists/*
-eof
+EOF
