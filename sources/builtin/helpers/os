@@ -1,0 +1,39 @@
+#!/bin/sh
+
+. "$KANO_ROOT_DIRECTORY/builtin/helpers/fail"
+
+os() {
+  COMMAND="$1"
+
+  is_macos() {
+    [ "$(uname)" = "Darwin" ]
+  }
+
+  is_linux() {
+    [ "$(uname)" = "Linux" ]
+  }
+
+  is_ubuntu() {
+    is_linux && _is_distribution "ubuntu"
+  }
+
+  is_alpine() {
+    is_linux && _is_distribution "alpine"
+  }
+
+  _is_distribution() {
+    DISTRIBUTION="$1"
+
+    grep -q "$DISTRIBUTION" "/etc/os-release"
+  }
+
+  case "$COMMAND" in
+    is_macos | is_linux | is_ubuntu | is_alpine)
+      "$COMMAND"
+      ;;
+
+    *)
+      fail "Unknown 'os' subcommand: $COMMAND"
+      ;;
+  esac
+}

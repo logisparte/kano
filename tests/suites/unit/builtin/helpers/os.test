@@ -1,0 +1,125 @@
+#!/bin/sh
+
+Include "$KANO_ROOT_DIRECTORY/builtin/helpers/os"
+
+Describe "os"
+  uname() {
+    echo "$OS_TYPE"
+  }
+
+  grep() {
+    [ "$*" = "-q $DISTRIBUTION /etc/os-release" ]
+  }
+
+  fail() {
+    # shellcheck disable=SC2034
+    fail_called_with="$*"
+    %preserve fail_called_with
+    exit 1
+  }
+
+  OS_TYPE=
+  DISTRIBUTION=
+
+  Context "when unknown subcommand"
+    It "should fail with the expected error message"
+      When run os some_unknown_command
+      The status should be failure
+      The variable fail_called_with should equal "Unknown 'os' subcommand: some_unknown_command"
+    End
+  End
+
+  Describe "is_macos"
+    Context "when operating system is macOS"
+      OS_TYPE="Darwin"
+      It "should return true"
+        When run os is_macos
+        The status should be success
+      End
+    End
+
+    Context "when operating system is not macOS"
+      OS_TYPE="Linux"
+      It "should return false"
+        When run os is_macos
+        The status should be failure
+      End
+    End
+  End
+
+  Describe "is_linux"
+    Context "when operating system is Linux"
+      OS_TYPE="Linux"
+      It "should return true"
+        When run os is_linux
+        The status should be success
+      End
+    End
+
+    Context "when operating system is not Linux"
+      OS_TYPE="macOS"
+      It "should return false"
+        When run os is_linux
+        The status should be failure
+      End
+    End
+  End
+
+  Describe "is_ubuntu"
+    Context "when operating system is Linux"
+      OS_TYPE="Linux"
+      Context "when operating system is Ubuntu"
+        DISTRIBUTION="ubuntu"
+        It "should return true"
+          When run os is_ubuntu
+          The status should be success
+        End
+      End
+
+      Context "when operating system is not Ubuntu"
+        DISTRIBUTION="unknown_distribution"
+        It "should return false"
+          When run os is_ubuntu
+          The status should be success
+        End
+      End
+    End
+
+    Context "when operating system is not Linux"
+      OS_TYPE="macOS"
+      It "should return false"
+        When run os is_ubuntu
+        The status should be failure
+      End
+    End
+  End
+
+  Describe "is_alpine"
+    Context "when operating system is Linux"
+      OS_TYPE="Linux"
+      Context "when operating system is Alpine"
+        DISTRIBUTION="is_alpine"
+        It "should return true"
+          When run os is_alpine
+          The status should be success
+        End
+      End
+
+      Context "when operating system is not Alpine"
+        DISTRIBUTION="unknown_distribution"
+        It "should return false"
+          When run os is_alpine
+          The status should be success
+        End
+      End
+    End
+
+    Context "when operating system is not Linux"
+      OS_TYPE="macOS"
+      It "should return false"
+        When run os is_alpine
+        The status should be failure
+      End
+    End
+  End
+End
