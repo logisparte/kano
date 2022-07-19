@@ -1,30 +1,32 @@
 #!/bin/sh -e
 
 kano() {
-  KANO_SOURCE_DIRECTORY="$(_find_kano_installation_directory)"
-  export KANO_SOURCE_DIRECTORY
-  export KANO_BUILTIN_DIRECTORY="$KANO_SOURCE_DIRECTORY/builtin"
+  if [ -h "$0" ]; then
+    KANO_EXECUTABLE="$(readlink "$0")"
+
+  else
+    KANO_EXECUTABLE="$0"
+  fi
+
+  KANO_ROOT_DIRECTORY="$(dirname "$KANO_EXECUTABLE")"
+  export KANO_ROOT_DIRECTORY
+
+  # Deprecated, use $KANO_ROOT_DIRECTORY
+  export KANO_SOURCE_DIRECTORY="$KANO_ROOT_DIRECTORY"
+
+  # Deprecated, not intended as public variable, will be removed
+  export KANO_BUILTIN_DIRECTORY="$KANO_ROOT_DIRECTORY/builtin"
+
+  export KANO_HELPERS="$KANO_ROOT_DIRECTORY/builtin/helpers"
   export KANO_SYSTEM_DIRECTORY="/etc/kano"
   export KANO_TEAMS_DIRECTORY="$HOME/.kano_teams"
   export KANO_USER_DIRECTORY="$HOME/.kano_user"
   export KANO_PROJECT_DIRECTORY="$PWD/.kano"
-
   KANO_PROJECT_NAME="$(basename "$PWD")"
   export KANO_PROJECT_NAME
 
-  export KANO_HELPERS="$KANO_BUILTIN_DIRECTORY/helpers"
-
-  . "$KANO_SOURCE_DIRECTORY/router"
+  . "$KANO_ROOT_DIRECTORY/router"
   router route "$@"
-}
-
-_find_kano_installation_directory() {
-  KANO_EXECUTABLE="$0"
-  if [ -h "$KANO_EXECUTABLE" ]; then
-    KANO_EXECUTABLE="$(readlink "$KANO_EXECUTABLE")"
-  fi
-
-  dirname "$KANO_EXECUTABLE"
 }
 
 kano "$@"

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$KANO_SOURCE_DIRECTORY/builtin/helpers/get_absolute_directory_path"
+Include "$KANO_ROOT_DIRECTORY/builtin/helpers/get_absolute_directory_path"
 
 TEST_DATA_DIRECTORY="$TEST_DIRECTORY/data/get_absolute_directory_path_test"
 

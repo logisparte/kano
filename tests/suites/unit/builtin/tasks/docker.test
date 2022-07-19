@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$KANO_SOURCE_DIRECTORY/builtin/tasks/docker"
+Include "$KANO_ROOT_DIRECTORY/builtin/tasks/docker"
 
 Describe "docker"
   DEFAULT_FILE="$KANO_PROJECT_DIRECTORY/Dockerfile"
@@ -786,7 +786,7 @@ Describe "docker"
             The variable docker_called_with should include "--name $DEFAULT_CONTAINER"
             The variable docker_called_with should include "--rm"
             The variable docker_called_with should include \
-              "--volume $KANO_SOURCE_DIRECTORY:/opt/kano/lib"
+              "--volume $KANO_ROOT_DIRECTORY:/opt/kano/lib"
             The variable docker_called_with should include "--volume $PWD:$PWD"
             The variable docker_called_with should include "--workdir $PWD"
             The variable docker_called_with should end_with \

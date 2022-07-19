@@ -42,5 +42,4 @@ dev() {
 
 _is_kano_dev_version() {
   [ "$(readlink "$EXECUTABLE_DIRECTORY/kano")" = "$SOURCE_DIRECTORY/kano" ]
-  return $?
 }

@@ -1,9 +1,9 @@
 #!/bin/sh
 
-. "$KANO_SOURCE_DIRECTORY/builtin/helpers/does_file_exist"
-. "$KANO_SOURCE_DIRECTORY/builtin/helpers/does_symbol_exist"
-. "$KANO_SOURCE_DIRECTORY/builtin/helpers/fail"
-. "$KANO_SOURCE_DIRECTORY/scopes"
+. "$KANO_ROOT_DIRECTORY/builtin/helpers/does_file_exist"
+. "$KANO_ROOT_DIRECTORY/builtin/helpers/does_symbol_exist"
+. "$KANO_ROOT_DIRECTORY/builtin/helpers/fail"
+. "$KANO_ROOT_DIRECTORY/scopes"
 
 tasks() {
   find_scope() {

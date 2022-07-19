@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$KANO_SOURCE_DIRECTORY/builtin/helpers/succeed"
+Include "$KANO_ROOT_DIRECTORY/builtin/helpers/succeed"
 
 SOME_SUCCESS_MESSAGE="Some success message"
 

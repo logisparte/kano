@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$KANO_SOURCE_DIRECTORY/builtin/tasks/dockered"
+Include "$KANO_ROOT_DIRECTORY/builtin/tasks/dockered"
 
 Describe "dockered"
   _kano() {

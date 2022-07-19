@@ -1,7 +1,6 @@
 #!/bin/sh
 
 . "$KANO_HELPERS/does_directory_exist"
-. "$KANO_HELPERS/does_symbol_exist"
 . "$KANO_HELPERS/fail"
 . "$KANO_HELPERS/report"
 
@@ -14,22 +13,16 @@ test_help() {
 test() {
   SUITE_NAME="$1"
 
-  if [ -n "$SUITE_NAME" ]; then
-    SUITE_PATH="$TEST_SUITE_DIRECTORY/$SUITE_NAME"
-    if does_directory_exist "$SUITE_PATH"; then
-      _info "Running $SUITE_NAME tests"
-      _test "$SUITE_PATH"
-      return $?
+  if [ -z "$SUITE_NAME" ]; then
+    _info "Running all tests"
+    _test "$TEST_SUITE_DIRECTORY"
 
-    else
-      fail "[test] No test suite named '$SUITE_NAME'"
-    fi
+  elif does_directory_exist "$TEST_SUITE_DIRECTORY/$SUITE_NAME"; then
+    _info "Running $SUITE_NAME tests"
+    _test "$TEST_SUITE_DIRECTORY/$SUITE_NAME"
 
   else
-    SUITE_PATH="$TEST_SUITE_DIRECTORY"
-    _info "Running all tests"
-    _test "$SUITE_PATH"
-    return $?
+    fail "[test] No test suite named '$SUITE_NAME'"
   fi
 }
 
@@ -37,8 +30,6 @@ _test() {
   SUITE_PATH="$1"
 
   # Ensure that the kano code under test is the one in the source directory
-  INITIAL_KANO_SOURCE_DIRECTORY="$KANO_SOURCE_DIRECTORY"
-  INITIAL_KANO_BUILTIN_DIRECTORY="$KANO_BUILTIN_DIRECTORY"
   INITIAL_KANO_SYSTEM_DIRECTORY="$KANO_SYSTEM_DIRECTORY"
   INITIAL_KANO_TEAMS_DIRECTORY="$KANO_TEAMS_DIRECTORY"
   INITIAL_KANO_USER_DIRECTORY="$KANO_USER_DIRECTORY"
@@ -46,8 +37,6 @@ _test() {
   INITIAL_KANO_PROJECT_NAME="$KANO_PROJECT_NAME"
   INITIAL_KANO_TEAM="$KANO_TEAM"
 
-  export KANO_SOURCE_DIRECTORY="$SOURCE_DIRECTORY"
-  export KANO_BUILTIN_DIRECTORY="$SOURCE_DIRECTORY/builtin"
   export KANO_SYSTEM_DIRECTORY="$TEST_DIRECTORY/data/some_system/kano"
   export KANO_TEAMS_DIRECTORY="$TEST_DIRECTORY/data/some_home/.kano_teams"
   export KANO_USER_DIRECTORY="$TEST_DIRECTORY/data/some_home/.kano_user"
@@ -69,8 +58,6 @@ _test() {
   RESULT=$?
 
   # Reset environment
-  export KANO_SOURCE_DIRECTORY="$INITIAL_KANO_SOURCE_DIRECTORY"
-  export KANO_BUILTIN_DIRECTORY="$INITIAL_KANO_BUILTIN_DIRECTORY"
   export KANO_SYSTEM_DIRECTORY="$INITIAL_KANO_SYSTEM_DIRECTORY"
   export KANO_TEAMS_DIRECTORY="$INITIAL_KANO_TEAMS_DIRECTORY"
   export KANO_USER_DIRECTORY="$INITIAL_KANO_USER_DIRECTORY"

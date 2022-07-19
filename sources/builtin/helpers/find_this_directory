@@ -1,8 +1,8 @@
 #!/bin/sh
 
-. "$KANO_SOURCE_DIRECTORY/builtin/helpers/does_file_exist"
-. "$KANO_SOURCE_DIRECTORY/builtin/helpers/get_absolute_directory_path"
-. "$KANO_SOURCE_DIRECTORY/builtin/helpers/is_symbolic_link"
+. "$KANO_ROOT_DIRECTORY/builtin/helpers/does_file_exist"
+. "$KANO_ROOT_DIRECTORY/builtin/helpers/get_absolute_directory_path"
+. "$KANO_ROOT_DIRECTORY/builtin/helpers/is_symbolic_link"
 
 find_this_directory() {
   EXECUTABLE_FILE_PATH="$(_get_initial_executable_file_path)"
