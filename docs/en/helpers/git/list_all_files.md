@@ -4,11 +4,11 @@
 
 ## Description
 
-Returns a list of all files tracked by Git
+Returns a list of all files tracked by `git`
 
 ## Usage
 
-```text
+```shell
 list_all_files
 ```
 
@@ -25,7 +25,7 @@ scytale_decrypt_all() {
 Use as a list of argument:
 
 ```shell
-scytale_decrypt_all "$(list_all_files | xargs)"
+list_all_files | xargs scytale_decrypt_all
 ```
 
-Would decrypt all files tracked by Git
+Would decrypt all files tracked by `git`

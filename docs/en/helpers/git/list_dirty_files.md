@@ -8,7 +8,7 @@ Returns a list of all changed files since last commit, excluding deleted or untr
 
 ## Usage
 
-```text
+```shell
 list_dirty_files
 ```
 
@@ -25,7 +25,7 @@ scytale_decrypt_all() {
 Use as a list of argument:
 
 ```shell
-scytale_decrypt_all "$(list_dirty_files | xargs)"
+list_dirty_files | xargs scytale_decrypt_all
 ```
 
 Would decrypt all dirty files

@@ -4,7 +4,7 @@
 
 ## Description
 
-Use the `docker` task to work in an isolated development docker container
+Use the `docker` task to work in an isolated development Docker container
 
 > This task requires [Docker](https://github.com/docker)
 
@@ -346,8 +346,8 @@ demonstrating this particular use case
 
 #### Configuring customizations
 
-The simplest way to configure the container is to create it using standard docker options and
-flags. For example, to mount one's personal shell profile and git configuration, simply create
+The simplest way to configure the container is to create it using standard `docker` options and
+flags. For example, to mount one's personal shell profile and `git` configuration, simply create
 the container with the appropriate option:
 
 ```shell
@@ -370,8 +370,7 @@ docker_help() {
 }
 
 docker() {
-  # shellcheck disable=SC2046
-  kano --next docker $(_insert_my_personal_docker_options "$@" | xargs)
+  _insert_my_personal_docker_options "$@" | xargs kano --next docker
 }
 
 _insert_my_personal_docker_options() {
@@ -398,7 +397,7 @@ _echo_my_container_create_options() {
 > can be found [here](/docs/en/usage.md##scopes)
 
 With such a proxying user task, all bare `kano docker container create` commands, including
-[shortcuts](#shortcuts), will now include one's shell profile and git configurations. The same
+[shortcuts](#shortcuts), will now include one's shell profile and `git` configurations. The same
 principle could be applied with a proxying team task for team configurations, or directly in the
 project for project-specific configurations, such as network names or exposed ports
 
@@ -469,7 +468,7 @@ To mount one's `ssh` configuration:
 --env SSH_AUTH_SOCK="$SSH_AUTH_SOCK"
 ```
 
-This will forward the host's ssh agent in the docker container
+This will forward the host's ssh agent in the Docker container
 
 > `ssh-client` must also be installed in the development image
 
@@ -493,4 +492,4 @@ mounted, no way has been found yet to properly share GPG keys with the container
 both MacOS and Linux hosts because mounting the GPG socket
 [will likely never be supported by Docker for Mac](https://github.com/docker/for-mac/issues/483).
 A workaround with minimal impact on productivity is to simply use GPG outside the container for
-actions that require one's GPG keys, such as signing a git commit or tag
+actions that require one's GPG keys, such as signing a `git` commit or tag

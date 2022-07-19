@@ -379,8 +379,7 @@ docker_help() {
 }
 
 docker() {
-  # shellcheck disable=SC2046
-  kano --next docker $(_insert_my_personal_docker_options "$@" | xargs)
+  _insert_my_personal_docker_options "$@" | xargs kano --next docker
 }
 
 _insert_my_personal_docker_options() {
@@ -508,4 +507,4 @@ que
 [_Docker for Mac_ ne supportera pas le montage de socket unix](https://github.com/docker/for-mac/issues/483),
 et donc le montage du socket GPG. Une solution palliative avec l'impact le plus minimal sur la
 productivité est de simplement utliser `gpg` en dehors du conteneur lorsque les clés de
-l'utilisateur hôte sont requises, pour par exemple signer des commits ou des marqueurs git
+l'utilisateur hôte sont requises, pour par exemple signer des commits ou des marqueurs `git`

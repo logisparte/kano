@@ -39,8 +39,7 @@ _lint_shell() {
 
   _info "Linting shell files"
   report message "$SHELL_FILES" "gray"
-  # shellcheck disable=SC2046
-  shellcheck $(echo "$SHELL_FILES" | xargs)
+  echo "$SHELL_FILES" | xargs shellcheck
 }
 
 _lint_markdown() {
@@ -53,8 +52,7 @@ _lint_markdown() {
 
   _info "Linting markdown files"
   report message "$MARKDOWN_FILES" "gray"
-  # shellcheck disable=SC2046
-  markdownlint $(echo "$MARKDOWN_FILES" | xargs)
+  echo "$MARKDOWN_FILES" | xargs markdownlint
 }
 
 _info() {

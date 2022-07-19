@@ -95,7 +95,7 @@ See the [documentation](/docs/en/usage.md)
 
 ### Docker
 
-A development docker image is used to encapsulate project dependencies and runtime environment.
+A development Docker image is used to encapsulate project dependencies and runtime environment.
 To build the image:
 
 ```shell

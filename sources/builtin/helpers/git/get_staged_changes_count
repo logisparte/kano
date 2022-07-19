@@ -1,0 +1,5 @@
+#!/bin/sh
+
+get_staged_changes_count() {
+  git diff --staged --name-only | wc -l | xargs
+}
