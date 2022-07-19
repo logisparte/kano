@@ -39,8 +39,7 @@ _format_shell() {
 
   _info "Formatting shell files"
   report message "$SHELL_FILES" "gray"
-  # shellcheck disable=SC2046
-  shfmt -p -w -bn -ci -sr -kp -i 2 $(echo "$SHELL_FILES" | xargs)
+  echo "$SHELL_FILES" | xargs shfmt -p -w -bn -ci -sr -kp -i 2
 }
 
 _format_markdown_and_yaml() {
@@ -52,8 +51,7 @@ _format_markdown_and_yaml() {
   fi
 
   _info "Formatting markdown and yaml files"
-  # shellcheck disable=SC2046
-  prettier --write $(echo "$MARKDOWN_YAML_FILES" | xargs)
+  echo "$MARKDOWN_YAML_FILES" | xargs prettier --write
 }
 
 _info() {

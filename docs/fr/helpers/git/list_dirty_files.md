@@ -1,6 +1,6 @@
-# git: get_dirty_files
+# git: list_dirty_files
 
-> Read in [English](/docs/en/helpers/git/get_dirty_files.md)
+> Read in [English](/docs/en/helpers/git/list_dirty_files.md)
 
 ## Description
 
@@ -10,7 +10,7 @@ non-suivis ou effacés
 ## Usage
 
 ```text
-get_dirty_files
+list_dirty_files
 ```
 
 ## Exemples
@@ -26,7 +26,7 @@ tout_decrypter_scytale() {
 Utiliser comme liste d'arguments :
 
 ```shell
-tout_decrypter_scytale "$(get_dirty_files | xargs)"
+list_dirty_files | xargs tout_decrypter_scytale
 ```
 
 Décrypterait tous les fichiers modifiés

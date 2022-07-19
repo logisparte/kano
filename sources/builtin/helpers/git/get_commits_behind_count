@@ -1,0 +1,5 @@
+#!/bin/sh
+
+get_commits_behind_count() {
+  git rev-list --count HEAD..@\{upstream\} 2> /dev/null
+}

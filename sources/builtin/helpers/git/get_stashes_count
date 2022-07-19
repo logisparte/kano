@@ -1,0 +1,5 @@
+#!/bin/sh
+
+get_stashes_count() {
+  git stash list | wc -l | xargs
+}
