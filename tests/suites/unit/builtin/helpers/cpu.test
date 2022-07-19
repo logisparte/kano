@@ -1,0 +1,75 @@
+#!/bin/sh
+
+Include "$KANO_ROOT_DIRECTORY/builtin/helpers/cpu"
+
+Describe "cpu"
+  uname() {
+    if [ "$1" != "-m" ]; then
+      exit 1
+    fi
+
+    echo "$ARCHITECTURE_NAME"
+  }
+
+  fail() {
+    # shellcheck disable=SC2034
+    fail_called_with="$*"
+    %preserve fail_called_with
+    exit 1
+  }
+
+  ARCHITECTURE_NAME=
+
+  Context "when unknown subcommand"
+    It "should fail with the expected error message"
+      When run cpu some_unknown_command
+      The status should be failure
+      The variable fail_called_with should equal \
+        "Unknown 'cpu' subcommand: some_unknown_command"
+    End
+  End
+
+  Describe "is_arm64"
+    Context "when processor is arm64"
+      ARCHITECTURE_NAME="arm64"
+      It "should return true"
+        When run cpu is_arm64
+        The status should be success
+      End
+    End
+
+    Context "when processor is not arm64"
+      ARCHITECTURE_NAME="x86_64"
+      It "should return false"
+        When run cpu is_arm64
+        The status should be failure
+      End
+    End
+  End
+
+  Describe "is_amd64"
+    Context "when processor is amd64"
+      ARCHITECTURE_NAME="amd64"
+      It "should return true"
+        When run cpu is_amd64
+        The status should be success
+      End
+    End
+
+    Context "when processor is x86_64"
+      ARCHITECTURE_NAME="x86_64"
+      It "should return true"
+        When run cpu is_amd64
+        The status should be success
+      End
+    End
+
+    Context "when processor is not amd64 or x86_64"
+      ARCHITECTURE_NAME="arm64"
+      It "should return false"
+        When run cpu is_amd64
+        The status should be failure
+      End
+    End
+  End
+End

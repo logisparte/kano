@@ -1,0 +1,31 @@
+#!/bin/sh
+
+. "$KANO_ROOT_DIRECTORY/builtin/helpers/fail"
+
+cpu() {
+  COMMAND="$1"
+
+  is_arm64() {
+    _is_architecture "arm64"
+  }
+
+  is_amd64() {
+    _is_architecture "amd64" || _is_architecture "x86_64"
+  }
+
+  _is_architecture() {
+    ARCHITECTURE="$1"
+
+    [ "$(uname -m)" = "$ARCHITECTURE" ]
+  }
+
+  case "$COMMAND" in
+    is_arm64 | is_amd64)
+      "$COMMAND"
+      ;;
+
+    *)
+      fail "Unknown 'cpu' subcommand: $COMMAND"
+      ;;
+  esac
+}
