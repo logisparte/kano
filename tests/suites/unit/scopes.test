@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$KANO_SOURCE_DIRECTORY/scopes"
+Include "$KANO_ROOT_DIRECTORY/scopes"
 
 SOME_TEAM="some_team"
 
@@ -193,7 +193,7 @@ project"
       It "should return builtin directory"
         When run scopes to_directory "builtin"
         The status should be success
-        The output should equal "$KANO_BUILTIN_DIRECTORY"
+        The output should equal "$KANO_ROOT_DIRECTORY/builtin"
       End
     End
   End

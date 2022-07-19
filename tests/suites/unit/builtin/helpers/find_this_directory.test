@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$KANO_SOURCE_DIRECTORY/builtin/helpers/find_this_directory"
+Include "$KANO_ROOT_DIRECTORY/builtin/helpers/find_this_directory"
 
 Describe "find_this_directory"
   is_symbolic_link() {

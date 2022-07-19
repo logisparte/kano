@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$KANO_SOURCE_DIRECTORY/builtin/helpers/does_file_exist"
+Include "$KANO_ROOT_DIRECTORY/builtin/helpers/does_file_exist"
 
 TEST_DATA_DIRECTORY="$TEST_DIRECTORY/data/does_file_exist_test"
 

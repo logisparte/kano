@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$KANO_SOURCE_DIRECTORY/builtin/helpers/does_symbol_exist"
+Include "$KANO_ROOT_DIRECTORY/builtin/helpers/does_symbol_exist"
 
 SOME_SYMBOL="some_symbol"
 

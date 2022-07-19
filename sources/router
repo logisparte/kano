@@ -1,8 +1,8 @@
 #!/bin/sh
 
-. "$KANO_SOURCE_DIRECTORY/builtin/helpers/fail"
-. "$KANO_SOURCE_DIRECTORY/scopes"
-. "$KANO_SOURCE_DIRECTORY/tasks"
+. "$KANO_ROOT_DIRECTORY/builtin/helpers/fail"
+. "$KANO_ROOT_DIRECTORY/scopes"
+. "$KANO_ROOT_DIRECTORY/tasks"
 
 router() {
   route() {

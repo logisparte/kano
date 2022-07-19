@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$KANO_SOURCE_DIRECTORY/router"
+Include "$KANO_ROOT_DIRECTORY/router"
 
 SOME_TASK="some_task"
 SOME_PARAMETER="some_parameter"

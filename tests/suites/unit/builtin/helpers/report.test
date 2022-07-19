@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$KANO_SOURCE_DIRECTORY/builtin/helpers/report"
+Include "$KANO_ROOT_DIRECTORY/builtin/helpers/report"
 
 SOME_MESSAGE="some message"
 SOME_COLOR="purple"

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$KANO_SOURCE_DIRECTORY/builtin/helpers/list_files_in_directory"
+Include "$KANO_ROOT_DIRECTORY/builtin/helpers/list_files_in_directory"
 
 TEST_DATA_DIRECTORY="$TEST_DIRECTORY/data/list_files_in_directory_test"
 

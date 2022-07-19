@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$KANO_SOURCE_DIRECTORY/tasks"
+Include "$KANO_ROOT_DIRECTORY/tasks"
 
 SOME_SCOPE_1="some_scope_1"
 SOME_SCOPE_2="some_scope_2"

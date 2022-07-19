@@ -1,6 +1,6 @@
 #!/bin/sh
 
-Include "$KANO_SOURCE_DIRECTORY/builtin/tasks/init"
+Include "$KANO_ROOT_DIRECTORY/builtin/tasks/init"
 
 SOME_TEAM="some_team"
 
