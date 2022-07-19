@@ -1,6 +1,6 @@
-# git: get_all_files
+# git: list_all_files
 
-> Lire en [Français](/docs/fr/helpers/git/get_all_files.md)
+> Lire en [Français](/docs/fr/helpers/git/list_all_files.md)
 
 ## Description
 
@@ -9,7 +9,7 @@ Returns a list of all files tracked by Git
 ## Usage
 
 ```text
-get_all_files
+list_all_files
 ```
 
 ## Examples
@@ -25,7 +25,7 @@ scytale_decrypt_all() {
 Use as a list of argument:
 
 ```shell
-scytale_decrypt_all "$(get_all_files | xargs)"
+scytale_decrypt_all "$(list_all_files | xargs)"
 ```
 
 Would decrypt all files tracked by Git

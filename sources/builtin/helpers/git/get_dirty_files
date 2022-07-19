@@ -1,5 +1,8 @@
 #!/bin/sh
 
+. "$KANO_ROOT_DIRECTORY/builtin/helpers/git/list_dirty_files"
+
+# Deprecated, use list_dirty_files
 get_dirty_files() {
-  git status --short | grep 'A\|M\|R' | awk '{print $NF}'
+  list_dirty_files
 }
