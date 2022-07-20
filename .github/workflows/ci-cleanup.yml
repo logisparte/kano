@@ -21,7 +21,7 @@ jobs:
       - name: Install kano
         run: |
           curl --silent --show-error --location \
-            https://github.com/logisparte/kano/releases/download/4.1.0/kano.tar.gz \
+            https://github.com/logisparte/kano/releases/download/4.2.3/kano.tar.gz \
               | tar --extract --gzip
           sudo ./kano/install
 
@@ -37,12 +37,6 @@ jobs:
 
       - name: Pull branch development image
         run: kano docker image pull
-
-      - name: Start container workaround
-        run: |
-          kano docker container create
-          kano docker container start
-          sleep 30
 
       - name: Unrelease beta version
         run: |
