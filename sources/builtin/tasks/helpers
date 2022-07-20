@@ -1,0 +1,9 @@
+#!/bin/sh
+
+helpers_help() {
+  echo "Outputs the path to kano's builtin helpers directory (\$KANO_HELPERS)"
+}
+
+helpers() {
+  echo "$KANO_HELPERS"
+}

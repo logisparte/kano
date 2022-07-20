@@ -1,0 +1,18 @@
+#!/bin/sh
+
+Include "$KANO_ROOT_DIRECTORY/builtin/tasks/helpers"
+
+Describe "helpers"
+  It "has a help message"
+    When run helpers_help
+    The status should be success
+    The output should equal \
+      "Outputs the path to kano's builtin helpers directory (\$KANO_HELPERS)"
+  End
+
+  It "outputs \$KANO_HELPERS"
+    When run helpers
+    The status should be success
+    The output should equal "$KANO_HELPERS"
+  End
+End
