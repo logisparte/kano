@@ -19,7 +19,10 @@ a shell profile file:
 
 ```shell
 # .zshrc
-. "$(kano helpers)/report"
-. "$(kano helpers)/fail"
+
+export KANO_HELPERS="$(kano helpers)"
+
+. "$KANO_HELPERS/report"
+. "$KANO_HELPERS/fail"
 
 ```
