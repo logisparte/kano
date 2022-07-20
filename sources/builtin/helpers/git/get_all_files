@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. "$KANO_ROOT_DIRECTORY/builtin/helpers/git/list_all_files"
+. "$KANO_HELPERS/git/list_all_files"
 
 # Deprecated, use list_all_files
 get_all_files() {

@@ -1,6 +1,7 @@
 #!/bin/sh
 
 export KANO_ROOT_DIRECTORY="$PWD/sources"
+export KANO_HELPERS="$KANO_ROOT_DIRECTORY/builtin/helpers"
 export BUILD_DIRECTORY="$PWD/build"
 export RELEASE_DIRECTORY="$PWD/release"
 export SOURCE_DIRECTORY="$PWD/sources"
