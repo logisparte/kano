@@ -8,14 +8,15 @@ docker_help() {
 }
 
 docker() {
-  if [ "$KANO_DOCKER" = true ]; then
-    if [ "$1" = "_init_container" ]; then
-      _init_container
-      return
+  COMMAND="$1"
 
-    else
-      fail "Cannot run docker task inside a development container"
-    fi
+  if [ "$COMMAND" = "_init_container" ] || [ "$COMMAND" = "_is_container_ready" ]; then
+    "$COMMAND"
+    return $?
+  fi
+
+  if [ "$KANO_DOCKER" = true ]; then
+    fail "Cannot run docker task inside a development container"
   fi
 
   if ! _is_docker_installed; then
@@ -192,6 +193,7 @@ docker() {
       fi
 
       _docker container start "$@" "$KANO_DOCKER_CONTAINER"
+      _wait_until_container_ready
     }
 
     stop() {
@@ -353,6 +355,10 @@ docker() {
 }
 
 _init_container() {
+  if [ "$KANO_DOCKER" != true ]; then
+    fail "Container must be initialized from inside the container"
+  fi
+
   sudo useradd \
     --uid "$KANO_DOCKER_USER_ID" \
     --gid "sudo" \
@@ -361,6 +367,31 @@ _init_container() {
     "$KANO_DOCKER_USER_NAME"
   sudo passwd --delete "$KANO_DOCKER_USER_NAME" > /dev/null
   sudo chown -R "$KANO_DOCKER_USER_NAME" "$KANO_DOCKER_USER_HOME"
+  sudo mkdir -p /var/kano
+  sudo touch /var/kano/kano_docker_ready
+}
+
+_is_container_ready() {
+  if [ "$KANO_DOCKER" != true ]; then
+    fail "Container readiness must be checked from inside the container"
+  fi
+
+  does_file_exist "/var/kano/kano_docker_ready"
+}
+
+_wait_until_container_ready() {
+  RETRIES=30
+  while [ "$RETRIES" -gt 0 ]; do
+    if _docker container 'exec' "$KANO_DOCKER_CONTAINER" \
+        kano docker _is_container_ready; then
+      return
+    fi
+
+    sleep 1
+    RETRIES=$((RETRIES - 1))
+  done
+
+  fail "Development container could not initialize correctly"
 }
 
 _insert_image_in_push_or_pull_arguments() {

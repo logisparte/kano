@@ -116,18 +116,18 @@ Describe "docker"
     The output should equal "Develop in a docker container"
   End
 
-  Context "when inside a container"
-    KANO_DOCKER=true
-    Context "when subcommand is not '_init_container'"
+  Context "when subcommand is '_init_container'"
+    Context "when not inside a container"
       It "should fail with the expected error message"
-        When run docker some_command
+        When run docker _init_container
         The status should be failure
         The variable fail_called_with should equal \
-          "Cannot run docker task inside a development container"
+          "Container must be initialized from inside the container"
       End
     End
 
-    Context "when subcommand is '_init_container'"
+    Context "when inside a container"
+      KANO_DOCKER=true
       sudo() {
         "$@"
       }
@@ -150,6 +150,18 @@ Describe "docker"
         %preserve chown_called_with
       }
 
+      mkdir() {
+        # shellcheck disable=SC2034
+        mkdir_called_with="$*"
+        %preserve mkdir_called_with
+      }
+
+      touch() {
+        # shellcheck disable=SC2034
+        touch_called_with="$*"
+        %preserve touch_called_with
+      }
+
       export KANO_DOCKER_USER_ID="1001"
       export KANO_DOCKER_USER_NAME="some-user"
       export KANO_DOCKER_USER_HOME="/home/some-user"
@@ -167,6 +179,8 @@ Describe "docker"
         The variable passwd_called_with should equal "--delete $KANO_DOCKER_USER_NAME"
         The variable chown_called_with should equal \
           "-R $KANO_DOCKER_USER_NAME $KANO_DOCKER_USER_HOME"
+        The variable mkdir_called_with should equal "-p /var/kano"
+        The variable touch_called_with should equal "/var/kano/kano_docker_ready"
       End
       export KANO_DOCKER_USER_ID=
       export KANO_DOCKER_USER_NAME=
@@ -174,10 +188,60 @@ Describe "docker"
     End
   End
 
+  Context "when subcommand is '_is_container_ready'"
+    Context "when not inside a container"
+      It "should fail with the expected error message"
+        When run docker _is_container_ready
+        The status should be failure
+        The variable fail_called_with should equal \
+          "Container readiness must be checked from inside the container"
+      End
+    End
+
+    Context "when inside a container"
+      KANO_DOCKER=true
+      does_file_exist() {
+        if [ "$1" = "/var/kano/kano_docker_ready" ]; then
+          "$DOES_KANO_DOCKER_READY_FILE_EXIST"
+
+        else
+          false
+        fi
+      }
+
+      DOES_KANO_DOCKER_READY_FILE_EXIST=false
+
+      Context "when kano_docker_container_ready file does not exist yet"
+        It "should return false"
+          When run docker _is_container_ready
+          The status should be failure
+        End
+      End
+
+      Context "when kano_docker_container_ready file exists"
+        DOES_KANO_DOCKER_READY_FILE_EXIST=true
+        It "should return true"
+          When run docker _is_container_ready
+          The status should be success
+        End
+      End
+    End
+  End
+
+  Context "when inside a container"
+    KANO_DOCKER=true
+    It "should fail with the expected error message"
+      When run docker some_command
+      The status should be failure
+      The variable fail_called_with should equal \
+        "Cannot run docker task inside a development container"
+    End
+  End
+
   Context "when docker is not installed"
     IS_DOCKER_INSTALLED=false
     It "should fail with the expected error message"
-      When run docker
+      When run docker some_command
       The status should be failure
       The variable fail_called_with should equal "Docker is not installed"
     End
@@ -186,7 +250,7 @@ Describe "docker"
   Context "when docker daemon is not running"
     IS_DOCKER_DAEMON_RUNNING=false
     It "should fail"
-      When run docker
+      When run docker some_command
       The status should be failure
     End
   End
@@ -901,7 +965,58 @@ Describe "docker"
           It "should start container"
             When run docker container start
             The status should be success
-            The variable docker_called_with should equal "container start $DEFAULT_CONTAINER"
+            The variable docker_called_with should start_with \
+              "container start $DEFAULT_CONTAINER"
+          End
+
+          # shellcheck disable=SC2116
+          IS_CONTAINER_READY_COMMAND="$(
+            echo \
+              "container exec $DEFAULT_CONTAINER kano docker _is_container_ready"
+          )"
+
+          It "should check if container is initialized"
+            When run docker container start
+            The status should be success
+            The variable docker_called_with should include "$IS_CONTAINER_READY_COMMAND"
+          End
+
+          Context "when container is not immediately initialized"
+            IS_CONTAINER_READY_CALL_COUNT=0
+            CONTAINER_READY_CALL_NUMBER=1
+            _docker() {
+              if [ "$*" = "$IS_CONTAINER_READY_COMMAND" ]; then
+                IS_CONTAINER_READY_CALL_COUNT=$((IS_CONTAINER_READY_CALL_COUNT + 1))
+                %preserve IS_CONTAINER_READY_CALL_COUNT
+                [ $CONTAINER_READY_CALL_NUMBER -eq $IS_CONTAINER_READY_CALL_COUNT ]
+                return $?
+              fi
+
+              true
+            }
+
+            sleep() {
+              true
+            }
+
+            Context "when container will be initialized after 5 seconds"
+              CONTAINER_READY_CALL_NUMBER=5
+              It "should wait for it to be initialized"
+                When run docker container start
+                The status should be success
+                The variable IS_CONTAINER_READY_CALL_COUNT should equal 5
+              End
+            End
+
+            Context "when container is still not initialized after 30 seconds"
+              CONTAINER_READY_CALL_NUMBER=31
+              It "should fail with the expected error message"
+                When run docker container start
+                The status should be failure
+                The variable fail_called_with should equal \
+                  "Development container could not initialize correctly"
+              End
+            End
           End
 
           Context "when passing extra docker flags and options"
@@ -910,10 +1025,14 @@ Describe "docker"
                 --some-docker-option some_value \
                 --some-docker-flag
               The status should be success
-              The variable docker_called_with should start_with "container start"
-              The variable docker_called_with should include "--some-docker-option some_value"
-              The variable docker_called_with should include "--some-docker-flag"
-              The variable docker_called_with should end_with "$DEFAULT_CONTAINER"
+              # shellcheck disable=SC2116
+              The variable docker_called_with should start_with "$(
+                echo \
+                  "container start" \
+                  "--some-docker-option some_value" \
+                  "--some-docker-flag" \
+                  "$DEFAULT_CONTAINER"
+              )"
             End
           End
 
@@ -923,7 +1042,8 @@ Describe "docker"
             It "should start container with custom name"
               When run docker container start
               The status should be success
-              The variable docker_called_with should end_with "$SOME_CUSTOM_CONTAINER_NAME"
+              The variable docker_called_with should start_with \
+                "container start $SOME_CUSTOM_CONTAINER_NAME"
             End
           End
 
