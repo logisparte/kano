@@ -383,7 +383,7 @@ _wait_until_container_ready() {
   RETRIES=30
   while [ "$RETRIES" -gt 0 ]; do
     if _docker container 'exec' "$KANO_DOCKER_CONTAINER" \
-        kano docker _is_container_ready; then
+        kano docker _is_container_ready 2> /dev/null; then
       return
     fi
 
