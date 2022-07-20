@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. "$KANO_ROOT_DIRECTORY/builtin/helpers/git/list_dirty_files"
+. "$KANO_HELPERS/git/list_dirty_files"
 
 # Deprecated, use list_dirty_files
 get_dirty_files() {

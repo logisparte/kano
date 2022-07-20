@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. "$KANO_ROOT_DIRECTORY/builtin/helpers/report"
+. "$KANO_HELPERS/report"
 
 succeed() {
   MESSAGE="$1"

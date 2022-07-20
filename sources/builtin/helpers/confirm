@@ -1,7 +1,7 @@
 #!/bin/sh
 
-. "$KANO_ROOT_DIRECTORY/builtin/helpers/colorize"
-. "$KANO_ROOT_DIRECTORY/builtin/helpers/report"
+. "$KANO_HELPERS/colorize"
+. "$KANO_HELPERS/report"
 
 confirm() {
   while [ "$#" -gt 0 ]; do
