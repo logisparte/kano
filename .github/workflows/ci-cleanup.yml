@@ -38,6 +38,12 @@ jobs:
       - name: Pull branch development image
         run: kano docker image pull
 
+      - name: Start container workaround
+        run: |
+          kano docker container create
+          kano docker container start
+          sleep 30
+
       - name: Unrelease beta version
         run: |
           kano dockered unrelease \

@@ -39,6 +39,12 @@ jobs:
       - name: Pull existing development image
         run: kano docker image pull
 
+      - name: Start container workaround
+        run: |
+          kano docker container create
+          kano docker container start
+          sleep 30
+
       - name: Build project
         run: kano dockered build
 
