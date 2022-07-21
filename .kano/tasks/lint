@@ -1,7 +1,7 @@
 #!/bin/sh
 
-. "$KANO_HELPERS/git/get_all_files"
-. "$KANO_HELPERS/git/get_dirty_files"
+. "$KANO_HELPERS/git/list_all_files"
+. "$KANO_HELPERS/git/list_dirty_files"
 . "$KANO_HELPERS/report"
 
 lint_help() {
@@ -13,11 +13,11 @@ lint() {
 
   case "$FILTER" in
     dirty | "")
-      FILTERED_FILES="$(get_dirty_files)"
+      FILTERED_FILES="$(list_dirty_files)"
       ;;
 
     all)
-      FILTERED_FILES="$(get_all_files)"
+      FILTERED_FILES="$(list_all_files)"
       ;;
 
     *)
@@ -32,7 +32,13 @@ lint() {
 _lint_shell() {
   FILES="$1"
 
-  SHELL_FILES="$(echo "$FILES" | grep "\.kano\|sources\|tests" | grep -v "Dockerfile" || true)"
+  SHELL_FILES="$(
+    echo "$FILES" \
+      | grep -e "\.kano" -e "sources" -e "tests" \
+      | grep -v "Dockerfile" \
+      || true
+  )"
+
   if [ -z "$SHELL_FILES" ]; then
     return
   fi
@@ -52,7 +58,8 @@ _lint_markdown() {
 
   _info "Linting markdown files"
   report message "$MARKDOWN_FILES" "gray"
-  echo "$MARKDOWN_FILES" | xargs markdownlint
+  # shellcheck disable=SC2046
+  markdownlint $(echo "$MARKDOWN_FILES" | xargs)
 }
 
 _info() {

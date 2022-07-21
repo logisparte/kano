@@ -233,7 +233,7 @@ docker() {
 
       # shellcheck disable=SC2046
       _docker container 'exec' \
-        --user "$(id -un)" \
+        --user "$KANO_DOCKER_USER_NAME" \
         --workdir "$PWD" \
         $(_insert_container_in_exec_arguments "$@" | xargs)
     }

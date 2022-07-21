@@ -11,7 +11,12 @@ pre_commit() {
   _stash_unstaged_files
   _format
   _lint
-  _unstash_unstaged_files
+  if [ $? ]; then
+    _unstash_unstaged_files
+
+  else
+    fail "[pre_commit] linting failed, unstaged changes are still stashed"
+  fi
 }
 
 _stash_unstaged_files() {
