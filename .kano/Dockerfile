@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM ghcr.io/logisparte/helot-22.04:6.0.0 AS base
+FROM ghcr.io/logisparte/helot-22.04:6.0.1 AS base
 
 LABEL org.opencontainers.image.title="kano-dev"
 LABEL org.opencontainers.image.description="kano's development image"
