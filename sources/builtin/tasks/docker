@@ -254,47 +254,47 @@ docker() {
   # Native Docker shortcuts
 
   build() {
-    image build "$@"
+    _kano docker image build "$@"
   }
 
   rmi() {
-    image rm "$@"
+    _kano docker image rm "$@"
   }
 
   pull() {
-    image pull "$@"
+    _kano docker image pull "$@"
   }
 
   push() {
-    image push "$@"
+    _kano docker image push "$@"
   }
 
   tag() {
-    image tag "$@"
+    _kano docker image tag "$@"
   }
 
   create() {
-    container create "$@"
+    _kano docker container create "$@"
   }
 
   rm() {
-    container rm "$@"
+    _kano docker container rm "$@"
   }
 
   start() {
-    container start "$@"
+    _kano docker container start "$@"
   }
 
   stop() {
-    container stop "$@"
+    _kano docker container stop "$@"
   }
 
   kill_() {
-    container kill_ "$@"
+    _kano docker container kill_ "$@"
   }
 
   exec_() {
-    container exec_ "$@"
+    _kano docker container exec_ "$@"
   }
 
   # kano docker shortcuts
@@ -519,6 +519,7 @@ _is_container_running() {
 }
 
 _kano() {
+  # Execute a new kano call to catch user-defined task overloads (used for shortcuts)
   command kano "$@"
 }
 
