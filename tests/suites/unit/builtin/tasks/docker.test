@@ -427,7 +427,7 @@ Describe "docker"
         It "should delegate to image subcommand"
           When run docker build
           The status should be success
-          The variable docker_called_with should start_with "image build"
+          The variable kano_called_with should start_with "docker image build"
         End
       End
     End
@@ -512,7 +512,7 @@ Describe "docker"
           It "should delegate to image subcommand"
             When run docker rmi
             The status should be success
-            The variable docker_called_with should start_with "image rm"
+            The variable kano_called_with should start_with "docker image rm"
           End
         End
       End
@@ -612,7 +612,7 @@ Describe "docker"
           It "should delegate to image subcommand"
             When run docker pull
             The status should be success
-            The variable docker_called_with should start_with "image pull"
+            The variable kano_called_with should start_with "docker image pull"
           End
         End
       End
@@ -699,7 +699,7 @@ Describe "docker"
           It "should delegate to image subcommand"
             When run docker push
             The status should be success
-            The variable docker_called_with should start_with "image push"
+            The variable kano_called_with should start_with "docker image push"
           End
         End
       End
@@ -727,7 +727,7 @@ Describe "docker"
           It "should delegate to image subcommand"
             When run docker tag "$SOME_TAG"
             The status should be success
-            The variable docker_called_with should start_with "image tag"
+            The variable kano_called_with should start_with "docker image tag"
           End
         End
       End
@@ -870,7 +870,7 @@ Describe "docker"
             It "should delegate to container subcommand"
               When run docker create
               The status should be success
-              The variable docker_called_with should start_with "container create"
+              The variable kano_called_with should start_with "docker container create"
             End
           End
         End
@@ -932,7 +932,7 @@ Describe "docker"
             It "should delegate to container subcommand"
               When run docker rm
               The status should be success
-              The variable docker_called_with should start_with "container rm"
+              The variable kano_called_with should start_with "docker container rm"
             End
           End
         End
@@ -1051,7 +1051,7 @@ Describe "docker"
             It "should delegate to container subcommand"
               When run docker start
               The status should be success
-              The variable docker_called_with should start_with "container start"
+              The variable kano_called_with should start_with "docker container start"
             End
           End
         End
@@ -1127,7 +1127,7 @@ Describe "docker"
             It "should delegate to container subcommand"
               When run docker stop
               The status should be success
-              The variable docker_called_with should start_with "container stop"
+              The variable kano_called_with should start_with "docker container stop"
             End
           End
         End
@@ -1203,7 +1203,7 @@ Describe "docker"
             It "should delegate to container subcommand"
               When run docker 'kill'
               The status should be success
-              The variable docker_called_with should start_with "container kill"
+              The variable kano_called_with should start_with "docker container kill"
             End
           End
         End
@@ -1279,7 +1279,7 @@ Describe "docker"
             It "should delegate to container subcommand"
               When run docker 'exec'
               The status should be success
-              The variable docker_called_with should start_with "container exec"
+              The variable kano_called_with should start_with "docker container exec"
             End
           End
         End
