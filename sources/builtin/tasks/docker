@@ -206,7 +206,7 @@ docker() {
       fi
 
       _docker container stop "$@" "$KANO_DOCKER_CONTAINER"
-      _docker container 'wait' "$KANO_DOCKER_CONTAINER" > /dev/null 2>&1 || true
+      _shelled_docker container 'wait' "$KANO_DOCKER_CONTAINER" > /dev/null 2>&1 || true
     }
 
     kill_() {
@@ -219,7 +219,7 @@ docker() {
       fi
 
       _docker container 'kill' "$@" "$KANO_DOCKER_CONTAINER"
-      _docker container 'wait' "$KANO_DOCKER_CONTAINER" > /dev/null 2>&1 || true
+      _shelled_docker container 'wait' "$KANO_DOCKER_CONTAINER" > /dev/null 2>&1 || true
     }
 
     exec_() {
@@ -382,7 +382,7 @@ _is_container_ready() {
 _wait_until_container_ready() {
   RETRIES=30
   while [ "$RETRIES" -gt 0 ]; do
-    if _docker container 'exec' "$KANO_DOCKER_CONTAINER" \
+    if _shelled_docker container 'exec' "$KANO_DOCKER_CONTAINER" \
         kano docker _is_container_ready 2> /dev/null; then
       return
     fi
@@ -499,30 +499,37 @@ _is_flag_or_option() {
 }
 
 _is_docker_installed() {
-  _docker --help > /dev/null 2>&1
+  _shelled_docker --help > /dev/null 2>&1
 }
 
 _ensure_docker_daemon_is_running() {
-  _docker version > /dev/null
+  _shelled_docker version > /dev/null
 }
 
 _does_image_exist() {
-  [ -n "$(_docker image ls --quiet --filter reference="$WORKING_IMAGE" | xargs)" ]
+  [ -n "$(_shelled_docker image ls --quiet --filter reference="$WORKING_IMAGE" | xargs)" ]
 }
 
 _does_container_exist() {
-  [ -n "$(_docker container ls --all --quiet --filter name="$KANO_DOCKER_CONTAINER" | xargs)" ]
+  [ -n "$(_shelled_docker container ls --all --quiet --filter name="$KANO_DOCKER_CONTAINER" \
+    | xargs)" ]
 }
 
 _is_container_running() {
-  [ -n "$(_docker container ls --quiet --filter name="$KANO_DOCKER_CONTAINER" | xargs)" ]
-}
-
-_kano() {
-  # Execute a new kano call to catch user-defined task overloads (used for shortcuts)
-  command kano "$@"
+  [ -n "$(_shelled_docker container ls --quiet --filter name="$KANO_DOCKER_CONTAINER" \
+    | xargs)" ]
 }
 
 _docker() {
   command docker "$@"
+}
+
+# To protect against docker exit signals
+_shelled_docker() {
+  sh -c "docker $*"
+}
+
+# To allow overloaded tasks to be used by shortcuts
+_kano() {
+  command kano "$@"
 }

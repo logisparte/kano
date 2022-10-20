@@ -55,6 +55,18 @@ Describe "docker"
     %preserve docker_called_with
   }
 
+  _shelled_docker() {
+    # shellcheck disable=SC2034
+    if [ -z "$shelled_docker_called_with" ]; then
+      shelled_docker_called_with="$*"
+
+    else
+      shelled_docker_called_with="$shelled_docker_called_with $*"
+    fi
+
+    %preserve shelled_docker_called_with
+  }
+
   _kano() {
     # shellcheck disable=SC2034
     if [ -z "$kano_called_with" ]; then
@@ -978,13 +990,13 @@ Describe "docker"
           It "should check if container is initialized"
             When run docker container start
             The status should be success
-            The variable docker_called_with should include "$IS_CONTAINER_READY_COMMAND"
+            The variable shelled_docker_called_with should include "$IS_CONTAINER_READY_COMMAND"
           End
 
           Context "when container is not immediately initialized"
             IS_CONTAINER_READY_CALL_COUNT=0
             CONTAINER_READY_CALL_NUMBER=1
-            _docker() {
+            _shelled_docker() {
               if [ "$*" = "$IS_CONTAINER_READY_COMMAND" ]; then
                 IS_CONTAINER_READY_CALL_COUNT=$((IS_CONTAINER_READY_CALL_COUNT + 1))
                 %preserve IS_CONTAINER_READY_CALL_COUNT
@@ -1082,12 +1094,14 @@ Describe "docker"
           It "should stop container"
             When run docker container stop
             The status should be success
-            # shellcheck disable=SC2116
-            The variable docker_called_with should equal "$(
-              echo \
-                "container stop $DEFAULT_CONTAINER" \
-                "container wait $DEFAULT_CONTAINER"
-            )"
+            The variable docker_called_with should equal "container stop $DEFAULT_CONTAINER"
+          End
+
+          It "should wait for container to be stopped"
+            When run docker container stop
+            The status should be success
+            The variable shelled_docker_called_with should equal \
+              "container wait $DEFAULT_CONTAINER"
           End
 
           Context "when passing extra docker flags and options"
@@ -1102,8 +1116,7 @@ Describe "docker"
                   "container stop" \
                     "--some-docker-option some_value" \
                     "--some-docker-flag" \
-                    "$DEFAULT_CONTAINER" \
-                  "container wait $DEFAULT_CONTAINER"
+                    "$DEFAULT_CONTAINER"
               )"
             End
           End
@@ -1114,12 +1127,15 @@ Describe "docker"
             It "should stop container with custom name"
               When run docker container stop
               The status should be success
-              # shellcheck disable=SC2116
-              The variable docker_called_with should equal "$(
-                echo \
-                  "container stop $SOME_CUSTOM_CONTAINER_NAME" \
-                  "container wait $SOME_CUSTOM_CONTAINER_NAME"
-              )"
+              The variable docker_called_with should equal \
+                "container stop $SOME_CUSTOM_CONTAINER_NAME"
+            End
+
+            It "should wait for container with custom name to be stopped"
+              When run docker container stop
+              The status should be success
+              The variable shelled_docker_called_with should equal \
+                "container wait $SOME_CUSTOM_CONTAINER_NAME"
             End
           End
 
@@ -1158,12 +1174,14 @@ Describe "docker"
           It "should kill container"
             When run docker container 'kill'
             The status should be success
-            # shellcheck disable=SC2116
-            The variable docker_called_with should equal "$(
-              echo \
-                "container kill $DEFAULT_CONTAINER" \
-                "container wait $DEFAULT_CONTAINER"
-            )"
+            The variable docker_called_with should equal "container kill $DEFAULT_CONTAINER"
+          End
+
+          It "should wait for container to be killed"
+            When run docker container 'kill'
+            The status should be success
+            The variable shelled_docker_called_with should equal \
+              "container wait $DEFAULT_CONTAINER"
           End
 
           Context "when passing extra docker flags and options"
@@ -1178,8 +1196,7 @@ Describe "docker"
                   "container kill" \
                     "--some-docker-option some_value" \
                     "--some-docker-flag" \
-                    "$DEFAULT_CONTAINER" \
-                  "container wait $DEFAULT_CONTAINER"
+                    "$DEFAULT_CONTAINER"
               )"
             End
           End
@@ -1190,12 +1207,15 @@ Describe "docker"
             It "should kill container with custom name"
               When run docker container 'kill'
               The status should be success
-              # shellcheck disable=SC2116
-              The variable docker_called_with should equal "$(
-                echo \
-                  "container kill $SOME_CUSTOM_CONTAINER_NAME" \
-                  "container wait $SOME_CUSTOM_CONTAINER_NAME"
-              )"
+              The variable docker_called_with should equal \
+                "container kill $SOME_CUSTOM_CONTAINER_NAME"
+            End
+
+            It "should wait for container with custom name to be killed"
+              When run docker container 'kill'
+              The status should be success
+              The variable shelled_docker_called_with should equal \
+                "container wait $SOME_CUSTOM_CONTAINER_NAME"
             End
           End
 
