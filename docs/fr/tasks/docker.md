@@ -472,7 +472,13 @@ Pour avoir la même configuration `vim` que sur l'hôte :
 
 ##### ssh
 
-Pour avoir la même configuration `ssh` que sur l'hôte :
+Pour relayer l'agent ssh de l'hôte, suivre les instructions appropriées suivantes
+
+> `ssh-client` doit être installé dans l'image de développement dans tous les cas
+
+###### Relayer l'agent ssh depuis Linux
+
+Monter le socket et la configuration ssh de l'hôte :
 
 ```shell
 --volume "$HOME/.ssh:$HOME/.ssh"
@@ -480,31 +486,37 @@ Pour avoir la même configuration `ssh` que sur l'hôte :
 --env SSH_AUTH_SOCK="$SSH_AUTH_SOCK"
 ```
 
-Cela relaiera l'agent `ssh` de l'hôte dans le conteneur de développement
+###### Relayer l'agent ssh depuis macOS
 
-> `ssh-client` doit aussi être installé dans l'image de développement
+Puisque le montage de socket unix
+[ne sera vraisemblablement jamais supporté par _Docker for Mac_](https://github.com/docker/for-mac/issues/483),
+le socket ssh natif ne peut être monté comme sur Linux. Docker a cependant implémenté un faux
+socket spécial à `/run/host-services/ssh-auth.sock` qui peut être monté pour arriver au même
+résultat. Pour le monter ainsi que la configuration ssh de l'hôte :
 
-###### ssh et macOS
-
-Si _macOS Keychain_ est utilisé pour gérer les phrases secrètes `ssh`, monter la configuration
-`ssh` de l'hôte ne fonctionnera pas directement puisque _Keychain_ ne sera pas accessible depuis
-le conteneur. Pour pallier à cette situation, la configuration suivante peut être ajoutée à
-`$HOME/.ssh/config` pour demander la phrase secrète une fois par session si _Keychain_ n'est pas
-trouvé :
-
-```text
-IgnoreUnknown UseKeychain
-UseKeychain yes
-AddKeysToAgent yes
+```shell
+WORKAROUND_SSH_AUTH_SOCK="/run/host-services/ssh-auth.sock"
+# ...
+--volume "$HOME/.ssh:$HOME/.ssh"
+--volume "$WORKAROUND_SSH_AUTH_SOCK:$WORKAROUND_SSH_AUTH_SOCK"
+--env SSH_AUTH_SOCK="$WORKAROUND_SSH_AUTH_SOCK"
 ```
 
 ##### gpg
 
-Bien qu'il soit possible d'avoir `gnupg2` installé dans le conteneur et la configuration `gpg`
-de l'hôte montée, aucun moyen n'a encore été trouvé pour correctement partager des clés `gpg`
-avec le conteneur qui fonctionne tant sur Linux que sur macOS. Ceci est grandement dû au fait
-que
-[_Docker for Mac_ ne supportera pas le montage de socket unix](https://github.com/docker/for-mac/issues/483),
-et donc le montage du socket GPG. Une solution palliative avec l'impact le plus minimal sur la
-productivité est de simplement utliser `gpg` en dehors du conteneur lorsque les clés de
-l'utilisateur hôte sont requises, pour par exemple signer des commits ou des marqueurs `git`
+Pour relayer l'agent gpg de l'hôte, suivre les instructions appropriées suivantes
+
+> `gnupg2` doit être installé dans l'image de développement dans tous les cas
+
+###### Relayer l'agent gpg agent depuis Linux
+
+> TODO
+
+###### Relayer l'agent gpg agent depuis macOS
+
+Puisque le montage de socket unix
+[ne sera vraisemblablement jamais supporté par _Docker for Mac_](https://github.com/docker/for-mac/issues/483),
+le socket gpg ne peut être monté. Pour signer des commits et des marqueurs git, il est
+recommendé de
+[configurer git pour utiliser une clé ssh à la place d'une clé gpg](https://calebhearth.com/sign-git-with-ssh)
+et de [relayer l'agent ssh de l'hôte dans le conteneur de développement](#ssh)

@@ -347,8 +347,8 @@ demonstrating this particular use case
 #### Configuring customizations
 
 The simplest way to configure the container is to create it using standard `docker` options and
-flags. For example, to mount one's personal shell profile and `git` configuration, simply create
-the container with the appropriate option:
+flags. For example, to mount the host's user shell profile and `git` configuration, simply
+create the container with the appropriate option:
 
 ```shell
 kano docker container create \
@@ -397,9 +397,9 @@ _echo_my_container_create_options() {
 > can be found [here](/docs/en/usage.md##scopes)
 
 With such a proxying user task, all bare `kano docker container create` commands, including
-[shortcuts](#shortcuts), will now include one's shell profile and `git` configurations. The same
-principle could be applied with a proxying team task for team configurations, or directly in the
-project for project-specific configurations, such as network names or exposed ports
+[shortcuts](#shortcuts), will now include the host's shell profile and `git` configurations. The
+same principle could be applied with a proxying team task for team configurations, or directly
+in the project for project-specific configurations, such as network names or exposed ports
 
 #### Example customizations
 
@@ -416,7 +416,7 @@ To have consistent terminal colors with the host OS:
 
 ##### bash
 
-To mount one's `bash` configuration:
+To mount the host's `bash` configuration:
 
 ```shell
 --volume "$HOME/.bashrc:$HOME/.bashrc"
@@ -426,7 +426,7 @@ To mount one's `bash` configuration:
 
 ##### zsh
 
-To mount one's `zsh` configuration:
+To mount the host's `zsh` configuration:
 
 ```shell
 --volume "$HOME/.zshenv:$HOME/.zshenv"
@@ -437,7 +437,7 @@ To mount one's `zsh` configuration:
 
 ##### git
 
-To mount one's `git` configuration:
+To mount the host's `git` configuration:
 
 ```shell
 --volume "$HOME/.gitconfig:$HOME/.gitconfig"
@@ -448,7 +448,7 @@ To mount one's `git` configuration:
 
 ##### vim
 
-To mount one's vim configuration:
+To mount the host's vim configuration:
 
 ```shell
 --volume "$HOME/.vim:$HOME/.vim"
@@ -460,7 +460,13 @@ To mount one's vim configuration:
 
 ##### ssh
 
-To mount one's `ssh` configuration:
+To forward the host's ssh agent, follow the appropriate instructions below
+
+> `ssh-client` must be installed in the development image in either cases
+
+###### ssh agent forwarding from Linux
+
+Mount the host's ssh socket and configuration:
 
 ```shell
 --volume "$HOME/.ssh:$HOME/.ssh"
@@ -468,28 +474,36 @@ To mount one's `ssh` configuration:
 --env SSH_AUTH_SOCK="$SSH_AUTH_SOCK"
 ```
 
-This will forward the host's ssh agent in the Docker container
+###### ssh agent forwarding from macOS
 
-> `ssh-client` must also be installed in the development image
+Because mounting unix sockets
+[will likely never be supported by Docker for Mac](https://github.com/docker/for-mac/issues/483),
+the native ssh socket cannot be mounted like on Linux. Docker however implemented a workaround
+with a special false socket at `/run/host-services/ssh-auth.sock` which can be mounted to
+achieve the same result. To mount it and the host's ssh configuration:
 
-###### ssh and macOS
-
-If macOS Keychain is used to manage ssh passphrases, mounting the host's `ssh` configuration
-will not work directly since Keychain will not be available in the container. To work around
-this situation, the following configuration can be added to `$HOME/.ssh/config` to prompt for
-passphrases once per session if Keychain is not found:
-
-```text
-IgnoreUnknown UseKeychain
-UseKeychain yes
-AddKeysToAgent yes
+```shell
+WORKAROUND_SSH_AUTH_SOCK="/run/host-services/ssh-auth.sock"
+# ...
+--volume "$HOME/.ssh:$HOME/.ssh"
+--volume "$WORKAROUND_SSH_AUTH_SOCK:$WORKAROUND_SSH_AUTH_SOCK"
+--env SSH_AUTH_SOCK="$WORKAROUND_SSH_AUTH_SOCK"
 ```
 
 ##### gpg
 
-Although it's possible to have `gnupg2` installed in the container and the host's configuration
-mounted, no way has been found yet to properly share GPG keys with the container that works with
-both MacOS and Linux hosts because mounting the GPG socket
-[will likely never be supported by Docker for Mac](https://github.com/docker/for-mac/issues/483).
-A workaround with minimal impact on productivity is to simply use GPG outside the container for
-actions that require one's GPG keys, such as signing a `git` commit or tag
+To forward the host's gpg agent, follow the appropriate instructions below
+
+> `gnupg2` must be installed in the development image in either cases
+
+###### gpg agent forwarding from Linux
+
+> TODO
+
+###### gpg agent forwarding from macOS
+
+Because mounting unix sockets
+[will likely never be supported by Docker for Mac](https://github.com/docker/for-mac/issues/483),
+the gpg socket cannot be mounted. To sign git commits and tags, the recommendation is to
+[configure git to use an ssh key instead of a gpg key](https://calebhearth.com/sign-git-with-ssh)
+and [forward the host's ssh agent in the container](#ssh)
