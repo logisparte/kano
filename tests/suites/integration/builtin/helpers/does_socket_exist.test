@@ -1,0 +1,37 @@
+#!/bin/sh
+
+Include "$KANO_ROOT_DIRECTORY/builtin/helpers/does_socket_exist"
+
+TEST_DATA_DIRECTORY="$TEST_DIRECTORY/data/does_socket_exist_test"
+
+SOME_SOCKET="$TEST_DATA_DIRECTORY/some_socket.sock"
+
+Describe "does_socket_exist"
+  before_all() {
+    mkdir -p "$TEST_DATA_DIRECTORY"
+  }
+
+  after_all() {
+    rm -rf "$TEST_DATA_DIRECTORY"
+  }
+
+  BeforeAll "before_all"
+  AfterAll "after_all"
+
+  Context "when socket does not exist"
+    It "should return false"
+      When run does_socket_exist "$SOME_SOCKET"
+      The status should be failure
+    End
+  End
+
+  Context "when socket exists"
+    Skip "need to find a way to create dummy socket file"
+
+    It "should return true"
+      # create socket file at $SOME_SOCKET
+      When run does_socket_exist "$SOME_SOCKET"
+      The status should be success
+    End
+  End
+End
