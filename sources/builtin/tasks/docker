@@ -1,6 +1,7 @@
 #!/bin/sh
 
 . "$KANO_ROOT_DIRECTORY/builtin/helpers/does_file_exist"
+. "$KANO_ROOT_DIRECTORY/builtin/helpers/does_socket_exist"
 . "$KANO_ROOT_DIRECTORY/builtin/helpers/fail"
 
 docker_help() {
@@ -359,6 +360,7 @@ _init_container() {
     fail "Container must be initialized from inside the container"
   fi
 
+  # Add user
   sudo useradd \
     --uid "$KANO_DOCKER_USER_ID" \
     --gid "sudo" \
@@ -367,6 +369,13 @@ _init_container() {
     "$KANO_DOCKER_USER_NAME"
   sudo passwd --delete "$KANO_DOCKER_USER_NAME" > /dev/null
   sudo chown -R "$KANO_DOCKER_USER_NAME" "$KANO_DOCKER_USER_HOME"
+
+  # If present, ensure SSH socket is accessible even for non-root user
+  if [ -n "$SSH_AUTH_SOCK" ] && does_socket_exist "$SSH_AUTH_SOCK"; then
+    sudo chmod 666 "$SSH_AUTH_SOCK"
+  fi
+
+  # Container is ready
   sudo mkdir -p /var/kano
   sudo touch /var/kano/kano_docker_ready
 }

@@ -23,6 +23,15 @@ Describe "docker"
     fi
   }
 
+  does_socket_exist() {
+    if [ "$1" = "$SSH_AUTH_SOCK" ]; then
+      "$DOES_SSH_AUTH_SOCK_EXIST"
+
+    else
+      false
+    fi
+  }
+
   _is_docker_installed() {
     "$IS_DOCKER_INSTALLED"
   }
@@ -82,6 +91,7 @@ Describe "docker"
   IS_DOCKER_INSTALLED=true
   IS_DOCKER_DAEMON_RUNNING=true
   DOES_DOCKERFILE_EXIST=true
+  DOES_SSH_AUTH_SOCK_EXIST=false
   DOES_IMAGE_EXIST=false
   DOES_CONTAINER_EXIST=false
   IS_CONTAINER_RUNNING=false
@@ -96,6 +106,7 @@ Describe "docker"
     export INITIAL_KANO_DOCKER_USER_ID="$KANO_DOCKER_USER_ID"
     export INITIAL_KANO_DOCKER_USER_NAME="$KANO_DOCKER_USER_NAME"
     export INITIAL_KANO_DOCKER_USER_HOME="$KANO_DOCKER_USER_HOME"
+    export INITIAL_SSH_AUTH_SOCK="$SSH_AUTH_SOCK"
     export KANO_DOCKER=
     export KANO_DOCKER_FILE=
     export KANO_DOCKER_REGISTRY=
@@ -105,6 +116,7 @@ Describe "docker"
     export KANO_DOCKER_USER_ID=
     export KANO_DOCKER_USER_NAME=
     export KANO_DOCKER_USER_HOME=
+    export SSH_AUTH_SOCK=
   }
 
   after_all() {
@@ -117,6 +129,7 @@ Describe "docker"
     export KANO_DOCKER_USER_ID="$INITIAL_KANO_DOCKER_USER_ID"
     export KANO_DOCKER_USER_NAME="$INITIAL_KANO_DOCKER_USER_NAME"
     export KANO_DOCKER_USER_HOME="$INITIAL_KANO_DOCKER_USER_HOME"
+    export SSH_AUTH_SOCK="$INITIAL_SSH_AUTH_SOCK"
   }
 
   BeforeAll "before_all"
@@ -162,6 +175,12 @@ Describe "docker"
         %preserve chown_called_with
       }
 
+      chmod() {
+        # shellcheck disable=SC2034
+        chmod_called_with="$*"
+        %preserve chmod_called_with
+      }
+
       mkdir() {
         # shellcheck disable=SC2034
         mkdir_called_with="$*"
@@ -194,9 +213,34 @@ Describe "docker"
         The variable mkdir_called_with should equal "-p /var/kano"
         The variable touch_called_with should equal "/var/kano/kano_docker_ready"
       End
-      export KANO_DOCKER_USER_ID=
-      export KANO_DOCKER_USER_NAME=
-      export KANO_DOCKER_USER_HOME=
+
+      Context "when SSH_AUTH_SOCK is not defined"
+        It "should not change socket permissions"
+          When run docker _init_container
+          The status should be success
+          The variable chmod_called_with should be undefined
+        End
+      End
+
+      Context "when SSH_AUTH_SOCK is defined"
+        export SSH_AUTH_SOCK="/home/some-user/some_ssh_socket.sock"
+        Context "when socket does not exist"
+          It "should not change socket permissions"
+            When run docker _init_container
+            The status should be success
+            The variable chmod_called_with should be undefined
+          End
+        End
+
+        Context "when socket exists"
+          DOES_SSH_AUTH_SOCK_EXIST=true
+          It "should change socket permissions so that everyone can read/write"
+            When run docker _init_container
+            The status should be success
+            The variable chmod_called_with should equal "666 $SSH_AUTH_SOCK"
+          End
+        End
+      End
     End
   End
 
