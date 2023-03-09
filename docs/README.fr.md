@@ -59,7 +59,7 @@ l'intégration de nouveaux contributeurs
 
 ## Licence
 
-Kano est _libre comme dans liberté_, sous les termes de la [licence GPL-3.0](/LICENSE)
+`kano` est distribué sous les termes de la [licence Apache 2.0](/LICENSE)
 
 ## Utilisateurs
 

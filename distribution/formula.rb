@@ -6,7 +6,7 @@ class ${PASCAL_CASED_PACKAGE} < Formula
   url "https://github.com/logisparte/kano/releases/download/${RELEASE}/kano.tar.gz"
   version "${VERSION}"
   sha256 "${CHECKSUM}"
-  license "GPL-3.0-only"
+  license "Apache-2.0"
   depends_on "git" => :optional
 
   def install
