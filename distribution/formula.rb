@@ -27,7 +27,7 @@ class ${PASCAL_CASED_PACKAGE} < Formula
   end
 
   test do
-    help_output = shell_output("kano help")
+    help_output = shell_output("#{bin}/kano help")
     assert_match(/Show this help message/, help_output)
   end
 end
