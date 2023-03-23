@@ -368,7 +368,7 @@ _init_container() {
     --home-dir "$KANO_DOCKER_USER_HOME" \
     "$KANO_DOCKER_USER_NAME"
   sudo passwd --delete "$KANO_DOCKER_USER_NAME" > /dev/null
-  sudo chown -R "$KANO_DOCKER_USER_NAME" "$KANO_DOCKER_USER_HOME"
+  sudo chown -R "$KANO_DOCKER_USER_NAME" "$KANO_DOCKER_USER_HOME" > /dev/null || true
 
   # If present, ensure SSH socket is accessible even for non-root user
   if [ -n "$SSH_AUTH_SOCK" ] && does_socket_exist "$SSH_AUTH_SOCK"; then
@@ -389,7 +389,7 @@ _is_container_ready() {
 }
 
 _wait_until_container_ready() {
-  RETRIES=30
+  RETRIES=10
   while [ "$RETRIES" -gt 0 ]; do
     if _shelled_docker container 'exec' "$KANO_DOCKER_CONTAINER" \
         kano docker _is_container_ready 2> /dev/null; then
