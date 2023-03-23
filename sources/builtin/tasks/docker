@@ -3,6 +3,7 @@
 . "$KANO_ROOT_DIRECTORY/builtin/helpers/does_file_exist"
 . "$KANO_ROOT_DIRECTORY/builtin/helpers/does_socket_exist"
 . "$KANO_ROOT_DIRECTORY/builtin/helpers/fail"
+. "$KANO_ROOT_DIRECTORY/builtin/helpers/log"
 
 docker_help() {
   echo "Develop in a docker container"
@@ -303,20 +304,26 @@ docker() {
   boot() {
     if ! _does_image_exist; then
       if [ "$KANO_DOCKER_TAG" = "latest" ]; then
+        log debug "Building latest"
         _kano docker image build
 
       else
+        log debug "Pulling $KANO_DOCKER_TAG"
         _kano docker image pull
       fi
     fi
 
     if ! _does_container_exist; then
+      log debug "Creating container"
       _kano docker container create
     fi
 
     if ! _is_container_running; then
+      log debug "Starting container"
       _kano docker container start
     fi
+
+    log success "Container ready"
   }
 
   execute() {
@@ -325,21 +332,28 @@ docker() {
   }
 
   shell() {
-    _kano docker execute --interactive --tty "${SHELL:-/bin/sh}" --login
+    _kano docker boot
+    log debug "Opening interactive shell in container"
+    _kano docker container exec_ --interactive --tty "${SHELL:-/bin/sh}" --login
   }
 
   clean() {
     if _is_container_running; then
+      log debug "Killing container"
       _kano docker container 'kill'
     fi
 
     if _does_container_exist; then
+      log debug "Deleting container"
       _kano docker container rm
     fi
 
     if _does_image_exist; then
+      log debug "Deleting image"
       _kano docker image rm
     fi
+
+    log success "Dev environment cleaned"
   }
 
   case "$1" in
@@ -396,6 +410,7 @@ _wait_until_container_ready() {
       return
     fi
 
+    log debug "[$RETRIES] Waiting for container to be ready"
     sleep 1
     RETRIES=$((RETRIES - 1))
   done

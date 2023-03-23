@@ -1,0 +1,100 @@
+#!/bin/sh
+
+. "$KANO_HELPERS/colorize"
+
+log() {
+  COMMAND="$1"
+
+  error() {
+    MESSAGE="$1"
+
+    case "$KANO_LOG_LEVEL" in
+      off)
+        return
+        ;;
+
+      *)
+        _print "$MESSAGE" red >&2
+        ;;
+    esac
+  }
+
+  success() {
+    MESSAGE="$1"
+
+    case "$KANO_LOG_LEVEL" in
+      off | error)
+        return
+        ;;
+
+      *)
+        _print "$MESSAGE" green
+        ;;
+    esac
+  }
+
+  warning() {
+    MESSAGE="$1"
+
+    case "$KANO_LOG_LEVEL" in
+      off | error | success)
+        return
+        ;;
+
+      *)
+        _print "$MESSAGE" yellow
+        ;;
+    esac
+  }
+
+  info() {
+    MESSAGE="$1"
+
+    case "$KANO_LOG_LEVEL" in
+      off | error | success | warning)
+        return
+        ;;
+
+      *)
+        _print "$MESSAGE" cyan
+        ;;
+    esac
+  }
+
+  debug() {
+    MESSAGE="$1"
+
+    case "$KANO_LOG_LEVEL" in
+      off | error | success | warning | info)
+        return
+        ;;
+
+      *)
+        _print "$MESSAGE" gray
+        ;;
+    esac
+  }
+
+  _print() {
+    MESSAGE="$1"
+    COLOR="$2"
+
+    if [ -n "$COLOR" ]; then
+      printf "%s\n" "$(colorize "$MESSAGE" "$COLOR")"
+
+    else
+      printf "%s\n" "$MESSAGE"
+    fi
+  }
+
+  case "$COMMAND" in
+    error | success | warning | info | debug)
+      shift
+      "$COMMAND" "$@"
+      ;;
+
+    *)
+      fail "Unknown 'log' subcommand: $COMMAND"
+      ;;
+  esac
+}
