@@ -6,69 +6,23 @@ LABEL org.opencontainers.image.description="kano's development image"
 LABEL org.opencontainers.image.authors="@logisparte"
 LABEL org.opencontainers.image.source="https://github.com/logisparte/kano"
 
-FROM base AS markdownlint_prettier_commitlint
+FROM base AS common_tools
 
 RUN <<EOF
-  curl --silent --show-error --location https://deb.nodesource.com/setup_lts.x \
-    | sudo bash -
+  curl --silent --fail --show-error --location https://deb.nodesource.com/setup_lts.x \
+    | sudo -E bash -
   DEBIAN_FRONTEND=noninteractive \
   sudo apt-get update \
   && sudo apt-get install --yes --quiet --no-install-recommends \
-    nodejs
+    nodejs \
+    shellcheck \
+    shfmt
   sudo npm config set update-notifier=false fund=false
   sudo npm install --location=global --omit=dev --omit=optional \
-    markdownlint-cli@0.31.1 \
-    prettier@2.7.1 \
-    @commitlint/cli@17.0.3
+    markdownlint-cli@0.33.0 \
+    prettier@2.8.4 \
+    @commitlint/cli@17.4.4
   sudo npm cache clean --force
-EOF
-
-FROM markdownlint_prettier_commitlint AS shfmt
-
-ARG TARGETARCH
-
-ENV GOBIN="/usr/bin"
-ENV GOPATH="/usr/lib/go"
-ENV GOPROXY="direct"
-
-RUN <<EOF
-  case "$TARGETARCH" in
-    amd64)
-      GO_ARCHITECTURE="amd64"
-      ;;
-
-    arm64*)
-      GO_ARCHITECTURE="arm64"
-      ;;
-
-    *)
-      echo "Unknown target architecture: $TARGETARCH" >&2
-      exit 1
-      ;;
-  esac
-
-  curl --silent --show-error --location \
-    "https://golang.org/dl/go1.18.3.linux-$GO_ARCHITECTURE.tar.gz" \
-      | sudo tar --directory /opt --extract --gzip
-  sudo ln -s "/opt/go/bin/go" "/usr/bin/go"
-  sudo -E go install mvdan.cc/sh/v3/cmd/shfmt@v3.5.1
-  sudo -E go clean --cache
-EOF
-
-FROM shfmt AS shellcheck
-
-RUN <<EOF
-  DEBIAN_FRONTEND=noninteractive \
-  sudo apt-get update \
-  && sudo apt-get install --yes --quiet --no-install-recommends \
-    shellcheck
-EOF
-
-FROM shellcheck AS shellspec
-
-RUN <<EOF
-  curl --silent --show-error --location https://git.io/shellspec \
-    | sudo sh -s 0.28.1 --dir /opt/shellspec --bin /usr/bin --yes
 EOF
 
 FROM base AS kcov_builder
@@ -95,11 +49,13 @@ RUN <<EOF
   sudo cmake --build "$KCOV_BUILD_DIRECTORY" --target install
 EOF
 
-FROM shellspec AS kcov
+FROM common_tools AS shellspec_kcov
 
 COPY --from=kcov_builder /usr/local/bin/kcov* /usr/bin/
 
 RUN <<EOF
+  curl --silent --show-error --location https://git.io/shellspec \
+    | sudo sh -s 0.28.1 --dir /opt/shellspec --bin /usr/bin --yes
   DEBIAN_FRONTEND=noninteractive \
   sudo apt-get update \
   && sudo apt-get install --yes --quiet --no-install-recommends \
@@ -109,7 +65,7 @@ RUN <<EOF
     zlib1g
 EOF
 
-FROM kcov AS cleanup
+FROM shellspec_kcov AS cleanup
 
 RUN <<EOF
   sudo apt-get clean
