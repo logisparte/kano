@@ -51,15 +51,13 @@ _release_local() {
 
 _release_public() {
   VERSION="$1"
-  GIT_NAME="$2"
-  GIT_EMAIL="$3"
-  GITHUB_ACCESS_TOKEN="$4"
+  GITHUB_TOKEN="$2"
 
   _info "Creating public release"
   _assemble_package_directory
   CHECKSUM="$(_archive_package_directory)"
   _info "Packaged $PACKAGE_ARCHIVE. Checksum is: $CHECKSUM"
-  _login_to_github "$GIT_NAME" "$GIT_EMAIL" "$GITHUB_ACCESS_TOKEN"
+  _login_to_github "$GITHUB_TOKEN"
 
   DESCRIPTION="$(git tag -n100 "$VERSION" | awk '{$1=$1; print}' | cut -d ' ' -f 2-)"
   gh release create \
@@ -88,15 +86,13 @@ _release_public() {
 
 _release_beta() {
   VERSION="$1"
-  GIT_NAME="$2"
-  GIT_EMAIL="$3"
-  GITHUB_ACCESS_TOKEN="$4"
+  GITHUB_TOKEN="$2"
 
   _info "Creating beta release"
   _assemble_package_directory
   CHECKSUM="$(_archive_package_directory)"
   _info "Packaged $PACKAGE_ARCHIVE. Checksum is: $CHECKSUM"
-  _login_to_github "$GIT_NAME" "$GIT_EMAIL" "$GITHUB_ACCESS_TOKEN"
+  _login_to_github "$GITHUB_TOKEN"
 
   if gh release list | grep -q "$VERSION"; then
     gh release delete --yes "$VERSION"
@@ -150,30 +146,19 @@ _archive_package_directory() {
 }
 
 _login_to_github() {
-  GIT_NAME="$1"
-  GIT_EMAIL="$2"
-  GITHUB_ACCESS_TOKEN="$3"
+  GITHUB_TOKEN="$1"
 
-  if [ -z "$GIT_NAME" ]; then
-    _fail "No git name provided"
-  fi
-
-  if [ -z "$GIT_EMAIL" ]; then
-    _fail "No git email provided"
-  fi
-
-  if [ -z "$GITHUB_ACCESS_TOKEN" ]; then
+  if [ -z "$GITHUB_TOKEN" ]; then
     _fail "No GitHub access token provided"
   fi
 
   _info "Configuring git for GitHub"
-  kano configure_github --global \
-    "$GIT_NAME" \
-    "$GIT_EMAIL" \
-    "$GITHUB_ACCESS_TOKEN"
+  git config --global user.name logisparte
+  git config --global user.email noreply@logisparte.com
+  git config --global url."https://$GITHUB_TOKEN:@github.com/".insteadOf "https://github.com/"
 
   _info "Logging in to GitHub"
-  echo "$GITHUB_ACCESS_TOKEN" | gh auth login --with-token
+  echo "$GITHUB_TOKEN" | gh auth login --with-token
 }
 
 _case_dashed_to_pascal() {

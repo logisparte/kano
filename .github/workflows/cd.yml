@@ -8,16 +8,15 @@ on:
 env:
   KANO_DOCKER_TAG: ${{ github.sha }}
   KANO_DOCKER_REGISTRY: ghcr.io/logisparte
-  DOCKER_USERNAME: logisparte-helot
-  DOCKER_PASSWORD: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
   DOCKER_BUILDKIT: true
-  GIT_NAME: helot
-  GIT_EMAIL: logisparte-helot@users.noreply.github.com
-  RELEASE_GITHUB_ACCESS_TOKEN: ${{ secrets.HELOT_GITHUB_ACCESS_TOKEN }}
+
+permissions:
+  contents: read # Required by actions/checkout
+  packages: write # Required for release and docker
 
 jobs:
   release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Install kano
         run: |
@@ -27,14 +26,14 @@ jobs:
           sudo ./kano/install
 
       - name: Clone project
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Login to registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.KANO_DOCKER_REGISTRY }}
-          username: ${{ env.DOCKER_USERNAME }}
-          password: ${{ env.DOCKER_PASSWORD }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull existing development image
         run: kano docker image pull
@@ -43,12 +42,7 @@ jobs:
         run: kano dockered build
 
       - name: Release project
-        run: |
-          kano dockered release \
-            "$GITHUB_REF_NAME" \
-            "$GIT_NAME" \
-            "$GIT_EMAIL" \
-            "$RELEASE_GITHUB_ACCESS_TOKEN"
+        run: kano dockered release "$GITHUB_REF_NAME" "$GITHUB_TOKEN"
 
       - name: Tag versioned image
         run: |
