@@ -10,6 +10,7 @@ env:
   DOCKER_BUILDKIT: true
 
 permissions:
+  contents: write # Required for release
   packages: write # Required for beta release and docker
 
 jobs:
