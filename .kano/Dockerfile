@@ -1,12 +1,75 @@
 # syntax=docker/dockerfile:1
-FROM ghcr.io/logisparte/helot-22.04:7.0.0 AS base
+FROM ubuntu:22.04 AS base
 
 LABEL org.opencontainers.image.title="kano-dev"
 LABEL org.opencontainers.image.description="kano's development image"
 LABEL org.opencontainers.image.authors="@logisparte"
 LABEL org.opencontainers.image.source="https://github.com/logisparte/kano"
 
-FROM base AS common_tools
+FROM base AS docker
+
+RUN <<EOF
+  DEBIAN_FRONTEND=noninteractive \
+    apt-get update \
+      && apt-get install --yes --quiet --no-install-recommends \
+        sudo
+  useradd --groups sudo --no-create-home docker
+  passwd --delete docker
+  apt-get clean
+  rm -rf /var/lib/apt/lists/*
+EOF
+
+USER docker
+
+SHELL ["/bin/sh", "-e", "-c"]
+
+CMD ["/bin/sh"]
+
+FROM docker AS system
+
+RUN <<EOF
+  sudo ln -snf "/usr/share/zoneinfo/UTC" /etc/localtime
+  sudo sh -c "echo UTC > /etc/timezone"
+  DEBIAN_FRONTEND=noninteractive \
+    sudo apt-get update \
+      && sudo apt-get install --yes --quiet --no-install-recommends \
+        apt-transport-https \
+        ca-certificates \
+        curl \
+        git \
+        gnupg2 \
+        software-properties-common \
+        ssh-client \
+        tzdata \
+        unzip \
+        vim \
+        wget \
+        zsh
+  sudo git config --system init.defaultbranch master
+  sudo apt-get clean
+  sudo rm -rf /var/lib/apt/lists/*
+EOF
+
+ENV EDITOR="/usr/bin/vim"
+
+FROM system AS system_github
+
+RUN <<EOF
+  curl --silent --show-error --location \
+    "https://cli.github.com/packages/githubcli-archive-keyring.gpg" \
+      | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+  sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+    | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+  DEBIAN_FRONTEND=noninteractive \
+    sudo apt-get update \
+      && sudo apt-get install --yes --quiet --no-install-recommends \
+        gh
+  sudo apt-get clean
+  sudo rm -rf /var/lib/apt/lists/*
+EOF
+
+FROM system_github AS project
 
 RUN <<EOF
   curl --silent --fail --show-error --location https://deb.nodesource.com/setup_lts.x \
@@ -23,9 +86,11 @@ RUN <<EOF
     prettier@2.8.4 \
     @commitlint/cli@17.4.4
   sudo npm cache clean --force
+  sudo apt-get clean
+  sudo rm -rf /var/lib/apt/lists/*
 EOF
 
-FROM base AS kcov_builder
+FROM system AS kcov_builder
 
 RUN <<EOF
   KCOV_VERSION="40"
@@ -47,9 +112,11 @@ RUN <<EOF
       | sudo tar --extract --gzip
   sudo cmake -B "$KCOV_BUILD_DIRECTORY" -Wno-dev "$KCOV_DIRECTORY"
   sudo cmake --build "$KCOV_BUILD_DIRECTORY" --target install
+  sudo apt-get clean
+  sudo rm -rf /var/lib/apt/lists/*
 EOF
 
-FROM common_tools AS shellspec_kcov
+FROM project AS project_shellspec_kcov
 
 COPY --from=kcov_builder /usr/local/bin/kcov* /usr/bin/
 
@@ -63,11 +130,6 @@ RUN <<EOF
     libcurl4 \
     libdw1 \
     zlib1g
-EOF
-
-FROM shellspec_kcov AS cleanup
-
-RUN <<EOF
   sudo apt-get clean
   sudo rm -rf /var/lib/apt/lists/*
 EOF
