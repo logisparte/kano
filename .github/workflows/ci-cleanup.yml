@@ -7,7 +7,6 @@ env:
   DOCKER_BUILDKIT: true
 
 permissions:
-  contents: read # Required by actions/checkout
   packages: write # Required for release cleanup and docker
 
 jobs:
@@ -32,10 +31,10 @@ jobs:
         with:
           registry: ${{ env.KANO_DOCKER_REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ github.token }}
 
       - name: Pull branch development image
         run: kano docker image pull
 
       - name: Unrelease beta version
-        run: kano dockered unrelease "$BETA_NAME" "$GITHUB_TOKEN"
+        run: kano dockered unrelease "$BETA_NAME" ${{ github.token }}

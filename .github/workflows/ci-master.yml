@@ -10,7 +10,6 @@ env:
   DOCKER_BUILDKIT: true
 
 permissions:
-  contents: read # Required by actions/checkout
   packages: write # Required by docker
 
 jobs:
@@ -32,13 +31,13 @@ jobs:
         with:
           registry: ${{ env.KANO_DOCKER_REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ github.token }}
 
       - name: Build new development image
         run: kano docker image build
 
       - name: Tag new development image
         run: |
-          kano docker image tag "$GITHUB_SHA"
-          kano docker image push "$GITHUB_SHA"
+          kano docker image tag ${{ github.sha }}
+          kano docker image push ${{ github.sha }}
           kano docker image push

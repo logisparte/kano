@@ -10,7 +10,6 @@ env:
   DOCKER_BUILDKIT: true
 
 permissions:
-  contents: read # Required by actions/checkout
   packages: write # Required for beta release and docker
 
 jobs:
@@ -32,7 +31,7 @@ jobs:
         with:
           registry: ${{ env.KANO_DOCKER_REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ github.token }}
 
       - name: Build branch development image
         run: kano docker image build
@@ -48,4 +47,4 @@ jobs:
 
       - name: Release beta version
         if: startsWith(github.head_ref, 'beta-')
-        run: kano dockered release "$GITHUB_REF_NAME" "$GITHUB_TOKEN"
+        run: kano dockered release ${{ github.ref_name }} ${{ github.token }}
