@@ -11,7 +11,7 @@ env:
 
 permissions:
   contents: write # Required for release
-  packages: write # Required for beta release and docker
+  packages: write # Required for release and docker
 
 jobs:
   check-branch:
@@ -46,6 +46,17 @@ jobs:
       - name: Test project
         run: kano dockered test
 
+      - name: Create release token
+        if: startsWith(github.head_ref, 'beta-')
+        uses: actions/create-github-app-token@v1
+        id: release-token
+        with:
+          app-id: ${{ secrets.HELOT_CLIENT_ID }}
+          private-key: ${{ secrets.HELOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: homebrew-beta-packages
+
       - name: Release beta version
         if: startsWith(github.head_ref, 'beta-')
-        run: kano dockered release ${{ github.ref_name }} ${{ github.token }}
+        run: |
+          kano dockered release ${{ github.ref_name }} ${{ steps.release-token.outputs.token }}

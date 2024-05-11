@@ -41,8 +41,18 @@ jobs:
       - name: Build project
         run: kano dockered build
 
+      - name: Create release token
+        uses: actions/create-github-app-token@v1
+        id: release-token
+        with:
+          app-id: ${{ secrets.HELOT_CLIENT_ID }}
+          private-key: ${{ secrets.HELOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: homebrew-packages
+
       - name: Release project
-        run: kano dockered release ${{ github.ref_name }} ${{ github.token }}
+        run: |
+          kano dockered release ${{ github.ref_name }} ${{ steps.release-token.outputs.token }}
 
       - name: Tag versioned image
         run: |
