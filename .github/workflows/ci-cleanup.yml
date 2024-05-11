@@ -7,7 +7,8 @@ env:
   DOCKER_BUILDKIT: true
 
 permissions:
-  packages: write # Required for release cleanup and docker
+  contents: write # Required for release
+  packages: write # Required for release and docker
 
 jobs:
   cleanup-beta:
@@ -36,5 +37,14 @@ jobs:
       - name: Pull branch development image
         run: kano docker image pull
 
+      - name: Create release token
+        uses: actions/create-github-app-token@v1
+        id: release-token
+        with:
+          app-id: ${{ secrets.HELOT_CLIENT_ID }}
+          private-key: ${{ secrets.HELOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: homebrew-beta-packages
+
       - name: Unrelease beta version
-        run: kano dockered unrelease "$BETA_NAME" ${{ github.token }}
+        run: kano dockered unrelease "$BETA_NAME" ${{ steps.release-token.outputs.token }}

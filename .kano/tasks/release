@@ -153,9 +153,8 @@ _login_to_github() {
   fi
 
   _info "Configuring git for GitHub"
-  git config --global user.name logisparte
-  git config --global user.email noreply@logisparte.com
-  git config --global url."https://$GITHUB_TOKEN:@github.com/".insteadOf "https://github.com/"
+  git config --global user.name helot-bot[bot]
+  git config --global user.email 169493167+helot-bot[bot]@users.noreply.github.com
 
   _info "Logging in to GitHub"
   echo "$GITHUB_TOKEN" | gh auth login --with-token
