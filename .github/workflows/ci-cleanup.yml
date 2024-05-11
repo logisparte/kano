@@ -44,7 +44,7 @@ jobs:
           app-id: ${{ vars.HELOT_APP_ID }}
           private-key: ${{ secrets.HELOT_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
-          repositories: homebrew-beta-packages
+          repositories: "kano,homebrew-beta-packages"
 
       - name: Unrelease beta version
         run: kano dockered unrelease "$BETA_NAME" ${{ steps.release-token.outputs.token }}

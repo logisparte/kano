@@ -48,7 +48,7 @@ jobs:
           app-id: ${{ vars.HELOT_APP_ID }}
           private-key: ${{ secrets.HELOT_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
-          repositories: homebrew-packages
+          repositories: "kano,homebrew-packages"
 
       - name: Release project
         run: |
