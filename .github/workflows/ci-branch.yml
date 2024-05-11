@@ -51,7 +51,7 @@ jobs:
         uses: actions/create-github-app-token@v1
         id: release-token
         with:
-          app-id: ${{ secrets.HELOT_CLIENT_ID }}
+          app-id: ${{ vars.HELOT_APP_ID }}
           private-key: ${{ secrets.HELOT_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: homebrew-beta-packages
