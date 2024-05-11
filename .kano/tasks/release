@@ -70,6 +70,7 @@ _release_public() {
   PACKAGE_INDEX_BRANCH="$PACKAGE-$VERSION"
   gh repo clone "logisparte/homebrew-packages" "../homebrew-packages"
   cd "../homebrew-packages" || fail
+  _login_to_github "$GITHUB_TOKEN"
   git checkout -b "$PACKAGE_INDEX_BRANCH"
   LANG=C sed \
     -e "s/\${PASCAL_CASED_PACKAGE}/$(_case_dashed_to_pascal "$PACKAGE")/g" \
