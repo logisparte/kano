@@ -1,8 +1,15 @@
-# kano
+# kano (archived)
 
 > Lire en [Français](/docs/README.fr.md)
 
 Software engineering workflow automation CLI
+
+> [!NOTE]
+> This repository is no longer maintained. Users are encouraged to migrate to
+> [docker-env](https://github.com/logisparte/docker-env) for containerized development
+> environments and to [shell-utils](https://github.com/logisparte/shell-utils) for shell script
+> helpers. Tasks should now be written as standalone scripts in `/scripts`. Task scopes are also
+> abandoned.
 
 ## About
 
